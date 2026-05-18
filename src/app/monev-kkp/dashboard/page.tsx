@@ -175,7 +175,8 @@ export default function DashboardMonevKkpPage() {
   const transaksiPerKL = useMemo(
     () =>
       (data?.transaksiPerKL ?? []).map((item) => ({
-        name: `${item.kddept} - ${item.nmdept}`,
+        name: item.kddept,
+        fullName: `${item.kddept} - ${item.nmdept}`,
         value: item.totalTransaksi,
       })),
     [data],
@@ -183,7 +184,8 @@ export default function DashboardMonevKkpPage() {
   const transaksiPerSatker = useMemo(
     () =>
       (data?.transaksiPerSatker ?? []).map((item) => ({
-        name: `${item.kdsatker} - ${item.nmsatker}`,
+        name: item.kdsatker,
+        fullName: `${item.kdsatker} - ${item.nmsatker}`,
         value: item.totalTransaksi,
       })),
     [data],

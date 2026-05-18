@@ -1,16 +1,18 @@
-import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
+import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const require = createRequire(import.meta.url);
-  const reactPdfPackagePath = require.resolve("react-pdf/package.json");
-  const reactPdfRoot = path.dirname(reactPdfPackagePath);
+  // Follow pnpm's symlink to find react-pdf's real location in the .pnpm store,
+  // then resolve its sibling pdfjs-dist so API and Worker versions always match.
+  // We avoid require.resolve() and import.meta.resolve() because Turbopack
+  // rewrites both into numeric module IDs at build time.
+  const symlinkedReactPdf = path.join(process.cwd(), "node_modules", "react-pdf");
+  const realReactPdfRoot = await realpath(symlinkedReactPdf);
   const workerPath = path.resolve(
-    reactPdfRoot,
+    realReactPdfRoot,
     "../pdfjs-dist/build/pdf.worker.min.mjs",
   );
 

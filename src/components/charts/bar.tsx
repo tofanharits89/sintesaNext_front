@@ -210,13 +210,18 @@ export function Bar({
 
   const isHorizontal = orientation === "horizontal";
 
+  // Filter lines to only include those intended for bar layout
+  const barLines = useMemo(() => {
+    return lines.filter((l) => l.type === "bar" || l.type === undefined);
+  }, [lines]);
+
   // Find the index of this bar series among all bar series
   const seriesIndex = useMemo(() => {
-    const idx = lines.findIndex((l) => l.dataKey === dataKey);
+    const idx = barLines.findIndex((l) => l.dataKey === dataKey);
     return idx >= 0 ? idx : 0;
-  }, [lines, dataKey]);
+  }, [barLines, dataKey]);
 
-  const seriesCount = lines.length;
+  const seriesCount = barLines.length;
   const isLastSeries = seriesIndex === seriesCount - 1;
 
   // Calculate the width for each bar within a group (for non-stacked)

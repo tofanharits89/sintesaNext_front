@@ -2,8 +2,7 @@ import { cookies } from "next/headers";
 import { apiPath } from "@/lib/config/base-path";
 import { backendPath } from "@/lib/config/config";
 import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
-import { LineChartComponent } from "@/components/ui/line-chart";
-import { BarChartComponent } from "@/components/ui/bar-chart";
+import { LineChart as LineChartComponent, BarChart as BarChartComponent } from "@/components/lazy";
 
 interface Props {
   selectedYear: string;

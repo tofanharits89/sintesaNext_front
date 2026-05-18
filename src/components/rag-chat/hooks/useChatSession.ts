@@ -1,6 +1,22 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { sendRagMessageStream, RagChatSource } from "@/lib/api/rag-chat";
 import { ChatMessage, StreamProgress, generateSessionId } from "../types";
+
+const STORAGE_KEY = "shinta_chat_session";
+
+function loadPersistedSession(): { sessionId: string; messages: ChatMessage[] } {
+    try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return { sessionId: generateSessionId(), messages: [] };
+}
+
+function saveSession(sessionId: string, messages: ChatMessage[]) {
+    try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ sessionId, messages }));
+    } catch { /* ignore */ }
+}
 
 interface UseChatSessionReturn {
     // State
@@ -27,8 +43,9 @@ interface UseChatSessionReturn {
  * Hook managing chat session state and messaging logic.
  */
 export function useChatSession(): UseChatSessionReturn {
-    const [sessionId, setSessionId] = useState<string>(() => generateSessionId());
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const persisted = useRef(loadPersistedSession());
+    const [sessionId, setSessionId] = useState<string>(() => persisted.current.sessionId);
+    const [messages, setMessages] = useState<ChatMessage[]>(() => persisted.current.messages);
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [sources, setSources] = useState<RagChatSource[]>([]);
@@ -36,6 +53,11 @@ export function useChatSession(): UseChatSessionReturn {
     const [nearingLimit, setNearingLimit] = useState(false);
     const [agentName, setAgentName] = useState<string | null>(null);
     const currentAnswerRef = useRef<string>("");
+
+    // Persist session to survive page refresh
+    useEffect(() => {
+        saveSession(sessionId, messages);
+    }, [sessionId, messages]);
 
     const handleSend = useCallback(async (
         input: string,
@@ -118,7 +140,9 @@ export function useChatSession(): UseChatSessionReturn {
     }, [isSending, messages, sessionId]);
 
     const resetSession = useCallback(() => {
-        setSessionId(generateSessionId());
+        const newId = generateSessionId();
+        sessionStorage.removeItem(STORAGE_KEY);
+        setSessionId(newId);
         setMessages([]);
         setSources([]);
         setError(null);

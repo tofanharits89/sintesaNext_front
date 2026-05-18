@@ -383,12 +383,12 @@ export default function Rekam({
 
   return (
     <Dialog open={show} onOpenChange={handleModalClose}>
-      <DialogContent showCloseButton={false} className="max-w-4xl sm:max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
+      <DialogContent showCloseButton={false} className="max-w-4xl sm:max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Rekam Data Dispensasi TA. {tahun}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-6 py-4 overflow-y-auto flex-1 min-h-0">
           <Formik
             validationSchema={validationSchema}
             onSubmit={handleSubmitdata}

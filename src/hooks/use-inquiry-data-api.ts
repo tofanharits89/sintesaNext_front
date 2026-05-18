@@ -5,6 +5,10 @@ import { useInquiryQueryBuilder } from "./use-inquiry-query-builder";
 import { apiClient, http, directBackendClient } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 
+const INQUIRY_CLIENT_TIMEOUT_MS = Number(
+  process.env.NEXT_PUBLIC_INQUIRY_TIMEOUT_MS || 600_000,
+); // 10 minutes
+
 export interface QueryExecutionResult {
   success: boolean;
   data?: any[];
@@ -79,6 +83,7 @@ export function useInquiryDataApi() {
             page: pagination?.page ?? 1,
             pageSize: pagination?.pageSize ?? 50,
           },
+          { timeout: INQUIRY_CLIENT_TIMEOUT_MS },
         );
 
         setLastResult(result);
@@ -128,7 +133,7 @@ export function useInquiryDataApi() {
             format: "csv",
             limit: 750000, // Higher limit for downloads
           },
-          { responseType: "blob", timeout: 300000 },
+          { responseType: "blob", timeout: INQUIRY_CLIENT_TIMEOUT_MS },
         );
         const blob: Blob = resp instanceof Blob ? resp : new Blob([resp]);
 
@@ -172,7 +177,7 @@ export function useInquiryDataApi() {
         const blobResp = await directBackendClient.post(
           "/inquiry-data/query",
           { encryptedQuery, format: "excel", limit: 750000 },
-          { responseType: "blob", timeout: 300000 },
+          { responseType: "blob", timeout: INQUIRY_CLIENT_TIMEOUT_MS },
         );
 
         // Check if the response is a JSON error instead of binary Excel
@@ -243,6 +248,7 @@ export function useInquiryDataApi() {
         const result = await directBackendClient.post<QueryPreviewResult>(
           "/inquiry-data/query/preview",
           { encryptedQuery },
+          { timeout: INQUIRY_CLIENT_TIMEOUT_MS },
         );
 
         // Note: We don't setLastResult for preview as it's a different result type

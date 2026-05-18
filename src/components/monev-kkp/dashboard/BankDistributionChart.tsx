@@ -18,14 +18,14 @@ import { ChartCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import type { BankDistItem } from "@/features/monev-kkp/api/services";
 
 const COLORS = [
-  { bg: "#dbeafe", text: "#1e3a8a" }, // blue-100
-  { bg: "#93c5fd", text: "#1e3a8a" }, // blue-300
-  { bg: "#3b82f6", text: "#ffffff" }, // blue-500
-  { bg: "#1d4ed8", text: "#ffffff" }, // blue-700
-  { bg: "#1e3a8a", text: "#ffffff" }, // blue-900
-  { bg: "#172554", text: "#ffffff" }, // blue-950
-  { bg: "#60a5fa", text: "#ffffff" }, // blue-400 (fallback)
-  { bg: "#2563eb", text: "#ffffff" }, // blue-600 (fallback)
+  { bg: "#e5e7eb", text: "#374151" }, // gray-200
+  { bg: "#cbd5e1", text: "#334155" }, // slate-300
+  { bg: "#94a3b8", text: "#0f172a" }, // slate-400
+  { bg: "#64748b", text: "#ffffff" }, // slate-500
+  { bg: "#78716c", text: "#ffffff" }, // stone-500
+  { bg: "#57534e", text: "#ffffff" }, // stone-600
+  { bg: "#a8a29e", text: "#1c1917" }, // stone-400 (fallback)
+  { bg: "#71717a", text: "#ffffff" }, // zinc-500 (fallback)
 ];
 
 interface BankDistributionChartProps {
@@ -179,7 +179,7 @@ export function BankDistributionChart({
                             color: colorConfig.text
                           }}
                         >
-                          <span className="text-xs sm:text-sm font-medium truncate">
+                          <span className="font-mono text-[10px] sm:text-xs font-medium truncate">
                             {percentage.toFixed(1)}%
                           </span>
                         </div>
@@ -230,7 +230,7 @@ export function BankDistributionChart({
                     <span className="font-semibold text-sm text-foreground min-w-[6rem]">
                       {item.value.toLocaleString("id-ID")} Satker
                     </span>
-                    <span className="min-w-[3.5rem] inline-flex items-center justify-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground border border-border/40">
+                    <span className="min-w-[3.5rem] inline-flex items-center justify-center rounded-md bg-muted px-2 py-1 font-mono text-[10px] font-medium text-muted-foreground border border-border/40">
                       {percentage.toFixed(1)}%
                     </span>
                   </div>

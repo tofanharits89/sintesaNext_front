@@ -107,22 +107,22 @@ export function ProgramCard({
             </div>
 
             {/* Right side: Info */}
-            <div className="flex-1 space-y-3 text-right">
+            <div className="flex-1 min-w-0 space-y-3 text-right">
               <div>
                 <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Pagu</p>
-                <p className="font-mono font-bold text-blue-600 text-base leading-tight">
+                <p className="font-mono font-bold text-blue-600 text-sm sm:text-base leading-tight break-words">
                   {formatCurrency(pagu)}
                 </p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Realisasi</p>
-                <p className="font-mono font-bold text-green-600 text-base leading-tight">
+                <p className="font-mono font-bold text-green-600 text-sm sm:text-base leading-tight break-words">
                   {formatCurrency(realisasi)}
                 </p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Blokir</p>
-                <p className="font-mono font-bold text-red-600 text-base leading-tight">
+                <p className="font-mono font-bold text-red-600 text-sm sm:text-base leading-tight break-words">
                   {formatCurrency(blokir)}
                 </p>
               </div>

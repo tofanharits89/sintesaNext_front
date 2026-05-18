@@ -9,16 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -29,11 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Settings,
-  User,
   Shield,
-  Palette,
-  Bell,
-  Globe,
   Lock,
   MessageCircle,
 } from "lucide-react";
@@ -41,21 +28,11 @@ import { WhatsAppSettingsTab } from "./whatsapp-settings-tab";
 
 export default function SettingsPage() {
   const { user, isLoading, refetch } = useAuth();
-  const u = user as { name?: string; email?: string; role?: string; location?: string } | undefined;
-  const [theme, setTheme] = useState("system");
-  const [language, setLanguage] = useState("id");
   const [allowMultiSession, setAllowMultiSession] = useState<boolean>(false);
   const [isUpdatingMultiSession, setIsUpdatingMultiSession] = useState(false);
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-    desktop: true,
-    sound: false,
-  });
 
-  // Track the user data to set state
   useEffect(() => {
-    if (user && 'allowMultiSession' in user) {
+    if (user && "allowMultiSession" in user) {
       setAllowMultiSession((user as any).allowMultiSession === true);
     }
   }, [user]);
@@ -66,23 +43,21 @@ export default function SettingsPage() {
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       await attachCSRFToken(headers);
-
       const res = await fetch("/api/v1/users/profile/me", {
         method: "PUT",
         headers,
-        body: JSON.stringify({ allowMultiSession: checked })
+        body: JSON.stringify({ allowMultiSession: checked }),
       });
       if (!res.ok) throw new Error("Gagal menyimpan pengaturan");
       toast.success("Pengaturan perangkat berhasil diperbarui.");
       refetch();
     } catch (err: any) {
-      setAllowMultiSession(!checked); // Revert on fail
+      setAllowMultiSession(!checked);
       toast.error(err.message || "Gagal memperbarui pengaturan");
     } finally {
       setIsUpdatingMultiSession(false);
     }
   };
-
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -114,178 +89,37 @@ export default function SettingsPage() {
               <SettingsContentSkeleton />
             ) : (
               <div className="grid gap-6">
-              {/* Theme Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" />
-                    Tema Aplikasi
-                  </CardTitle>
-                  <CardDescription>
-                    Pilih tema yang sesuai dengan preferensi Anda
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="theme-select">Tema</Label>
-                    <Select value={theme} onValueChange={setTheme}>
-                      <SelectTrigger id="theme-select">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Terang</SelectItem>
-                        <SelectItem value="dark">Gelap</SelectItem>
-                        <SelectItem value="system">Sistem</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Language Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" />
-                    Bahasa
-                  </CardTitle>
-                  <CardDescription>
-                    Pilih bahasa untuk antarmuka aplikasi
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="language-select">Bahasa</Label>
-                    <Select value={language} onValueChange={setLanguage}>
-                      <SelectTrigger id="language-select">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="id">Bahasa Indonesia</SelectItem>
-                        <SelectItem value="en">English</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Account Security Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    Keamanan Akun
-                  </CardTitle>
-                  <CardDescription>
-                    Atur preferensi keamanan akun Anda
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Multi-Device Login</Label>
-                      <p className="text-sm text-muted-foreground pr-4">
-                        Izinkan akun Anda login di beberapa perangkat secara bersamaan. Jika dinonaktifkan, login baru akan otomatis mengeluarkan akun dari perangkat lain.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={allowMultiSession}
-                      onCheckedChange={handleMultiSessionToggle}
-                      disabled={isUpdatingMultiSession}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Notification Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    Notifikasi
-                  </CardTitle>
-                  <CardDescription>
-                    Atur preferensi notifikasi Anda
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Lock className="h-5 w-5" />
+                      Keamanan Akun
+                    </CardTitle>
+                    <CardDescription>
+                      Atur preferensi keamanan akun Anda
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label>Notifikasi Email</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Terima notifikasi melalui email
+                        <Label>Multi-Device Login</Label>
+                        <p className="text-sm text-muted-foreground pr-4">
+                          Izinkan akun Anda login di beberapa perangkat secara bersamaan. Jika dinonaktifkan, login baru akan otomatis mengeluarkan akun dari perangkat lain.
                         </p>
                       </div>
                       <Switch
-                        checked={notifications.email}
-                        onCheckedChange={(checked) =>
-                          setNotifications((prev) => ({
-                            ...prev,
-                            email: checked,
-                          }))
-                        }
+                        checked={allowMultiSession}
+                        onCheckedChange={handleMultiSessionToggle}
+                        disabled={isUpdatingMultiSession}
                       />
                     </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Notifikasi Push</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Terima notifikasi push di browser
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notifications.push}
-                        onCheckedChange={(checked) =>
-                          setNotifications((prev) => ({ ...prev, push: checked }))
-                        }
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Notifikasi Desktop</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Tampilkan notifikasi desktop
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notifications.desktop}
-                        onCheckedChange={(checked) =>
-                          setNotifications((prev) => ({
-                            ...prev,
-                            desktop: checked,
-                          }))
-                        }
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Suara Notifikasi</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Putar suara saat ada notifikasi
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notifications.sound}
-                        onCheckedChange={(checked) =>
-                          setNotifications((prev) => ({
-                            ...prev,
-                            sound: checked,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </TabsContent>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
 
-        {/* WhatsApp Settings Tab */}
+          {/* WhatsApp Settings Tab */}
           <TabsContent value="whatsapp">
             {isLoading || !user ? <SettingsContentSkeleton /> : <WhatsAppSettingsTab />}
           </TabsContent>
@@ -296,52 +130,50 @@ export default function SettingsPage() {
               <SettingsContentSkeleton />
             ) : (
               <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Pengaturan Sistem
-                  </CardTitle>
-                  <CardDescription>
-                    Konfigurasi tingkat sistem (hanya untuk administrator)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Mode Maintenance</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Aktifkan mode maintenance untuk sistem
-                        </p>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Pengaturan Sistem
+                    </CardTitle>
+                    <CardDescription>
+                      Konfigurasi tingkat sistem (hanya untuk administrator)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Mode Maintenance</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Aktifkan mode maintenance untuk sistem
+                          </p>
+                        </div>
+                        <Switch />
                       </div>
-                      <Switch />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Debug Mode</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Aktifkan mode debug untuk troubleshooting
-                        </p>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Debug Mode</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Aktifkan mode debug untuk troubleshooting
+                          </p>
+                        </div>
+                        <Switch />
                       </div>
-                      <Switch />
+                      <Separator />
+                      <div className="space-y-2">
+                        <Label>Cache TTL (detik)</Label>
+                        <Input type="number" placeholder="3600" />
+                      </div>
                     </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label>Cache TTL (detik)</Label>
-                      <Input type="number" placeholder="3600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </TabsContent>
-      </TabsContents>
-    </Tabs>
-
-
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+        </TabsContents>
+      </Tabs>
     </div>
   );
 }
@@ -349,40 +181,20 @@ export default function SettingsPage() {
 function SettingsContentSkeleton() {
   return (
     <div className="mt-6 space-y-6 animate-in fade-in duration-500">
-      {/* Skeletons for the cards in the General tab */}
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div
-          key={i}
-          className="rounded-lg border p-6 space-y-4 shadow-sm bg-white dark:bg-neutral-900"
-        >
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-5 rounded-md" />
-              <Skeleton className="h-6 w-48" />
-            </div>
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-full" />
-        </div>
-      ))}
       <div className="rounded-lg border p-6 space-y-4 shadow-sm bg-white dark:bg-neutral-900">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Skeleton className="h-5 w-5 rounded-md" />
-            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-6 w-48" />
           </div>
-          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-4 w-64" />
         </div>
-        <div className="space-y-4">
-          {Array.from({ length: 4 }).map((_, j) => (
-            <div key={j} className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-48" />
-              </div>
-              <Skeleton className="h-6 w-10 rounded-full" />
-            </div>
-          ))}
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+          <Skeleton className="h-6 w-10 rounded-full" />
         </div>
       </div>
     </div>

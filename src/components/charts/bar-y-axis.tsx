@@ -10,6 +10,14 @@ export interface BarYAxisProps {
   showAllLabels?: boolean;
   /** Maximum number of labels to show. Default: 20 */
   maxLabels?: number;
+  /** Width reserved for the labels. Defaults to the chart left margin. */
+  width?: number;
+  /** Maximum text width inside the label area. Default: 70 */
+  labelMaxWidth?: number;
+  /** Additional class name for label text. */
+  labelClassName?: string;
+  /** Right padding (px) between labels and chart bars. Default: 8 */
+  labelPaddingRight?: number;
 }
 
 interface BarYAxisLabelProps {
@@ -17,6 +25,9 @@ interface BarYAxisLabelProps {
   y: number;
   bandHeight: number;
   isHovered: boolean;
+  labelMaxWidth: number;
+  labelClassName?: string | undefined;
+  labelPaddingRight: number;
 }
 
 function BarYAxisLabel({
@@ -24,13 +35,17 @@ function BarYAxisLabel({
   y,
   bandHeight,
   isHovered,
+  labelMaxWidth,
+  labelClassName,
+  labelPaddingRight,
 }: BarYAxisLabelProps) {
   return (
     <div
-      className="absolute right-0 flex items-center justify-end pr-2"
+      className="absolute right-0 flex items-center justify-end"
       style={{
         top: y,
         height: bandHeight,
+        paddingRight: labelPaddingRight,
       }}
     >
       <motion.span
@@ -40,12 +55,12 @@ function BarYAxisLabel({
             ? "var(--foreground)"
             : "var(--chart-label, var(--color-zinc-500))",
         }}
-        className={cn("truncate whitespace-nowrap text-right text-xs")}
+        className={cn("truncate whitespace-nowrap text-right text-xs", labelClassName)}
         initial={{
           opacity: 0.7,
           color: "var(--chart-label, var(--color-zinc-500))",
         }}
-        style={{ maxWidth: 70 }}
+        style={{ maxWidth: labelMaxWidth }}
         transition={{ duration: 0.15 }}
       >
         {label}
@@ -57,6 +72,10 @@ function BarYAxisLabel({
 export function BarYAxis({
   showAllLabels = true,
   maxLabels = 20,
+  width,
+  labelMaxWidth = 70,
+  labelClassName,
+  labelPaddingRight = 8,
 }: BarYAxisProps) {
   const {
     margin,
@@ -82,7 +101,7 @@ export function BarYAxis({
 
     const allLabels = data.map((d, i) => {
       const label = barXAccessor(d);
-      const bandY = barScale(label) ?? 0;
+      const bandY = barScale(String(i)) ?? 0;
       // Center the label vertically within the band
       const y = bandY + margin.top;
       return { label, y, bandHeight: bandWidth, index: i };
@@ -125,7 +144,7 @@ export function BarYAxis({
       className="pointer-events-none absolute top-0 bottom-0"
       style={{
         left: 0,
-        width: margin.left,
+        width: width ?? margin.left,
       }}
     >
       {labelsToShow.map((item) => (
@@ -134,6 +153,9 @@ export function BarYAxis({
           isHovered={hoveredBarIndex === item.index}
           key={`${item.label}-${item.y}`}
           label={item.label}
+          labelClassName={labelClassName}
+          labelMaxWidth={labelMaxWidth}
+          labelPaddingRight={labelPaddingRight}
           y={item.y}
         />
       ))}

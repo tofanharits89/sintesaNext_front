@@ -59,7 +59,7 @@ export default function EPASummaryPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">EPA Summary</h1>
         <p className="text-sm text-muted-foreground">
-          Ringkasan dan analisis pelaksanaan Electronic Payment Administration
+          Ringkasan dan analisis pelaksanaan Evaluasi Pelaksanaan Anggaran
           (EPA)
         </p>
       </div>

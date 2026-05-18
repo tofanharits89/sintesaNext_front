@@ -38,8 +38,8 @@ function shortProv(name: string): string {
     .trim();
 }
 
-const COLOR_2025 = "#93c5fd"; // blue-300
-const COLOR_2026 = "#3b82f6"; // blue-500
+const COLOR_2025 = "#cbd5e1"; // slate-300 (neutral)
+const COLOR_2026 = "#64748b"; // slate-500 (neutral)
 
 export function SebaranPenerimaChart() {
   const { data, isLoading } = useSebaranPenerima();

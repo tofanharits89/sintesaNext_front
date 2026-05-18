@@ -494,7 +494,7 @@ export default function MapApbd() {
               )}
               <div
                 ref={containerRef}
-                className="relative isolate z-0 w-full h-full"
+                className="relative isolate z-0 w-full h-[350px] lg:h-full"
                 style={{ background: "#b8b89a" }}
               />
             </Card>

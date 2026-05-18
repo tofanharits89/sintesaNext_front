@@ -91,20 +91,20 @@ export function useBelwilDataApi() {
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        const blob = await directBackendClient.post(
+        const resp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "csv" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "csv", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blob instanceof Blob ? blob : new Blob([blob]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob = resp instanceof Blob ? resp : new Blob([resp]);
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `belanja_kewilayahan_${reportParams.tahun}_${Date.now()}.csv`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("CSV download error:", error);
@@ -135,18 +135,36 @@ export function useBelwilDataApi() {
 
         const blobResp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "excel" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "excel", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob =
+          blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+
+        if (blob.size < 10000) {
+          try {
+            const text = await blob.text();
+            if (text && text.trim().startsWith("{")) {
+              const maybe = JSON.parse(text);
+              if (maybe && maybe.success === false) {
+                throw new Error(maybe.error || "Failed to get data for Excel");
+              }
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message.includes("Failed to get data")) {
+              throw e;
+            }
+          }
+        }
+
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `belanja_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
@@ -262,20 +280,20 @@ export function useBelwilTematikDataApi() {
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        const blob = await directBackendClient.post(
+        const resp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "csv" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "csv", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blob instanceof Blob ? blob : new Blob([blob]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob = resp instanceof Blob ? resp : new Blob([resp]);
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `belwil_tematik_${reportParams.tipeLaporan}_${reportParams.tahun}_${Date.now()}.csv`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("CSV download error:", error);
@@ -300,18 +318,36 @@ export function useBelwilTematikDataApi() {
 
         const blobResp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "excel" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "excel", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob =
+          blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+
+        if (blob.size < 10000) {
+          try {
+            const text = await blob.text();
+            if (text && text.trim().startsWith("{")) {
+              const maybe = JSON.parse(text);
+              if (maybe && maybe.success === false) {
+                throw new Error(maybe.error || "Failed to get data for Excel");
+              }
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message.includes("Failed to get data")) {
+              throw e;
+            }
+          }
+        }
+
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `belwil_tematik_${reportParams.tipeLaporan}_${reportParams.tahun}_${Date.now()}.xlsx`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
@@ -421,20 +457,20 @@ export function useBelwilSubsidiDataApi() {
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        const blob = await directBackendClient.post(
+        const resp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "csv" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "csv", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blob instanceof Blob ? blob : new Blob([blob]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob = resp instanceof Blob ? resp : new Blob([resp]);
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `subsidi_kewilayahan_${reportParams.tahun}_${Date.now()}.csv`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("CSV download error:", error);
@@ -459,18 +495,36 @@ export function useBelwilSubsidiDataApi() {
 
         const blobResp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "excel" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "excel", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob =
+          blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+
+        if (blob.size < 10000) {
+          try {
+            const text = await blob.text();
+            if (text && text.trim().startsWith("{")) {
+              const maybe = JSON.parse(text);
+              if (maybe && maybe.success === false) {
+                throw new Error(maybe.error || "Failed to get data for Excel");
+              }
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message.includes("Failed to get data")) {
+              throw e;
+            }
+          }
+        }
+
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `subsidi_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
@@ -580,20 +634,20 @@ export function useBelwilBansosDataApi() {
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        const blob = await directBackendClient.post(
+        const resp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "csv" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "csv", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blob instanceof Blob ? blob : new Blob([blob]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob = resp instanceof Blob ? resp : new Blob([resp]);
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `bansos_kewilayahan_${reportParams.tahun}_${Date.now()}.csv`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("CSV download error:", error);
@@ -618,18 +672,36 @@ export function useBelwilBansosDataApi() {
 
         const blobResp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "excel" },
-          { responseType: "blob" },
+          { encryptedQuery, format: "excel", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-        const url = window.URL.createObjectURL(blobObj);
+        const blob: Blob =
+          blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+
+        if (blob.size < 10000) {
+          try {
+            const text = await blob.text();
+            if (text && text.trim().startsWith("{")) {
+              const maybe = JSON.parse(text);
+              if (maybe && maybe.success === false) {
+                throw new Error(maybe.error || "Failed to get data for Excel");
+              }
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message.includes("Failed to get data")) {
+              throw e;
+            }
+          }
+        }
+
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `bansos_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`;
         document.body.appendChild(a);
         a.click();
-        a.remove();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);

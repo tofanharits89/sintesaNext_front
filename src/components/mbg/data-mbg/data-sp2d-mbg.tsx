@@ -967,27 +967,27 @@ export function DataSP2DMBG() {
     <div className="space-y-6">
       <Tabs defaultValue="realisasi" className="w-full gap-3">
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-3 gap-2 md:gap-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl flex flex-wrap gap-2 md:gap-0">
             <TabsTrigger
               value="realisasi"
-              className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+              className="flex-1 min-w-fit h-10 md:h-full px-3 md:px-5 py-2 text-xs md:text-base flex items-center justify-center gap-2"
             >
-              <CalendarRange className="h-4 w-4 md:h-5 md:w-5" />
-              Realisasi BGN COA
+              <CalendarRange className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+              <span>Realisasi BGN COA</span>
             </TabsTrigger>
             <TabsTrigger
               value="rekap"
-              className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+              className="flex-1 min-w-fit h-10 md:h-full px-3 md:px-5 py-2 text-xs md:text-base flex items-center justify-center gap-2"
             >
-              <MapPin className="h-4 w-4 md:h-5 md:w-5" />
-              Rekap Lokus MBG
+              <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+              <span>Rekap Lokus MBG</span>
             </TabsTrigger>
             <TabsTrigger
               value="spasial"
-              className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+              className="flex-1 min-w-fit h-10 md:h-full px-3 md:px-5 py-2 text-xs md:text-base flex items-center justify-center gap-2"
             >
-              <FileSpreadsheet className="h-4 w-4 md:h-5 md:w-5" />
-              Unduh Data MBG
+              <FileSpreadsheet className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+              <span>Unduh Data MBG</span>
             </TabsTrigger>
           </TabsList>
         </div>

@@ -76,6 +76,8 @@ interface DataTableProps<TData, TValue> {
   manualPagination?: boolean;
   // Total row count for manual pagination
   rowCount?: number;
+  // Hide the rows-per-page selector
+  hideRowsPerPage?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -95,6 +97,7 @@ export function DataTable<TData, TValue>({
   emptyMessage = "No results.",
   manualPagination = false,
   rowCount,
+  hideRowsPerPage = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -257,33 +260,35 @@ export function DataTable<TData, TValue>({
         <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4">
           {/* Left: Rows per page */}
           <div className="flex items-center space-x-2 order-2 md:order-1">
-            <p className="text-sm font-medium">Rows per page</p>
-            <Select
-              value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                const newSize = Number(value);
-                table.setPageSize(newSize);
-                // Force triggering onPaginationChange with the new value immediately 
-                // in case table.setPageSize internal update is batched
-                onPaginationChange?.({
-                  ...effectivePagination,
-                  pageSize: newSize,
-                });
-              }}
-            >
-              <SelectTrigger className="h-8 w-[80px]">
-                <SelectValue
-                  placeholder={table.getState().pagination.pageSize}
-                />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 25, 50, 100].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!hideRowsPerPage && (
+              <>
+                <p className="text-sm font-medium">Rows per page</p>
+                <Select
+                  value={`${table.getState().pagination.pageSize}`}
+                  onValueChange={(value) => {
+                    const newSize = Number(value);
+                    table.setPageSize(newSize);
+                    onPaginationChange?.({
+                      ...effectivePagination,
+                      pageSize: newSize,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[80px]">
+                    <SelectValue
+                      placeholder={table.getState().pagination.pageSize}
+                    />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 25, 50, 100].map((pageSize) => (
+                      <SelectItem key={pageSize} value={`${pageSize}`}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </div>
 
           {/* Center: Pagination */}

@@ -27,7 +27,7 @@ export function ChatHeader({ onReset, disabled }: ChatHeaderProps) {
                     <Sparkles className="h-4 w-4" />
                 </span>
                 <div className="flex flex-col">
-                    <CardTitle className="text-sm">Shinta</CardTitle>
+                    <CardTitle className="text-sm">Shinta <span className="text-xs font-normal text-muted-foreground">(Beta)</span></CardTitle>
                     <CardDescription className="text-xs">
                         SINTESA Hi-Quality Information Trusted Assistant
                     </CardDescription>
