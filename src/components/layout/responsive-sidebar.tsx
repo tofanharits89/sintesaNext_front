@@ -262,6 +262,9 @@ export function ResponsiveSidebar({
         // Only admins can see Data Supplier
         if (item.label === "Data Supplier" && !isAdmin) return false;
 
+        // Hide Transfer Daerah from kppn (still in development)
+        if (item.label === "Transfer Daerah" && user.role === "kppn") return false;
+
         // Only admins and ditpa can see IKI Dit.PA
         if (item.label === "IKI Dit.PA" && !isAdmin && user.role !== "ditpa")
           return false;

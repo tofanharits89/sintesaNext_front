@@ -426,7 +426,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Manajemen Akun</h1>
         <div className="flex gap-2">
           <Button
@@ -482,13 +482,13 @@ export default function UsersPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent showCloseButton={false} className="sm:max-w-[700px] w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-          <DialogHeader>
+        <DialogContent showCloseButton={false} className="sm:max-w-[700px] w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90svh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle>
               {form.id ? "Edit Pengguna" : "Tambah Pengguna"}
             </DialogTitle>
           </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-4 py-4 px-4">
               <FieldGroup>
                 <Field>
