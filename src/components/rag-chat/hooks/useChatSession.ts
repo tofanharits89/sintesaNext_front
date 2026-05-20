@@ -53,6 +53,8 @@ export function useChatSession(): UseChatSessionReturn {
     const [nearingLimit, setNearingLimit] = useState(false);
     const [agentName, setAgentName] = useState<string | null>(null);
     const currentAnswerRef = useRef<string>("");
+    const progressShownAtRef = useRef<number>(0);
+    const progressHiddenRef = useRef<boolean>(false);
 
     // Persist session to survive page refresh
     useEffect(() => {
@@ -74,6 +76,8 @@ export function useChatSession(): UseChatSessionReturn {
         setStreamProgress({ step: 0, action: "connecting" });
         setNearingLimit(false);
         currentAnswerRef.current = "";
+        progressShownAtRef.current = Date.now();
+        progressHiddenRef.current = false;
 
         const nextMessages: ChatMessage[] = [
             ...messages,
@@ -94,6 +98,7 @@ export function useChatSession(): UseChatSessionReturn {
                 {
                     onStepStart: (step, action) => {
                         setStreamProgress({ step, action });
+                        progressShownAtRef.current = Date.now();
                     },
                     onToolCall: (step, tool, query) => {
                         setStreamProgress({ step, action: "searching", tool, query });
@@ -103,14 +108,24 @@ export function useChatSession(): UseChatSessionReturn {
                     },
                     onAgentSelected: (name) => {
                         setAgentName(name);
+                        setStreamProgress({ step: 0, action: "thinking" });
+                        progressShownAtRef.current = Date.now();
                     },
                     onSources: (newSources) => {
                         setSources(newSources);
                     },
                     onContent: (content) => {
                         currentAnswerRef.current += content;
-                        // Hide progress indicator once content starts streaming
-                        setStreamProgress(null);
+                        // Hide progress after minimum display time (400ms) so user sees transitions
+                        if (!progressHiddenRef.current) {
+                            progressHiddenRef.current = true;
+                            const elapsed = Date.now() - progressShownAtRef.current;
+                            if (elapsed >= 400) {
+                                setStreamProgress(null);
+                            } else {
+                                setTimeout(() => setStreamProgress(null), 400 - elapsed);
+                            }
+                        }
                         // Call the callback with accumulated content
                         onContentCallback?.(currentAnswerRef.current, assistantIndex);
                     },
