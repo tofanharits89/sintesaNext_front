@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
                 "Cache-Control": "no-cache, no-transform",
                 "Connection": "keep-alive",
                 "X-Accel-Buffering": "no",
+                "Content-Encoding": "identity",
                 "Transfer-Encoding": "chunked",
             },
         });
