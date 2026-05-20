@@ -76,7 +76,18 @@ export function useDauTransaksi(params: {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  const rows: DauTransaksiRowUi[] = (data || []).map((r, idx) => {
+  const sortedData = [...(data || [])].sort((a, b) => {
+    const yearA = Number(a.thang ?? 0);
+    const yearB = Number(b.thang ?? 0);
+    if (yearB !== yearA) {
+      return yearB - yearA;
+    }
+    const monthA = Number(a.bulan ?? 0);
+    const monthB = Number(b.bulan ?? 0);
+    return monthB - monthA;
+  });
+
+  const rows: DauTransaksiRowUi[] = sortedData.map((r, idx) => {
     const kdpeemda = String(r.kdpemda ?? "").trim();
 
     // Better fallback for KPPN and PEMDA names

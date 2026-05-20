@@ -131,50 +131,55 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
 
   // When selecting dasar pemotongan, fetch pemotongan detail to derive kdsatker/kdlokasi for this Pemda
   const { rows: pemotonganRows } = useKmkPemotongan(formData.dasarPemotongan || undefined, !!formData.dasarPemotongan);
+  // Consolidated auto-fill effect for KDSatker and KdLokasi to prioritize KMK row values
   useEffect(() => {
-    if (!formData.dasarPemotongan) {
-      // Avoid fighting with kdakun-based auto-fill. Only clear when kdakun is also empty
-      if (!formData.kdakun && (formData.kdsatker !== "" || formData.kdlokasi !== "")) {
-        setFormData((p) => ({ ...p, kdsatker: "", kdlokasi: "" }));
-      }
-      return;
-    }
-    // Only derive from pemotonganRows when kdakun has not been selected
-    if (!formData.kdakun) {
-      const match = (pemotonganRows || []).find((r: any) => String(r.kdkabkota || "") === kdpemdaCode);
-      const nextKdsatker = match ? String(match.kdsatker || "") : "";
-      const nextKdlokasi = match ? String(match.kdlokasi || "") : "";
-      if (formData.kdsatker !== nextKdsatker || formData.kdlokasi !== nextKdlokasi) {
-        setFormData((p) => ({ ...p, kdsatker: nextKdsatker, kdlokasi: nextKdlokasi }));
-      }
-    }
-  }, [formData.dasarPemotongan, formData.kdakun, pemotonganRows, kdpemdaCode, formData.kdsatker, formData.kdlokasi]);
+    let nextKdsatker = "";
+    let nextKdlokasi = "";
 
-  // Auto-fill KDSatker & KdLokasi based on selected kdakun using fixed mapping rules
-  useEffect(() => {
-    const selectedAkun = formData.kdakun;
-    if (!selectedAkun) {
-      // When kdakun cleared, fallback to blank unless dasarPemotongan will set it
-      if (!formData.dasarPemotongan && (formData.kdsatker !== "" || formData.kdlokasi !== "")) {
-        setFormData((p) => ({ ...p, kdsatker: "", kdlokasi: "" }));
+    // 1. Try to get values from selected Dasar KMK Pemotongan (pemotonganRows) matching this Pemda
+    if (formData.dasarPemotongan) {
+      const match = (pemotonganRows || []).find((r: any) => String(r.kdkabkota || "") === kdpemdaCode);
+      if (match) {
+        nextKdsatker = String(match.kdsatker || "").trim();
+        nextKdlokasi = String(match.kdlokasi || "").trim();
       }
-      return;
     }
-    const groupA = new Set(["715211", "425713", "425762", "425823"]);
-    const groupB = new Set(["717121", "425719"]);
-    let nextKdsatker = "000000";
-    let nextKdlokasi = "0000";
-    if (groupA.has(String(selectedAkun))) {
-      nextKdsatker = "977386";
-      nextKdlokasi = "0100";
-    } else if (groupB.has(String(selectedAkun))) {
-      nextKdsatker = "999302";
-      nextKdlokasi = "0100";
+
+    // 2. If no valid values derived from KMK, fallback to Kode Akun mapping rules
+    const hasKmkValue = nextKdsatker && nextKdsatker !== "000000" && nextKdlokasi && nextKdlokasi !== "0000";
+    
+    if (!hasKmkValue && formData.kdakun) {
+      const selectedAkun = formData.kdakun;
+      const groupA = new Set(["715211", "425713", "425762", "425823"]);
+      const groupB = new Set(["717121", "425719"]);
+      
+      let fallbackSatker = "000000";
+      let fallbackLokasi = "0000";
+      
+      if (groupA.has(String(selectedAkun))) {
+        fallbackSatker = "977386";
+        fallbackLokasi = "0100";
+      } else if (groupB.has(String(selectedAkun))) {
+        fallbackSatker = "999302";
+        fallbackLokasi = "0100";
+      }
+      
+      nextKdsatker = fallbackSatker;
+      nextKdlokasi = fallbackLokasi;
     }
+
+    // 3. Update form state only if values actually changed to avoid infinite render loops
     if (formData.kdsatker !== nextKdsatker || formData.kdlokasi !== nextKdlokasi) {
       setFormData((p) => ({ ...p, kdsatker: nextKdsatker, kdlokasi: nextKdlokasi }));
     }
-  }, [formData.kdakun, formData.kdsatker, formData.kdlokasi, formData.dasarPemotongan]);
+  }, [
+    formData.dasarPemotongan,
+    formData.kdakun,
+    pemotonganRows,
+    kdpemdaCode,
+    formData.kdsatker,
+    formData.kdlokasi
+  ]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -203,11 +208,27 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
         (Number.isFinite(bulanNumber) && bulanNumber >= 1 && bulanNumber <= 12
           ? (months[bulanNumber - 1] ?? "")
           : "");
+
+      // Map single month value to jan, peb, mar... des fields based on bulanNumber
+      const monthsKeys = [
+        "jan", "peb", "mar", "apr", "mei", "jun",
+        "jul", "ags", "sep", "okt", "nov", "des"
+      ];
+      const monthlyFields: Record<string, number> = {};
+      monthsKeys.forEach((key, idx) => {
+        if (idx + 1 === bulanNumber) {
+          // Div by 1,000,000 because backend multiplies by 1,000,000
+          monthlyFields[key] = Number(formData.nilaiPotongan || 0) / 1000000;
+        } else {
+          monthlyFields[key] = 0;
+        }
+      });
+
       const payload = {
         kdkppn: kdkppnCodeOnly,
         bulan: bulanTwoDigit,
         thang: Number(tahun || 0),
-        kdkabkota: String(kdpemdaCode || "").trim(),
+        kdpemda: String(kdpemdaCode || "").trim(),
         jenis: String(formData.jenis || "").trim(),
         kriteria: String(formData.kriteria || "").trim(),
         no_kmk: String(formData.dasarPemotongan || "").trim(),
@@ -216,6 +237,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
         kdsatker: String(formData.kdsatker || "").trim(),
         kdlokasi: String(formData.kdlokasi || "").trim(),
         nmbulan: nmbulanComputed,
+        ...monthlyFields,
       };
 
       // Basic front-end validation
@@ -230,7 +252,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
       }
       const requiredFields = [
         { key: "kdkppn", val: payload.kdkppn },
-        { key: "kdkabkota", val: payload.kdkabkota },
+        { key: "kdpemda", val: payload.kdpemda },
         { key: "jenis", val: payload.jenis },
         { key: "kriteria", val: payload.kriteria },
         { key: "no_kmk", val: payload.no_kmk },
