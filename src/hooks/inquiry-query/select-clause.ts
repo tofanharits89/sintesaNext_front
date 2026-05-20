@@ -481,9 +481,11 @@ export function buildSelectClause(
     reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" &&
     reportParams.tipeLaporan !== "pergerakan_blokir_bulanan" &&
     reportParams.tipeLaporan !== "pergerakan_blokir_bulanan_per_jenis" &&
-    reportParams.tipeLaporan !== "revisi_dipa"
+    reportParams.tipeLaporan !== "revisi_dipa" &&
+    reportParams.tipeLaporan !== "deviasi_output" &&
+    reportParams.tipeLaporan !== "deviasi_pnbp"
   ) {
-    // Include PAGU_DIPA for tipe laporan 1, 2, 3, and 7 (exclude 4, 5, 6, revisi_dipa)
+    // Include PAGU_DIPA for tipe laporan 1, 2, 3, and 7 (exclude 4, 5, 6, revisi_dipa, deviasi)
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`);
   }
 
@@ -559,6 +561,42 @@ export function buildSelectClause(
       `TO_CHAR(main.TANGGAL, 'YYYY-MM-DD') AS TANGGAL_POSTING`,
     );
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
+  } else if (reportParams.tipeLaporan === "deviasi_output") {
+    // Deviasi Output: PAGU + RENCANA & REALISASI per bulan (s.d. cutOff)
+    // Table: monev{tahun}.rencana_real_harian_output_{tahun}_new
+    // Columns: pagu, renc1-12, real1-12
+    selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
+    for (let month = 1; month <= cutOffNum; month++) {
+      const monthName = MONTH_NAMES[month - 1];
+      selectColumns.push(
+        `ROUND(SUM(main.renc${month}) / ${divisor}, 0) AS RENCANA_${monthName}`,
+      );
+      selectColumns.push(
+        `ROUND(SUM(main.real${month}) / ${divisor}, 0) AS REALISASI_${monthName}`,
+      );
+    }
+    // Total aggregate across all months up to cutOff
+    const rencTotal = Array.from({ length: cutOffNum }, (_, i) => `main.renc${i + 1}`).join(" + ");
+    const realTotal = Array.from({ length: cutOffNum }, (_, i) => `main.real${i + 1}`).join(" + ");
+    selectColumns.push(`ROUND(SUM(${rencTotal}) / ${divisor}, 0) AS TOTAL_RENCANA`);
+    selectColumns.push(`ROUND(SUM(${realTotal}) / ${divisor}, 0) AS TOTAL_REALISASI`);
+  } else if (reportParams.tipeLaporan === "deviasi_pnbp") {
+    // Deviasi PNBP: PAGU + RENCANA & REALISASI per bulan
+    // Table: monev{tahun}.pnbp_rencana_{tahun}
+    selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
+    for (let month = 1; month <= cutOffNum; month++) {
+      const monthName = MONTH_NAMES[month - 1];
+      selectColumns.push(
+        `ROUND(SUM(main.renc${month}) / ${divisor}, 0) AS RENCANA_${monthName}`,
+      );
+      selectColumns.push(
+        `ROUND(SUM(main.real${month}) / ${divisor}, 0) AS REALISASI_${monthName}`,
+      );
+    }
+    const rencTotalPnbp = Array.from({ length: cutOffNum }, (_, i) => `main.renc${i + 1}`).join(" + ");
+    const realTotalPnbp = Array.from({ length: cutOffNum }, (_, i) => `main.real${i + 1}`).join(" + ");
+    selectColumns.push(`ROUND(SUM(${rencTotalPnbp}) / ${divisor}, 0) AS TOTAL_RENCANA`);
+    selectColumns.push(`ROUND(SUM(${realTotalPnbp}) / ${divisor}, 0) AS TOTAL_REALISASI`);
   } else {
     selectColumns.push(
       `ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`,

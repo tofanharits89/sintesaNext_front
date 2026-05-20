@@ -63,7 +63,8 @@ interface QueryManagementProps {
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa"; // Add scope for filtering queries
+    | "revisi_dipa"
+    | "deviasi"; // Add scope for filtering queries
   onRefreshReady?: (refreshFn: () => void) => void;
 }
 

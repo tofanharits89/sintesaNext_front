@@ -883,7 +883,8 @@ export const getAvailableFiltersForScope = (
     | "revisi_dipa"
     | "belwil"
     | "apbd"
-    | "sp2d" = "general",
+    | "sp2d"
+    | "deviasi" = "general",
   excludeFilters: string[] = [],
   options?: { tipeLaporan?: string },
 ): string[] => {
@@ -926,7 +927,8 @@ export const isFilterAvailableInScope = (
     | "kontrak"
     | "up_tup"
     | "penerimaan_pnbp"
-    | "sp2d" = "general",
+    | "sp2d"
+    | "deviasi" = "general",
 ): boolean => {
   const availableFilters = getAvailableFiltersForScope(scope);
   return availableFilters.includes(filterKey);
@@ -951,7 +953,8 @@ export const validateFiltersForScope = (
     | "sp2d"
     | "revisi_dipa"
     | "belwil"
-    | "apbd",
+    | "apbd"
+    | "deviasi",
 ): { isValid: boolean; incompatibleFilters: string[] } => {
   const availableFilters = getAvailableFiltersForScope(scope);
   const incompatibleFilters = activeFilters.filter(

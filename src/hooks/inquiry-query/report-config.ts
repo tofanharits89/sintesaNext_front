@@ -15,6 +15,10 @@ export const TABLE_MAPPING = {
   detil_penerimaan_pnbp: "pa_pnbp",
   spm_sp2d: "pa_realisasi",
   revisi_dipa: "dja_revisi_kanwil",
+  // Deviasi: table = monev{tahun}.rencana_real_harian_output_{tahun}_new
+  deviasi_output: "rencana_real_harian_output",
+  // Deviasi PNBP: table = monev{tahun}.pnbp_rencana_{tahun}
+  deviasi_pnbp: "pnbp_rencana",
 } as const;
 
 const REPORTS_EXCLUDE_PAGU_DIPA = new Set([
@@ -108,6 +112,19 @@ const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
   spm_sp2d: {
     includePaguDipa: false,
     addBlokirAfterReal: false,
+  },
+  // Deviasi Output Belanja Bulanan → monev{tahun}.rencana_real_harian_output_{tahun}_new
+  deviasi_output: {
+    includePaguDipa: false,
+    addBlokirAfterReal: false,
+    tableNameBuilder: (thang: string) =>
+      `monev${thang}.rencana_real_harian_output_${thang}_new`,
+  },
+  // Deviasi PNBP Bulanan → monev{tahun}.pnbp_rencana_{tahun}
+  deviasi_pnbp: {
+    includePaguDipa: false,
+    addBlokirAfterReal: false,
+    tableNameBuilder: (thang: string) => `monev${thang}.pnbp_rencana_${thang}`,
   },
 };
 

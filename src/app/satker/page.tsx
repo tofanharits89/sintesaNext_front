@@ -53,7 +53,7 @@ export default function SatkerPage() {
           <h1 className="text-3xl font-bold">Pencarian Satker</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Cari informasi satuan kerja berdasarkan kode satker atau nama satker. 
+          Cari informasi satuan kerja berdasarkan kode satker atau nama satker.
           Klik pada hasil pencarian untuk melihat profil lengkap satker.
         </p>
       </div>
@@ -93,6 +93,7 @@ export default function SatkerPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={handleKeyPress}
+                  autoComplete="off"
                   className="pl-9"
                 />
               </div>
@@ -150,25 +151,25 @@ export default function SatkerPage() {
       )}
 
       {/* No Results */}
-      {searchTerm.length >= 2 && 
-       apiResults.length === 0 && !apiLoading && !apiError &&
-       currentUser && currentUser.role !== "lainnya" && (
-        <Card className="max-w-2xl mx-auto">
-          <CardContent className="text-center py-8">
-            <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Tidak Ada Hasil</h3>
-            <p className="text-muted-foreground">
-              Tidak ditemukan satker yang sesuai dengan pencarian "{searchTerm}" dalam area akses Anda.
-              {currentUser.role === "kanwil_djpb" 
-                ? ` Pencarian terbatas pada Kanwil ${currentUser.kdkanwil}.`
-                : currentUser.role === "kppn"
-                ? ` Pencarian terbatas pada KPPN ${currentUser.kdkppn}.`
-                : " Coba gunakan kata kunci yang berbeda."
-              }
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {searchTerm.length >= 2 &&
+        apiResults.length === 0 && !apiLoading && !apiError &&
+        currentUser && currentUser.role !== "lainnya" && (
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="text-center py-8">
+              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Tidak Ada Hasil</h3>
+              <p className="text-muted-foreground">
+                Tidak ditemukan satker yang sesuai dengan pencarian "{searchTerm}" dalam area akses Anda.
+                {currentUser.role === "kanwil_djpb"
+                  ? ` Pencarian terbatas pada Kanwil ${currentUser.kdkanwil}.`
+                  : currentUser.role === "kppn"
+                    ? ` Pencarian terbatas pada KPPN ${currentUser.kdkppn}.`
+                    : " Coba gunakan kata kunci yang berbeda."
+                }
+              </p>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }

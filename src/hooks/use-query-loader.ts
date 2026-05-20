@@ -35,7 +35,8 @@ export interface UseQueryLoaderProps {
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa"; // Add scope for compatibility validation
+    | "revisi_dipa"
+    | "deviasi"; // Add scope for compatibility validation
 }
 
 /**

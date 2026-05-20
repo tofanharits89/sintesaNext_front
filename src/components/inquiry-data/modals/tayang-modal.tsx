@@ -54,7 +54,7 @@ interface TayangModalProps {
     tematikKategori?: string;
   };
   filterValues?: Record<string, FilterValue>;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" | "revisi_dipa";
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" | "revisi_dipa" | "deviasi";
 }
 
 export function TayangModal({

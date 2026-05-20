@@ -34,7 +34,8 @@ export interface SavedQuery {
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa";
+    | "revisi_dipa"
+    | "deviasi";
   createdAt: string;
   updatedAt: string;
 }
@@ -55,7 +56,8 @@ export interface CreateSavedQueryRequest {
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa";
+    | "revisi_dipa"
+    | "deviasi";
 }
 
 export interface UpdateSavedQueryRequest {
@@ -93,5 +95,6 @@ export interface GetSavedQueriesParams {
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa";
+    | "revisi_dipa"
+    | "deviasi";
 }

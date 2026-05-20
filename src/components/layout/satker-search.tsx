@@ -128,7 +128,10 @@ export function SatkerSearch() {
                                 key={satker.kdsatker}
                                 className={`px-4 py-3 cursor-pointer border-b last:border-b-0 hover:bg-muted ${index === selectedIndex ? "bg-muted" : ""
                                     }`}
-                                onClick={() => handleSelect(satker)}
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleSelect(satker);
+                                }}
                                 onMouseEnter={() => setSelectedIndex(index)}
                             >
                                 <div className="flex flex-col">

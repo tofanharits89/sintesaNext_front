@@ -21,7 +21,8 @@ interface FilterParametersCardProps {
     | "sp2d"
     | "revisi_dipa"
     | "belwil"
-    | "apbd"; // Optional scope for context-aware visibility
+    | "apbd"
+    | "deviasi"; // Optional scope for context-aware visibility
   tipeLaporan?: string; // Pass current report type to gate tematik mandatory filters on Belanja
 }
 
