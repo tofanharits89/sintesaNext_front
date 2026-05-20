@@ -22,7 +22,7 @@ export const ChartsSection = ({ data }: ChartsSectionProps) => {
   return (
     <>
       {/* Second Row: 3 Cards with Bar Charts */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 [&>*]:min-w-0">
         <Suspense fallback={<MultipleBarChartSkeleton height={250} />}>
           <RealizationChart
             data={data.realisasiJenisBelanjaData.data}
@@ -50,7 +50,7 @@ export const ChartsSection = ({ data }: ChartsSectionProps) => {
       </div>
 
       {/* Third Row: 2 Cards with Line Charts */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 [&>*]:min-w-0">
         <Suspense fallback={<LineChartSkeleton height={280} />}>
           <TrenChart
             data={data.trenRealisasiBulananData.data}

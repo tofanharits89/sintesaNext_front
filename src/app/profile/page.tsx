@@ -294,13 +294,13 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">Profil Akun</h1>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={onReset}>
+          <Button variant="secondary" onClick={onReset} className="flex-1 sm:flex-none">
             Reset
           </Button>
-          <Button onClick={onSave}>
+          <Button onClick={onSave} className="flex-1 sm:flex-none">
             <Save className="mr-2 h-4 w-4" />
             Simpan
           </Button>
@@ -642,11 +642,11 @@ export default function ProfilePage() {
 function ProfileSkeleton() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <Skeleton className="h-8 w-40" />
         <div className="flex gap-2">
-          <Skeleton className="h-10 w-20" />
-          <Skeleton className="h-10 w-28" />
+          <Skeleton className="h-10 flex-1 sm:w-20 sm:flex-none" />
+          <Skeleton className="h-10 flex-1 sm:w-28 sm:flex-none" />
         </div>
       </div>
 

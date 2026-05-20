@@ -106,7 +106,7 @@ const AppShell = memo(function AppShell({
       <Navbar />
       <ResponsiveSidebar />
       <div className="flex-1">
-        <main className="mx-4 sm:mx-6 lg:mx-8 pt-24 pb-6 md:pt-24 md:pb-8 lg:pt-14 lg:pb-10">
+        <main className="mx-4 sm:mx-6 lg:mx-8 pt-6 pb-6 md:pt-8 md:pb-8 lg:pt-10 lg:pb-10">
           {children}
         </main>
       </div>

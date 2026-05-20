@@ -427,16 +427,17 @@ export default function UsersPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Manajemen Akun</h1>
+        <h1 className="text-xl font-semibold">Manajemen Akun</h1>
         <div className="flex gap-2">
           <Button
             variant="destructive"
             onClick={handleBulkDeleteClick}
             disabled={!selected.size}
+            className="flex-1 sm:flex-none"
           >
             Hapus Terpilih ({selected.size})
           </Button>
-          <Button onClick={openCreate}>Tambah Pengguna</Button>
+          <Button onClick={openCreate} className="flex-1 sm:flex-none">Tambah Pengguna</Button>
         </div>
       </div>
 
