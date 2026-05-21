@@ -338,7 +338,7 @@ export function Navbar() {
               <Button
                 asChild
                 variant="ghost"
-                className="relative flex items-center gap-2 h-9 px-2 bg-zinc-100 dark:bg-black text-muted-foreground hover:text-foreground rounded-lg"
+                className="hidden md:flex relative items-center gap-2 h-9 px-2 bg-zinc-100 dark:bg-black text-muted-foreground hover:text-foreground rounded-lg"
                 aria-label="Track Nadine"
               >
                 <Link

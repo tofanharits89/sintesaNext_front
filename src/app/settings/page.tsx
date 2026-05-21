@@ -61,7 +61,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 min-h-9">
         <h1 className="text-xl font-semibold">Pengaturan</h1>
       </div>
 

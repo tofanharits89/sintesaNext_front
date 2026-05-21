@@ -69,9 +69,9 @@ export function useDauRekapBulanan(params: {
     queryKey: ["dau-rekap-bulanan", params.kdpemda, params.bulan, params.thang],
     queryFn: () => fetcher(key!),
     enabled: !!key,
-    refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    staleTime: 0, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 10 minutes
   });
 
   const rows: DauRekapBulananRow[] = Array.isArray(data)

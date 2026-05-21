@@ -30,9 +30,18 @@ export interface DauTransaksiRowUi {
 }
 
 const fetcher = async (url: string) => {
-  const headers: HeadersInit = { "Content-Type": "application/json" };
+  const headers: HeadersInit = { 
+    "Content-Type": "application/json",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache"
+  };
 
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, { 
+    credentials: "include", 
+    headers, 
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store"
+  });
   const text = await resp.text();
 
   if (!resp.ok) {
@@ -71,12 +80,23 @@ export function useDauTransaksi(params: {
   const { data, error, isLoading, refetch } = useQuery<RawDauTransaksiRow[]>({
     queryKey: ["dau-transaksi", params],
     queryFn: () => fetcher(key),
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    gcTime: 0,
   });
 
-  const rows: DauTransaksiRowUi[] = (data || []).map((r, idx) => {
+  const sortedData = [...(data || [])].sort((a, b) => {
+    const yearA = Number(a.thang ?? 0);
+    const yearB = Number(b.thang ?? 0);
+    if (yearB !== yearA) {
+      return yearB - yearA;
+    }
+    const monthA = Number(a.bulan ?? 0);
+    const monthB = Number(b.bulan ?? 0);
+    return monthB - monthA;
+  });
+
+  const rows: DauTransaksiRowUi[] = sortedData.map((r, idx) => {
     const kdpeemda = String(r.kdpemda ?? "").trim();
 
     // Better fallback for KPPN and PEMDA names

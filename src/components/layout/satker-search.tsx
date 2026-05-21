@@ -14,7 +14,7 @@ interface SatkerItem {
     kdkanwil: string;
 }
 
-export function SatkerSearch() {
+export function SatkerSearch({ className, inputClassName, placeholder }: { className?: string; inputClassName?: string; placeholder?: string }) {
     const [searchValue, setSearchValue] = useState("");
     const [showResults, setShowResults] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -97,13 +97,13 @@ export function SatkerSearch() {
     };
 
     return (
-        <div className="flex-1 max-w-xl mx-auto hidden sm:flex relative">
+        <div className={className ?? "flex-1 max-w-xl mx-auto hidden lg:flex relative"}>
             <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                     ref={inputRef}
-                    className="pl-9"
-                    placeholder="Cari Satker (kode atau nama)..."
+                    className={`pl-9 ${inputClassName || ""}`}
+                    placeholder={placeholder || "Cari Satker (kode atau nama)..."}
                     value={searchValue}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}

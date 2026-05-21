@@ -18,7 +18,8 @@ import { RekamDataTransaksiModal } from "./modals/rekam-data-transaksi-modal";
 import { KertasKerjaModal } from "./modals/kertas-kerja-modal";
 import tkdData from "@/data/kdkppn_tkd.json";
 import { useDauTransaksi } from "@/hooks/use-dau-transaksi";
-import { FilePenLine, FileText, Loader2, ReceiptText } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { FilePenLine, FileText, ReceiptText } from "lucide-react";
 
 interface DataTransaksiTabProps {
   // Remove selectedYear prop as this tab will manage its own year state
@@ -26,14 +27,28 @@ interface DataTransaksiTabProps {
   kdkppn?: string;
 }
 
-// Live data now fetched via useDauTransaksi
+const MONTHS = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
 
 export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
   const now = new Date();
   const defaultYear = String(now.getFullYear());
+  const defaultMonth = MONTHS[now.getMonth()];
 
   const [selectedYear, setSelectedYear] = useState(defaultYear);
-  const [selectedMonth, setSelectedMonth] = useState(""); // Default to empty (all months)
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth); // Default to current month
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
   const fallbackStageRef = useRef<"none" | "clearedMonth" | "switchedYear">("none");
@@ -93,25 +108,12 @@ export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
     (currentYear - i).toString()
   );
 
-  const months = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ];
+  const months = MONTHS;
 
   const handleReset = () => {
     fallbackStageRef.current = "none";
     setSelectedYear(defaultYear);
-    setSelectedMonth(""); // Reset to empty (all months)
+    setSelectedMonth(defaultMonth); // Reset to default (current month)
     setSelectedKppn(kdkppn || "");
     setSelectedKabKota("");
   };
@@ -255,7 +257,7 @@ export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
   } as const;
 
   
-  const { rows: rawRows, isLoading, error } = useDauTransaksi(params as any);
+  const { rows: rawRows, isLoading, error, mutate } = useDauTransaksi(params as any);
 
   // Client-side filter fallback: If kdkanwil is provided, ensure we only show rows belonging to that kanwil's KPPNs.
   // This handles cases where the backend might not strictly filter by kdkanwil when kppn is empty.
@@ -379,16 +381,13 @@ export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              <span>Memuat data...</span>
-            </div>
-          )}
           {error ? (
-            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive mb-3">
               {String(error.message || error)}
             </div>
+          ) : null}
+          {isLoading ? (
+            <TableSkeleton rows={10} />
           ) : (
             <DataTable columns={columns} data={rows} />
           )}
@@ -400,6 +399,7 @@ export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
         open={isRekamDataModalOpen}
         onOpenChange={setIsRekamDataModalOpen}
         data={selectedItem}
+        onSaveSuccess={mutate}
       />
       <KertasKerjaModal
         open={isKertasKerjaModalOpen}

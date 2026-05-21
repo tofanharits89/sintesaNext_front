@@ -55,7 +55,14 @@ interface RekonsiliasiDataTabProps {
 // ---------------------------------------------------------------------------
 
 async function fetcher<T>(url: string): Promise<T> {
-  const resp = await fetch(url, { credentials: "include" });
+  const resp = await fetch(url, { 
+    credentials: "include",
+    cache: "no-store",
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache"
+    }
+  });
   if (!resp.ok) {
     const text = await resp.text();
     let msg = `HTTP ${resp.status}`;
@@ -200,8 +207,9 @@ export function RekonsiliasiDataTab({ onHeaderActionChange, kdkanwil, kdkppn }: 
   const { data: rawRekonData, isLoading, error } = useQuery<RekonRow[]>({
     queryKey: ["rekon-omspan", selectedYear, selectedMonth, selectedKppn, selectedKabKota, selectedStatus, kdkanwil, kdkppn],
     queryFn: () => fetcher<RekonRow[]>(rekapUrl),
-    staleTime: 3 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // Client-side filter fallback for Kanwil users

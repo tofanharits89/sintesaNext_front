@@ -52,6 +52,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { trackMenuUsage } from "@/hooks/use-menu-usage";
 import { useAuth } from "@/hooks/useAuth";
+import { SatkerSearch } from "./satker-search";
 
 import {
   DropdownMenu,
@@ -262,6 +263,9 @@ export function ResponsiveSidebar({
       .filter((item) => {
         // Only admins can see Data Supplier
         if (item.label === "Data Supplier" && !isAdmin) return false;
+
+        // Hide Transfer Daerah from kppn (still in development)
+        if (item.label === "Transfer Daerah" && user.role === "kppn") return false;
 
         // Only admins and ditpa can see IKI Dit.PA
         if (item.label === "IKI Dit.PA" && !isAdmin && user.role !== "ditpa")
@@ -1089,16 +1093,23 @@ export function ResponsiveSidebar({
       </nav>
 
       {/* Normal sidebar below lg */}
-      <div className="lg:hidden">
+      <div className="contents lg:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
-          <div className="border bg-white dark:bg-card shadow-sm fixed top-22 left-4 right-4 sm:left-6 sm:right-6 z-30 rounded-xl">
+          <div className="border bg-white dark:bg-card shadow-sm sticky top-22 z-30 mx-4 sm:mx-6 mt-2 rounded-xl">
             <div className="h-12 flex items-center px-4">
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="shrink-0">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <span className="ml-2 text-sm text-muted-foreground">Menu</span>
+              <span className="ml-2 text-sm text-muted-foreground shrink-0">Menu</span>
+              <div className="ml-auto w-40">
+                <SatkerSearch 
+                  className="w-full flex relative" 
+                  inputClassName="h-9 text-xs placeholder:text-xs" 
+                  placeholder="Cari Satker"
+                />
+              </div>
             </div>
           </div>
           <SheetContent

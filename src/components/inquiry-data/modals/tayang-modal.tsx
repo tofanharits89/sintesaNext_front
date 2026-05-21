@@ -167,6 +167,7 @@ export function TayangModal({
       "PAGU_KONTRAK", "REALISASI_KONTRAK", "BLOKIR", "NILAI_SP2D",
       "JAN", "FEB", "MAR", "APR", "MEI", "JUN",
       "JUL", "AGS", "SEP", "OKT", "NOV", "DES", "JMLPNRK",
+      "RUPIAH",
     ];
     return summableColumns.includes(column.toUpperCase());
   };
@@ -241,6 +242,7 @@ export function TayangModal({
       lower.includes("anggaran") ||
       lower === "jmlpnrk" ||
       lower === "nilai_sp2d" ||
+      lower === "rupiah" ||
       rMonthly.includes(lower) ||
       baseMonthly.includes(lower)
     );
@@ -652,69 +654,131 @@ export function TayangModal({
 
         {/* Pagination + footer */}
         {lastResult && lastResult.success && lastResult.data && (
-          <div className="shrink-0 flex flex-col md:grid md:grid-cols-3 items-center gap-3">
-            {/* Left: Rows per page */}
-            <div className="flex items-center gap-2 order-2 md:order-1">
-              <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
-              <Select
-                value={pageSize.toString()}
-                onValueChange={(value) => {
-                  setPageSize(Number(value));
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[10, 25, 50, 100].map((size) => (
-                    <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <>
+            {/* Desktop / Tablet view (md and up) */}
+            <div className="hidden md:grid md:grid-cols-3 items-center gap-3 shrink-0">
+              {/* Left: Rows per page */}
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 25, 50, 100].map((size) => (
+                      <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Center: Pagination */}
+              <div className="flex items-center justify-center w-full">
+                <Pagination className="mx-auto justify-center">
+                  <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                    <PaginationPrevious
+                      onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
+                      className={cn(
+                        "cursor-pointer select-none",
+                        currentPage === 1 && "pointer-events-none opacity-50"
+                      )}
+                    />
+                    <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
+                      {renderPaginationItems()}
+                    </PaginationContent>
+                    <PaginationNext
+                      onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(totalPages, currentPage + 1)); }}
+                      className={cn(
+                        "cursor-pointer select-none",
+                        currentPage === totalPages && "pointer-events-none opacity-50"
+                      )}
+                    />
+                  </div>
+                </Pagination>
+              </div>
+
+              {/* Right: Entry count + close */}
+              <div className="flex items-center justify-end gap-3 w-full md:w-auto">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {displayStart}-{displayEnd} dari {totalAvailable} baris
+                </span>
+                <Button variant="destructive" onClick={handleCloseModal} className="w-20">
+                  Tutup
+                </Button>
+              </div>
             </div>
 
-            {/* Center: Pagination */}
-            <div className="flex items-center justify-center order-1 md:order-2 w-full">
-              <Pagination className="mx-auto justify-center">
-                <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
-                  <PaginationPrevious
-                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      currentPage === 1 && "pointer-events-none opacity-50"
-                    )}
-                  />
-                  <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
-                    {renderPaginationItems()}
-                  </PaginationContent>
-                  <PaginationNext
-                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(totalPages, currentPage + 1)); }}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      currentPage === totalPages && "pointer-events-none opacity-50"
-                    )}
-                  />
+            {/* Mobile view (sm and below) */}
+            <div className="flex md:hidden flex-col items-center gap-3 shrink-0 w-full">
+              {/* Pagination */}
+              <div className="flex items-center justify-center w-full">
+                <Pagination className="mx-auto justify-center">
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <PaginationPrevious
+                      onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
+                      className={cn(
+                        "cursor-pointer select-none",
+                        currentPage === 1 && "pointer-events-none opacity-50"
+                      )}
+                    />
+                    <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
+                      {renderPaginationItems()}
+                    </PaginationContent>
+                    <PaginationNext
+                      onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(totalPages, currentPage + 1)); }}
+                      className={cn(
+                        "cursor-pointer select-none",
+                        currentPage === totalPages && "pointer-events-none opacity-50"
+                      )}
+                    />
+                  </div>
+                </Pagination>
+              </div>
+
+              {/* Selector and Entry count on the same row */}
+              <div className="flex flex-row items-center justify-between w-full gap-2 px-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium whitespace-nowrap text-muted-foreground">Baris:</p>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(Number(value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-7 w-[60px] text-xs px-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 25, 50, 100].map((size) => (
+                        <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </Pagination>
-            </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {displayStart}-{displayEnd} dari {totalAvailable} baris
+                </span>
+              </div>
 
-            {/* Right: Entry count + close */}
-            <div className="flex items-center justify-end gap-3 order-3 w-full md:w-auto">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {displayStart}-{displayEnd} dari {totalAvailable} baris
-              </span>
-              <Button variant="destructive" onClick={handleCloseModal} className="w-20">
+              {/* Close button full width */}
+              <Button variant="destructive" onClick={handleCloseModal} className="w-full h-9">
                 Tutup
               </Button>
             </div>
-          </div>
+          </>
         )}
 
         {/* Close button when no data yet */}
         {!(lastResult && lastResult.success && lastResult.data) && (
-          <DialogFooter className="shrink-0">
-            <Button variant="destructive" onClick={handleCloseModal} className="w-24">
+          <DialogFooter className="shrink-0 flex-shrink-0 pt-4 border-t border-border/50">
+            <Button variant="destructive" onClick={handleCloseModal} className="w-full sm:w-24">
               Tutup
             </Button>
           </DialogFooter>

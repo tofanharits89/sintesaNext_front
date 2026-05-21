@@ -36,9 +36,9 @@ export function useDauPenundaanCabutByPemda(params: { kdpemda?: string; thang?: 
     queryKey: ["dau-penundaan-cabut-by-pemda", params.kdpemda, params.thang],
     queryFn: () => fetcher(url!),
     enabled: !!url,
-    refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    staleTime: 0, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 10 minutes
   });
 
   const rows: DauPenundaanCabutRow[] = Array.isArray(data) ? data : (data ? [data] : []);

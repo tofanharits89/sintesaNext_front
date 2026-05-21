@@ -595,7 +595,7 @@ export function APBDTayangModal({
           <Button
             variant="destructive"
             onClick={handleCloseModal}
-            className="w-24"
+            className="w-full sm:w-24"
           >
             Tutup
           </Button>

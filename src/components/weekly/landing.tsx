@@ -331,13 +331,13 @@ export default function WeeklyLanding() {
 
       {/* Tabs sections */}
       <Tabs defaultValue="belanja-negara" className="w-full gap-3">
-        <div className="border-b border-border/50 pb-3 mb-0 overflow-x-auto">
-          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl flex items-center justify-start sm:justify-center gap-2 min-w-max">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-auto md:min-h-14 p-2 rounded-xl flex flex-wrap items-center justify-center gap-2">
             {tabItems.map((item) => (
               <TabsTrigger
                 key={item.id}
                 value={item.id}
-                className="h-10 md:h-full px-3 md:px-4 py-0 text-xs sm:text-sm flex items-center justify-center whitespace-nowrap gap-2 flex-shrink-0"
+                className="h-10 md:h-full px-3 md:px-4 py-0 text-xs sm:text-sm flex items-center justify-center whitespace-nowrap gap-2"
               >
                 {item.icon}
                 <span className="font-medium">{item.title}</span>
@@ -370,7 +370,7 @@ export default function WeeklyLanding() {
                           date={dateRange}
                           onDateChange={setDateRange}
                           disabledDates={{ dayOfWeek: [0, 6] }}
-                          className="w-72"
+                          className="w-full sm:w-72"
                         />
                       </div>
 
@@ -410,7 +410,7 @@ export default function WeeklyLanding() {
                           date={dateRangeAkun}
                           onDateChange={setDateRangeAkun}
                           disabledDates={{ dayOfWeek: [0, 6] }}
-                          className="w-72"
+                          className="w-full sm:w-72"
                         />
                       </div>
 
@@ -450,7 +450,7 @@ export default function WeeklyLanding() {
                           date={dateRangeFungsi}
                           onDateChange={setDateRangeFungsi}
                           disabledDates={{ dayOfWeek: [0, 6] }}
-                          className="w-72"
+                          className="w-full sm:w-72"
                         />
                       </div>
 
@@ -490,7 +490,7 @@ export default function WeeklyLanding() {
                           date={dateRangeKl}
                           onDateChange={setDateRangeKl}
                           disabledDates={{ dayOfWeek: [0, 6] }}
-                          className="w-72"
+                          className="w-full sm:w-72"
                         />
                       </div>
 
@@ -530,7 +530,7 @@ export default function WeeklyLanding() {
                           date={dateRangeTkd}
                           onDateChange={setDateRangeTkd}
                           disabledDates={{ dayOfWeek: [0, 6] }}
-                          className="w-72"
+                          className="w-full sm:w-72"
                         />
                       </div>
 
@@ -570,7 +570,7 @@ export default function WeeklyLanding() {
                           date={dateRangeMbg}
                           onDateChange={setDateRangeMbg}
                           disabledDates={{ dayOfWeek: [0, 6] }}
-                          className="w-72"
+                          className="w-full sm:w-72"
                         />
                       </div>
 
@@ -609,7 +609,7 @@ export default function WeeklyLanding() {
                         <DateRangePicker
                           date={dateRangeSpasial}
                           onDateChange={setDateRangeSpasial}
-                          className="w-72"
+                          className="w-full sm:w-72"
                         />
                       </div>
 

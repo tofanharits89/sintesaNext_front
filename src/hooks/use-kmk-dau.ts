@@ -41,7 +41,11 @@ export interface KmkRow {
 const fetcher = async (url: string) => {
   const resp = await fetch(url, {
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache"
+    },
     signal: AbortSignal.timeout(20000),
     cache: "no-store",
   });
@@ -78,7 +82,7 @@ export function useKmkDau(year?: string | number, kdkanwil?: string, kdkppn?: st
     },
     refetchOnWindowFocus: false,
     staleTime: 0, // Always consider data stale for immediate refetch after mutations
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 0, // No cache
   });
 
   const rows: KmkRow[] = useMemo(() => {
