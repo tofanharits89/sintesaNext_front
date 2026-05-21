@@ -9,6 +9,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +73,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
     kdsatker: "",
     kdlokasi: "",
     dasarPenundaan: "", // no_kmk (jenis 3) — selected penundaan KMK
+    bulanCabut: 0,      // locked to selectedPencabutan.bulancabut
   });
 
   const [saving, setSaving] = useState(false);
@@ -216,6 +226,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
       kdsatker: "",
       kdlokasi: "",
       dasarPenundaan: "",
+      bulanCabut: 0,
     });
   };
 
@@ -236,6 +247,8 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
       if (formData.jenis === "3") {
         if (!formData.dasarPenundaan) throw new Error("Pilih Dasar KMK Penundaan");
         if (!selectedPencabutan) throw new Error("Data penundaan tidak ditemukan");
+        const bulanCabutVal = formData.bulanCabut || Number(selectedPencabutan.bulancabut || 0);
+        if (!bulanCabutVal) throw new Error("Bulan cabut tidak valid");
 
         const payload: Record<string, any> = {
           kdkppn:    kdkppnCodeOnly,
@@ -245,11 +258,10 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
           kriteria:  String(formData.kriteria || "").trim(),
           no_kmk:    selectedPencabutan.no_kmk,
           kmk_cabut: selectedPencabutan.no_kmkcabut ?? "",
-          bulancabut: selectedPencabutan.bulancabut ?? 0,
+          bulancabut: bulanCabutVal,
           bulan:     bulanTwoDigit,
           nmbulan:   nmbulanComputed,
         };
-        // Attach the 12 monthly values from the selected penundaan item
         for (const m of monthKeys) {
           payload[m] = Number((selectedPencabutan as any)[m] || 0);
         }
@@ -356,6 +368,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
         <DialogHeader className="p-6 pb-2">
@@ -503,13 +516,20 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
 
           {formData.jenis === "2" || formData.jenis === "3" ? (
             <div className="grid gap-4">
-              {/* Dasar KMK Penundaan */}
+              {/* Dasar KMK Penundaan dropdown */}
               <div className="space-y-1.5">
                 <Label>Dasar KMK Penundaan</Label>
                 <SearchableSelect
                   options={pencabutanOptions}
                   value={formData.dasarPenundaan}
-                  onValueChange={(value) => setFormData((p) => ({ ...p, dasarPenundaan: value }))}
+                  onValueChange={(value) => {
+                    const item = pencabutanItems.find((p) => p.no_kmk === value) ?? null;
+                    setFormData((p) => ({
+                      ...p,
+                      dasarPenundaan: value,
+                      bulanCabut: Number(item?.bulancabut || 0),
+                    }));
+                  }}
                   placeholder={
                     pencabutanLoading
                       ? "Memuat..."
@@ -521,44 +541,107 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
                 />
               </div>
 
-              {/* Read-only monthly values auto-filled from selected penundaan */}
-              {selectedPencabutan && (
-                <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground">
-                      Bulan Cabut: {selectedPencabutan.bulancabut ?? "-"} &nbsp;|&nbsp;
-                      No KMK Cabut: {selectedPencabutan.no_kmkcabut ?? "-"} &nbsp;|&nbsp;
-                      Tgl Cabut: {selectedPencabutan.tglcabut
-                        ? new Date(selectedPencabutan.tglcabut).toLocaleDateString("id-ID")
-                        : "-"}
-                    </Label>
-                  </div>
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                    {monthKeys.map((m, idx) => (
-                      <div key={m} className="space-y-0.5">
-                        <Label className="text-xs text-muted-foreground">{monthLabels[idx]}</Label>
-                        <Input
-                          value={Number((selectedPencabutan as any)[m] || 0).toLocaleString("id-ID")}
-                          disabled
-                          className="text-right text-xs h-7 px-2"
-                        />
+              {selectedPencabutan && (() => {
+                const fmtNum = (v: number) =>
+                  v === 0 ? "0" : v.toLocaleString("id-ID");
+                // Non-zero months for the "Cabut Penundaan" section
+                const nonZeroMonths = monthKeys
+                  .map((m, idx) => ({ m, idx, val: Number((selectedPencabutan as any)[m] || 0) }))
+                  .filter((x) => x.val !== 0);
+
+                return (
+                  <>
+                    {/* Full 12-month read-only grid */}
+                    <div className="grid grid-cols-4 gap-3">
+                      {monthKeys.map((m, idx) => (
+                        <div key={m} className="space-y-1.5">
+                          <Label className="text-sm text-muted-foreground">
+                            {["Januari","Februari","Maret","April","Mei","Juni",
+                              "Juli","Agustus","September","Oktober","November","Desember"][idx]}
+                          </Label>
+                          <Input
+                            value={fmtNum(Number((selectedPencabutan as any)[m] || 0))}
+                            disabled
+                            className="text-right font-mono"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Cabut Penundaan section — non-zero months + Dicairkan bulan */}
+                    {nonZeroMonths.length > 0 && (
+                      <div className="grid gap-3">
+                        <Label className="font-semibold text-sm">Cabut Penundaan</Label>
+                        <div className="flex flex-wrap gap-4 items-end">
+                          {nonZeroMonths.map(({ m, idx, val }) => (
+                            <div key={m} className="space-y-1.5 flex-1 min-w-[160px]">
+                              <Label className="text-sm text-muted-foreground">{monthLabels[idx]}</Label>
+                              <Input
+                                value={fmtNum(val)}
+                                disabled
+                                className="text-right font-mono"
+                              />
+                            </div>
+                          ))}
+
+                          {/* Dicairkan bulan — locked to bulancabut */}
+                          <div className="space-y-1.5 flex-1 min-w-[160px]">
+                            <Label className="text-sm text-muted-foreground">Dicairkan bulan</Label>
+                            <Select
+                              value={String(formData.bulanCabut || selectedPencabutan.bulancabut || "")}
+                              onValueChange={() => {/* locked */}}
+                              disabled
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {months.map((nm, idx) => (
+                                  <SelectItem key={idx + 1} value={String(idx + 1)}>
+                                    {nm}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    )}
+                  </>
+                );
+              })()}
             </div>
           ) : null}
         </div>
 
-        {errorMsg ? (
-          <div className="text-sm text-red-600">{errorMsg}</div>
-        ) : null}
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={handleClose} disabled={saving}>Tutup</Button>
           <Button onClick={handleSubmit} disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Error alert dialog */}
+    <AlertDialog open={!!errorMsg} onOpenChange={(open) => { if (!open) setErrorMsg(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            Gagal Menyimpan
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-left text-sm text-foreground">
+            {errorMsg}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={() => setErrorMsg(null)}>
+            OK
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
