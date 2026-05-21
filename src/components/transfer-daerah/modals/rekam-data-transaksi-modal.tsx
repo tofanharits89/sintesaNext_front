@@ -144,14 +144,14 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
   }, [dasarPenundaanOptionsRaw]);
 
   // ── Jenis 3: Pencabutan Penundaan dropdown ──────────────────────────────────
-  const kdkppnCode = useMemo(() => (kppnText || "").split(" - ")[0].trim(), [kppnText]);
+  const kdkppnCode = useMemo(() => (kppnText || "").split(" - ")[0]?.trim() ?? "", [kppnText]);
 
   const { items: pencabutanItems, options: pencabutanOptions, isLoading: pencabutanLoading } =
     usePencabutanPenundaanOptions({
       kdkppn: kdkppnCode,
       kdpemda: kdpemdaCode,
-      kriteria: formData.kriteria || undefined,
-      thang: tahun || undefined,
+      ...(formData.kriteria ? { kriteria: formData.kriteria } : {}),
+      ...(tahun ? { thang: tahun } : {}),
       enabled: formData.jenis === "3" && !!kdkppnCode && !!kdpemdaCode,
     });
 
@@ -408,6 +408,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
                     kdsatker: "",
                     kdlokasi: "",
                     dasarPenundaan: "",
+                    bulanCabut: 0,
                   });
                 }}
               >
