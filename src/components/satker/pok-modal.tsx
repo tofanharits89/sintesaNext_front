@@ -18,6 +18,7 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch POK HTML Content
   useEffect(() => {
@@ -41,7 +42,22 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
         }
         const text = await response.text();
         if (isMounted) {
-          setHtmlContent(text);
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(text, "text/html");
+          const sectionContent = doc.querySelector("section.content");
+          if (sectionContent) {
+            // Remove scripts to avoid execution and noise
+            sectionContent.querySelectorAll("script").forEach((el) => el.remove());
+            setHtmlContent(sectionContent.outerHTML);
+          } else {
+            // Fallback: look for pvtTable or tableFixHead
+            const tableFixHead = doc.querySelector(".tableFixHead") || doc.querySelector("table#pvtTable");
+            if (tableFixHead) {
+              setHtmlContent(tableFixHead.outerHTML);
+            } else {
+              setHtmlContent(text);
+            }
+          }
         }
       } catch (err: any) {
         if (isMounted) {
@@ -56,7 +72,7 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
     return () => {
       isMounted = false;
     };
-  }, [isOpen, pokUrl]);
+  }, [isOpen, pokUrl, refreshTrigger]);
 
   // Nested Tree Table Accordion Interactivity Handler
   useEffect(() => {
@@ -298,16 +314,7 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
                 size="sm"
                 onClick={() => {
                   setError(null);
-                  setHtmlContent("");
-                  if (pokUrl) {
-                    setLoading(true);
-                    fetch(apiPath(`/satker/satudja-proxy?url=${encodeURIComponent(pokUrl)}`), {
-                      credentials: "include",
-                    })
-                      .then((r) => r.text())
-                      .then((t) => { setHtmlContent(t); setLoading(false); })
-                      .catch((e) => { setError(e.message); setLoading(false); });
-                  }
+                  setRefreshTrigger((prev) => prev + 1);
                 }}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -319,7 +326,13 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
           {!loading && !error && htmlContent && (
             <>
               {/* Premium styling for POK table */}
-              <style dangerouslySetInnerHTML={{ __html: `
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                section.content, .content {
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  background: transparent !important;
+                }
                 .tableFixHead {
                   overflow: auto;
                   max-height: 78vh;
