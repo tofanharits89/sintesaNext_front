@@ -114,10 +114,11 @@ export default function LogUserPage() {
     if (lastActivity) {
       const elapsed = Date.now() - lastActivity;
       if (elapsed >= AFK_THRESHOLD_MS) {
-        const afkMins = Math.floor(elapsed / 60_000);
+        const afkDuration = elapsed - AFK_THRESHOLD_MS;
+        const afkMins = Math.floor(afkDuration / 60_000);
         const afkLabel = afkMins >= 60
           ? `${Math.floor(afkMins / 60)}j ${afkMins % 60}m`
-          : `${afkMins}m`;
+          : `${afkMins < 1 ? "<1" : afkMins}m`;
         return {
           label: "AFK",
           sublabel: afkLabel,
