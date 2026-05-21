@@ -30,9 +30,18 @@ export interface DauTransaksiRowUi {
 }
 
 const fetcher = async (url: string) => {
-  const headers: HeadersInit = { "Content-Type": "application/json" };
+  const headers: HeadersInit = { 
+    "Content-Type": "application/json",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache"
+  };
 
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, { 
+    credentials: "include", 
+    headers, 
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store"
+  });
   const text = await resp.text();
 
   if (!resp.ok) {
@@ -72,8 +81,8 @@ export function useDauTransaksi(params: {
     queryKey: ["dau-transaksi", params],
     queryFn: () => fetcher(key),
     refetchOnWindowFocus: true,
-    staleTime: 0, // 5 minutes - financial data
-    gcTime: 5 * 60 * 1000, // 10 minutes
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const sortedData = [...(data || [])].sort((a, b) => {
