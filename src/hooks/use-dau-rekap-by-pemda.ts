@@ -44,9 +44,9 @@ export function useDauRekapByPemda(params: { kdpemda?: string; thang?: string | 
     queryKey: ["dau-rekap-by-pemda", params.kdpemda, params.thang],
     queryFn: () => fetcher(url!),
     enabled: !!url,
-    refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes - financial data changes more frequently
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    staleTime: 0, // 2 minutes - financial data changes more frequently
+    gcTime: 5 * 60 * 1000, // 10 minutes
   });
 
   const rows: DauRekapByPemdaRow[] = Array.isArray(data) ? data : (data ? [data] : []);

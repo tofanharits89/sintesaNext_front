@@ -71,9 +71,9 @@ export function useDauTransaksi(params: {
   const { data, error, isLoading, refetch } = useQuery<RawDauTransaksiRow[]>({
     queryKey: ["dau-transaksi", params],
     queryFn: () => fetcher(key),
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    staleTime: 0, // 5 minutes - financial data
+    gcTime: 5 * 60 * 1000, // 10 minutes
   });
 
   const sortedData = [...(data || [])].sort((a, b) => {

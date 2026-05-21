@@ -257,7 +257,7 @@ export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
   } as const;
 
   
-  const { rows: rawRows, isLoading, error } = useDauTransaksi(params as any);
+  const { rows: rawRows, isLoading, error, mutate } = useDauTransaksi(params as any);
 
   // Client-side filter fallback: If kdkanwil is provided, ensure we only show rows belonging to that kanwil's KPPNs.
   // This handles cases where the backend might not strictly filter by kdkanwil when kppn is empty.
@@ -399,6 +399,7 @@ export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
         open={isRekamDataModalOpen}
         onOpenChange={setIsRekamDataModalOpen}
         data={selectedItem}
+        onSaveSuccess={mutate}
       />
       <KertasKerjaModal
         open={isKertasKerjaModalOpen}

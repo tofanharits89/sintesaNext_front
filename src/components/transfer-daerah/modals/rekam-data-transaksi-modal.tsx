@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -34,9 +35,10 @@ interface RekamDataTransaksiModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data: any; // expects row from useDauTransaksi()
+  onSaveSuccess?: () => void;
 }
 
-export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataTransaksiModalProps) {
+export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSuccess }: RekamDataTransaksiModalProps) {
   const months = [
     "Januari",
     "Februari",
@@ -65,6 +67,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
 
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // Preload disabled header values
   const tahun = data?.tahun ? String(data.tahun) : "";
@@ -138,7 +141,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
 
     // 1. Try to get values from selected Dasar KMK Pemotongan (pemotonganRows) matching this Pemda
     if (formData.dasarPemotongan) {
-      const match = (pemotonganRows || []).find((r: any) => String(r.kdkabkota || "") === kdpemdaCode);
+      const match = (pemotonganRows || []).find((r: any) => String(r.kdkabkota || "").trim() === String(kdpemdaCode || "").trim());
       if (match) {
         nextKdsatker = String(match.kdsatker || "").trim();
         nextKdlokasi = String(match.kdlokasi || "").trim();
@@ -149,7 +152,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
     const hasKmkValue = nextKdsatker && nextKdsatker !== "000000" && nextKdlokasi && nextKdlokasi !== "0000";
     
     if (!hasKmkValue && formData.kdakun) {
-      const selectedAkun = formData.kdakun;
+      const selectedAkun = String(formData.kdakun).trim();
       const groupA = new Set(["715211", "425713", "425762", "425823"]);
       const groupB = new Set(["717121", "425719"]);
       
@@ -284,6 +287,9 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
 
       onOpenChange(false);
       handleClose();
+      // Invalidate so the table refetches immediately with fresh data
+      queryClient.invalidateQueries({ queryKey: ["dau-transaksi"] });
+      onSaveSuccess?.();
     } catch (e: any) {
       setErrorMsg(e?.message || "Gagal menyimpan");
     } finally {
@@ -339,7 +345,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
                 </SelectTrigger>
                 <SelectContent>
                   {(jenisOptions || [])
-                    .filter((j) => j.value !== "2" && j.value !== "3")
+                    .filter((j) => j.value !== "2")
                     .map((j) => (
                       <SelectItem key={j.value} value={j.value} title={j.label}>
                         <span className="truncate">{j.label}</span>
