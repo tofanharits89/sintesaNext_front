@@ -27,6 +27,7 @@ import { useJenisKmkOptions } from "@/hooks/use-jenis-kmk-options";
 import { useKriteriaOptions } from "@/hooks/use-kriteria-options";
 import { useDasarPemotonganOptions } from "@/hooks/use-dasar-pemotongan-options";
 import { useKodeAkunOptions } from "@/hooks/use-kode-akun-options";
+import { usePencabutanPenundaanOptions } from "@/hooks/use-pencabutan-penundaan-options";
 import { backendPath } from "@/lib/config/config";
 import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
@@ -62,7 +63,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
     nilaiPotongan: "",
     kdsatker: "",
     kdlokasi: "",
-    dasarPenundaan: "", // no_kmk (jenis 2/3)
+    dasarPenundaan: "", // no_kmk (jenis 3) — selected penundaan KMK
   });
 
   const [saving, setSaving] = useState(false);
@@ -132,7 +133,27 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
     });
   }, [dasarPenundaanOptionsRaw]);
 
-  // When selecting dasar pemotongan, fetch pemotongan detail to derive kdsatker/kdlokasi for this Pemda
+  // ── Jenis 3: Pencabutan Penundaan dropdown ──────────────────────────────────
+  const kdkppnCode = useMemo(() => (kppnText || "").split(" - ")[0].trim(), [kppnText]);
+
+  const { items: pencabutanItems, options: pencabutanOptions, isLoading: pencabutanLoading } =
+    usePencabutanPenundaanOptions({
+      kdkppn: kdkppnCode,
+      kdpemda: kdpemdaCode,
+      kriteria: formData.kriteria || undefined,
+      thang: tahun || undefined,
+      enabled: formData.jenis === "3" && !!kdkppnCode && !!kdpemdaCode,
+    });
+
+  const selectedPencabutan = useMemo(
+    () => pencabutanItems.find((p) => p.no_kmk === formData.dasarPenundaan) ?? null,
+    [pencabutanItems, formData.dasarPenundaan]
+  );
+
+  const monthLabels = ["Jan","Peb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"] as const;
+  const monthKeys   = ["jan","peb","mar","apr","mei","jun","jul","ags","sep","okt","nov","des"] as const;
+  // ────────────────────────────────────────────────────────────────────────────
+
   const { rows: pemotonganRows } = useKmkPemotongan(formData.dasarPemotongan || undefined, !!formData.dasarPemotongan);
   // Consolidated auto-fill effect for KDSatker and KdLokasi to prioritize KMK row values
   useEffect(() => {
@@ -202,7 +223,6 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
     setErrorMsg(null);
     setSaving(true);
     try {
-      // Map modal state to backend payload
       const [kppnFirstPart] = (kppnText || "").split(" - ");
       const kdkppnCodeOnly = (kppnFirstPart ?? "").trim();
       const bulanTwoDigit = Number.isFinite(bulanNumber) ? String(bulanNumber).padStart(2, "0") : "";
@@ -212,6 +232,47 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
           ? (months[bulanNumber - 1] ?? "")
           : "");
 
+      // ── Jenis 3 payload ──────────────────────────────────────────────────────
+      if (formData.jenis === "3") {
+        if (!formData.dasarPenundaan) throw new Error("Pilih Dasar KMK Penundaan");
+        if (!selectedPencabutan) throw new Error("Data penundaan tidak ditemukan");
+
+        const payload: Record<string, any> = {
+          kdkppn:    kdkppnCodeOnly,
+          kdpemda:   String(kdpemdaCode || "").trim(),
+          thang:     Number(tahun || 0),
+          jenis:     "3",
+          kriteria:  String(formData.kriteria || "").trim(),
+          no_kmk:    selectedPencabutan.no_kmk,
+          kmk_cabut: selectedPencabutan.no_kmkcabut ?? "",
+          bulancabut: selectedPencabutan.bulancabut ?? 0,
+          bulan:     bulanTwoDigit,
+          nmbulan:   nmbulanComputed,
+        };
+        // Attach the 12 monthly values from the selected penundaan item
+        for (const m of monthKeys) {
+          payload[m] = Number((selectedPencabutan as any)[m] || 0);
+        }
+
+        const headers: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
+        const resp = await fetch(backendPath(`/transfer-daerah/dau/transaksi`), {
+          method: "POST", headers, credentials: "include",
+          body: JSON.stringify(payload),
+        });
+        const text = await resp.text();
+        if (!resp.ok) {
+          let msg = `Gagal menyimpan (HTTP ${resp.status})`;
+          try { const j = JSON.parse(text); msg = j?.message || j?.error || msg; } catch {}
+          throw new Error(msg);
+        }
+        onOpenChange(false);
+        handleClose();
+        queryClient.invalidateQueries({ queryKey: ["dau-transaksi"] });
+        onSaveSuccess?.();
+        return;
+      }
+      // ── END Jenis 3 ──────────────────────────────────────────────────────────
+
       // Map single month value to jan, peb, mar... des fields based on bulanNumber
       const monthsKeys = [
         "jan", "peb", "mar", "apr", "mei", "jun",
@@ -220,7 +281,6 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
       const monthlyFields: Record<string, number> = {};
       monthsKeys.forEach((key, idx) => {
         if (idx + 1 === bulanNumber) {
-          // Div by 1,000,000 because backend multiplies by 1,000,000
           monthlyFields[key] = Number(formData.nilaiPotongan || 0) / 1000000;
         } else {
           monthlyFields[key] = 0;
@@ -243,7 +303,6 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
         ...monthlyFields,
       };
 
-      // Basic front-end validation
       if (!Number.isFinite(bulanNumber) || bulanNumber < 1 || bulanNumber > 12) {
         throw new Error("Data belum lengkap: bulan");
       }
@@ -287,7 +346,6 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
 
       onOpenChange(false);
       handleClose();
-      // Invalidate so the table refetches immediately with fresh data
       queryClient.invalidateQueries({ queryKey: ["dau-transaksi"] });
       onSaveSuccess?.();
     } catch (e: any) {
@@ -449,12 +507,46 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
               <div className="space-y-1.5">
                 <Label>Dasar KMK Penundaan</Label>
                 <SearchableSelect
-                  options={dasarPenundaanOptions}
+                  options={pencabutanOptions}
                   value={formData.dasarPenundaan}
                   onValueChange={(value) => setFormData((p) => ({ ...p, dasarPenundaan: value }))}
-                  placeholder="Pilih dasar KMK penundaan"
+                  placeholder={
+                    pencabutanLoading
+                      ? "Memuat..."
+                      : pencabutanOptions.length === 0
+                      ? "Tidak ada data penundaan untuk KPPN/Pemda ini"
+                      : "Pilih dasar KMK penundaan"
+                  }
+                  disabled={pencabutanLoading}
                 />
               </div>
+
+              {/* Read-only monthly values auto-filled from selected penundaan */}
+              {selectedPencabutan && (
+                <div className="grid gap-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Bulan Cabut: {selectedPencabutan.bulancabut ?? "-"} &nbsp;|&nbsp;
+                      No KMK Cabut: {selectedPencabutan.no_kmkcabut ?? "-"} &nbsp;|&nbsp;
+                      Tgl Cabut: {selectedPencabutan.tglcabut
+                        ? new Date(selectedPencabutan.tglcabut).toLocaleDateString("id-ID")
+                        : "-"}
+                    </Label>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {monthKeys.map((m, idx) => (
+                      <div key={m} className="space-y-0.5">
+                        <Label className="text-xs text-muted-foreground">{monthLabels[idx]}</Label>
+                        <Input
+                          value={Number((selectedPencabutan as any)[m] || 0).toLocaleString("id-ID")}
+                          disabled
+                          className="text-right text-xs h-7 px-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
         </div>
