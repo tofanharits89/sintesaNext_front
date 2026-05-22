@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 type ReactPdfModule = typeof import("react-pdf");
 
@@ -18,19 +20,40 @@ interface DipaModalProps {
   onClose: () => void;
   dipaUrl: string | null;
   title?: string;
+  tahun?: string;
 }
 
-export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: DipaModalProps) {
+export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan", tahun = "2026" }: DipaModalProps) {
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.1);
+  const [scale, setScale] = useState(1.0);
   const [pdfMod, setPdfMod] = useState<ReactPdfModule | null>(null);
   const [pdfFile, setPdfFile] = useState<{ data: Uint8Array } | null>(null);
   const pdfBufferRef = useRef<ArrayBuffer | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Math.max(320, Math.min(800, window.innerWidth - 48));
+    }
+    return 800;
+  });
+  const [availableHeight, setAvailableHeight] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Math.max(200, Math.floor(window.innerHeight * 0.9 - 180));
+    }
+    return 600;
+  });
+  const [isPageRendered, setIsPageRendered] = useState(false);
+
+  const expectedPdfHeight = availableHeight
+    ? Math.floor(availableHeight * scale)
+    : undefined;
+
+  const expectedPdfWidth = expectedPdfHeight
+    ? Math.floor(expectedPdfHeight * 1.414)
+    : undefined;
 
   const pdfOptions = useMemo(() => ({}), []);
 
@@ -40,8 +63,16 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
       setPageNumber(1);
       setNumPages(0);
       setError("");
+      setIsPageRendered(false);
     }
   }, [isOpen, dipaUrl]);
+
+  // Reset rendering state on page or zoom change for clean rendering fade
+  useEffect(() => {
+    if (isOpen) {
+      setIsPageRendered(false);
+    }
+  }, [pageNumber, scale]);
 
   // Fetch PDF binary via POST (IDM only intercepts GET requests)
   useEffect(() => {
@@ -64,7 +95,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ url: dipaUrl }),
+      body: JSON.stringify({ url: dipaUrl, tahun }),
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -84,7 +115,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [isOpen, dipaUrl]);
+  }, [isOpen, dipaUrl, tahun]);
 
   // Lazy load react-pdf
   useEffect(() => {
@@ -102,12 +133,17 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
     return () => { cancelled = true; };
   }, [isOpen]);
 
-  // Track container width
+  // Track container width and height
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setContainerWidth(Math.max(320, Math.floor(entry.contentRect.width - 24)));
+        setContainerWidth(
+          Math.max(320, Math.min(800, Math.floor(entry.contentRect.width - 24)))
+        );
+        setAvailableHeight(
+          Math.max(200, Math.floor(entry.contentRect.height - 24))
+        );
       }
     });
     observer.observe(containerRef.current);
@@ -131,7 +167,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+        className="max-w-7xl sm:max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
         aria-describedby={undefined}
       >
         <DialogHeader className="p-6 pb-2">
@@ -140,40 +176,127 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
 
         <div
           ref={containerRef}
-          className="flex min-h-0 flex-1 flex-col items-center justify-start overflow-auto bg-muted/30 p-3"
+          className="flex-1 min-h-0 flex flex-col items-center justify-start overflow-auto bg-muted/30 p-3 w-full"
         >
-          {loading && (
-            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-muted-foreground">
-              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm">Memuat PDF...</p>
-            </div>
-          )}
+          {/* CSS Grid Wrapper: keeps the layout size perfectly stable for both skeleton and PDF */}
+          <div className="relative w-full max-w-7xl grid grid-cols-1 grid-rows-1 justify-items-center items-start my-2">
+            {/* Skeleton Overlay: fades out only when both fetching is complete and the first page has successfully rendered */}
+            <AnimatePresence>
+              {(loading || !isPageRendered) && !error && (
+                <motion.div
+                  key="skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.35, ease: "easeInOut" }}
+                  className="col-start-1 row-start-1 w-full bg-card border border-border rounded-xl shadow-lg p-5 sm:p-6 space-y-4 animate-pulse min-h-[350px] flex flex-col justify-start z-10"
+                  style={
+                    expectedPdfWidth && expectedPdfHeight
+                      ? { width: Math.floor(expectedPdfWidth * 0.9), height: Math.floor(expectedPdfHeight * 0.9) }
+                      : {}
+                  }
+                >
+                  {/* Document Header mockup */}
+                  <div className="flex flex-col items-center space-y-3 pb-6 border-b border-border/80">
+                    <div className="h-7 bg-muted-foreground/20 rounded w-1/3" />
+                    <div className="h-4 bg-muted-foreground/15 rounded w-1/4" />
+                    <div className="h-4 bg-muted-foreground/15 rounded w-1/5" />
+                  </div>
 
-          {!loading && error && (
-            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-red-600 text-center px-6">
-              <AlertCircle className="h-8 w-8" />
-              <p className="text-sm font-medium">{error}</p>
-            </div>
-          )}
+                  {/* Document Sub-header metadata grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                    <div className="space-y-3">
+                      <div className="h-4 bg-muted-foreground/15 rounded w-2/3" />
+                      <div className="h-4 bg-muted-foreground/15 rounded w-3/4" />
+                      <div className="h-4 bg-muted-foreground/15 rounded w-1/2" />
+                    </div>
+                    <div className="space-y-3 sm:text-right sm:items-end flex flex-col">
+                      <div className="h-4 bg-muted-foreground/15 rounded w-2/3" />
+                      <div className="h-4 bg-muted-foreground/15 rounded w-1/2" />
+                      <div className="h-4 bg-muted-foreground/15 rounded w-1/3" />
+                    </div>
+                  </div>
 
-          {!loading && !error && pdfMod && pdfFile && (
-            <pdfMod.Document
-              file={pdfFile}
-              options={pdfOptions}
-              onLoadSuccess={({ numPages: n }) => { setNumPages(n); setError(""); }}
-              onLoadError={(err: any) => setError(err?.message || "Gagal merender PDF")}
-              loading={<div className="p-4">Memuat PDF...</div>}
-              error={<div className="p-4 text-sm text-red-600">Gagal merender PDF</div>}
-            >
-              <pdfMod.Page
-                pageNumber={pageNumber}
-                {...(containerWidth ? { width: containerWidth } : {})}
-                scale={scale}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
-            </pdfMod.Document>
-          )}
+                  {/* Divider lines */}
+                  <div className="border-t-2 border-dashed border-border/80 my-4" />
+
+                  {/* Paragraph sections */}
+                  <div className="space-y-5 flex-1">
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted-foreground/15 rounded w-full" />
+                      <div className="h-3 bg-muted-foreground/15 rounded w-[96%]" />
+                      <div className="h-3 bg-muted-foreground/15 rounded w-[98%]" />
+                      <div className="h-3 bg-muted-foreground/15 rounded w-[92%]" />
+                      <div className="h-3 bg-muted-foreground/15 rounded w-[60%]" />
+                    </div>
+
+                    <div className="space-y-2 pt-4">
+                      <div className="h-3 bg-muted-foreground/15 rounded w-full" />
+                      <div className="h-3 bg-muted-foreground/15 rounded w-[94%]" />
+                      <div className="h-3 bg-muted-foreground/15 rounded w-[90%]" />
+                      <div className="h-3 bg-muted-foreground/15 rounded w-[45%]" />
+                    </div>
+
+                    {/* Simulated content block/table */}
+                    <div className="border border-border/60 rounded-lg p-4 space-y-3 bg-muted/5 mt-6">
+                      <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                        <div className="h-3 bg-muted-foreground/15 rounded w-1/4" />
+                        <div className="h-3 bg-muted-foreground/15 rounded w-1/6" />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="h-3 bg-muted-foreground/15 rounded w-1/3" />
+                        <div className="h-3 bg-muted-foreground/15 rounded w-[10%]" />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="h-3 bg-muted-foreground/15 rounded w-1/2" />
+                        <div className="h-3 bg-muted-foreground/15 rounded w-[8%]" />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error Message */}
+            {!loading && error && (
+              <div className="col-start-1 row-start-1 flex flex-col items-center justify-center flex-1 gap-3 text-red-600 text-center px-6 py-12 z-20">
+                <AlertCircle className="h-8 w-8" />
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            {/* Loaded PDF block: renders silently in background, then transitions smoothly once rendering finishes */}
+            {!loading && !error && pdfMod && pdfFile && (
+              <div
+                className={cn(
+                  "col-start-1 row-start-1 w-full flex justify-center transition-opacity duration-700 ease-out",
+                  isPageRendered ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+              >
+                <pdfMod.Document
+                  file={pdfFile}
+                  options={pdfOptions}
+                  onLoadSuccess={({ numPages: n }) => { setNumPages(n); setError(""); }}
+                  onLoadError={(err: any) => setError(err?.message || "Gagal merender PDF")}
+                  loading={null}
+                  error={<div className="p-4 text-sm text-red-600">Gagal merender PDF</div>}
+                >
+                  <pdfMod.Page
+                    pageNumber={pageNumber}
+                    {...(availableHeight ? { height: availableHeight } : {})}
+                    scale={scale}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                    onRenderSuccess={() => {
+                      setTimeout(() => {
+                        setIsPageRendered(true);
+                      }, 800);
+                    }}
+                  />
+                </pdfMod.Document>
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter className="p-6 pt-4 sm:justify-between">

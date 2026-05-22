@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const targetUrl = body?.url;
+    const tahun = body?.tahun || "2026";
 
     if (!targetUrl) {
       return NextResponse.json({ error: "Missing url" }, { status: 400 });
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     // Forward to backend satudja-proxy with cookies
     const cookieHeader = request.headers.get("cookie") || "";
-    const backendUrl = `${BACKEND_URL}/satker/satudja-proxy?url=${encodeURIComponent(targetUrl)}&inline=true`;
+    const backendUrl = `${BACKEND_URL}/satker/satudja-proxy?url=${encodeURIComponent(targetUrl)}&inline=true&tahun=${encodeURIComponent(tahun)}`;
 
     const resp = await fetch(backendUrl, {
       method: "GET",

@@ -282,9 +282,77 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
 
         <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/20 p-6">
           {loading && (
-            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-muted-foreground">
-              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm">Memuat dan menstrukturkan konten POK...</p>
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-auto border border-border rounded-xl shadow-sm bg-card max-h-full">
+                <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+                  <colgroup>
+                    <col className="w-[130px]" />
+                    <col />
+                    <col className="w-[85px]" />
+                    <col className="w-[115px]" />
+                    <col className="w-[130px]" />
+                    <col className="w-[75px]" />
+                  </colgroup>
+                  <thead className="sticky top-0 z-10 bg-muted select-none">
+                    <tr>
+                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Kode">Kode</th>
+                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Program/ Kegiatan/ KRO/ RO/ Komponen">Program/ Kegiatan/ KRO/ RO/ Komponen</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Volume">Volume</th>
+                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Harga Satuan">Harga Satuan</th>
+                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Jumlah">Jumlah</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Sumber Dana / Cara Penarikan">SD/CP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { level: 0, kodeWidth: "w-20", descWidth: "w-[80%]", volWidth: "w-12", priceWidth: "w-16", totalWidth: "w-24", sdWidth: "w-10" },
+                      { level: 1, kodeWidth: "w-24", descWidth: "w-[70%]", volWidth: "w-8", priceWidth: "w-20", totalWidth: "w-28", sdWidth: "w-8" },
+                      { level: 2, kodeWidth: "w-16", descWidth: "w-[50%]", volWidth: "w-10", priceWidth: "w-16", totalWidth: "w-20", sdWidth: "w-6" },
+                      { level: 2, kodeWidth: "w-16", descWidth: "w-[45%]", volWidth: "w-10", priceWidth: "w-18", totalWidth: "w-22", sdWidth: "w-6" },
+                      { level: 3, kodeWidth: "w-12", descWidth: "w-[35%]", volWidth: "w-6", priceWidth: "w-14", totalWidth: "w-16", sdWidth: "w-4" },
+                      { level: 1, kodeWidth: "w-24", descWidth: "w-[65%]", volWidth: "w-12", priceWidth: "w-20", totalWidth: "w-28", sdWidth: "w-8" },
+                      { level: 2, kodeWidth: "w-20", descWidth: "w-[55%]", volWidth: "w-10", priceWidth: "w-16", totalWidth: "w-22", sdWidth: "w-6" },
+                      { level: 0, kodeWidth: "w-20", descWidth: "w-[75%]", volWidth: "w-14", priceWidth: "w-22", totalWidth: "w-32", sdWidth: "w-10" },
+                      { level: 1, kodeWidth: "w-24", descWidth: "w-[60%]", volWidth: "w-8", priceWidth: "w-18", totalWidth: "w-24", sdWidth: "w-8" },
+                    ].map((row, idx) => (
+                      <tr 
+                        key={idx} 
+                        className={cn(
+                          "border-b border-border/60 align-middle",
+                          row.level === 0 ? "bg-muted/10 font-semibold" : ""
+                        )}
+                      >
+                        <td className="p-3.5 px-4">
+                          <div className={cn("h-4 bg-muted-foreground/15 rounded animate-pulse", row.kodeWidth)} />
+                        </td>
+                        <td 
+                          className="p-3.5 px-4 text-left"
+                          style={{ paddingLeft: `${16 + row.level * 20}px` }}
+                        >
+                          <div className="flex items-center gap-1.5 w-full min-w-0">
+                            {row.level > 0 && (
+                              <div className="w-3.5 h-3.5 rounded bg-muted-foreground/10 animate-pulse shrink-0" />
+                            )}
+                            <div className={cn("h-4 bg-muted-foreground/15 rounded animate-pulse", row.descWidth)} />
+                          </div>
+                        </td>
+                        <td className="p-3.5 px-4 text-center">
+                          <div className={cn("h-4 bg-muted-foreground/15 rounded animate-pulse mx-auto", row.volWidth)} />
+                        </td>
+                        <td className="p-3.5 px-4 text-right">
+                          <div className={cn("h-4 bg-muted-foreground/15 rounded animate-pulse ml-auto", row.priceWidth)} />
+                        </td>
+                        <td className="p-3.5 px-4 text-right">
+                          <div className={cn("h-4 bg-muted-foreground/15 rounded animate-pulse ml-auto", row.totalWidth)} />
+                        </td>
+                        <td className="p-3.5 px-4 text-center">
+                          <div className={cn("h-4 bg-muted-foreground/15 rounded animate-pulse mx-auto", row.sdWidth)} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -60,6 +67,7 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+  const [selectedTahun, setSelectedTahun] = useState<string>("2026");
 
   // Modal state
   const [pokModal, setPokModal] = useState<{ open: boolean; url: string | null; title: string }>({
@@ -85,7 +93,7 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
       setError(null);
       try {
         const result = await apiClient.get<SatudjaResponse>(
-          `/satker/${kdsatker}/dipa-revisions`,
+          `/satker/${kdsatker}/dipa-revisions?tahun=${selectedTahun}`,
         );
 
         if (result?.success === false) {
@@ -112,7 +120,7 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
     return () => {
       isMounted = false;
     };
-  }, [kdsatker, refreshTick]);
+  }, [kdsatker, refreshTick, selectedTahun]);
 
   const handleRefresh = () => setRefreshTick((prev) => prev + 1);
 
@@ -123,7 +131,7 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
     setDownloadingKey(key);
     try {
       const proxyUrl = apiPath(
-        `/satker/satudja-proxy?url=${encodeURIComponent(rev.adkUrl)}`,
+        `/satker/satudja-proxy?url=${encodeURIComponent(rev.adkUrl)}&tahun=${selectedTahun}`,
       );
       const response = await fetch(proxyUrl, { credentials: "include" });
 
@@ -200,9 +208,29 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
         onClose={() => setDipaModal((prev) => ({ ...prev, open: false }))}
         dipaUrl={dipaModal.url}
         title={dipaModal.title}
+        tahun={selectedTahun}
       />
 
       <div className="space-y-6">
+        {/* Year Filter Select */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-200/80 dark:border-zinc-800 p-4 rounded-lg gap-3">
+          <div className="space-y-0.5">
+            <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Tahun Anggaran</h4>
+            <p className="text-xs text-muted-foreground">Pilih tahun anggaran revisi DIPA yang ingin Anda lihat.</p>
+          </div>
+          <Select value={selectedTahun} onValueChange={setSelectedTahun} disabled={loading}>
+            <SelectTrigger size="sm" className="w-[120px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-950 font-medium cursor-pointer">
+              <SelectValue placeholder="Pilih Tahun" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2027">2027</SelectItem>
+              <SelectItem value="2026">2026</SelectItem>
+              <SelectItem value="2025">2025</SelectItem>
+              <SelectItem value="2024">2024</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Loading */}
         {loading && (
           <Card>
