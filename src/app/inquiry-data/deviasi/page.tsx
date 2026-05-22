@@ -220,6 +220,20 @@ export default function DeviasiPage() {
     [unsavedChangesWarning]
   );
 
+  // Create stable queryLoader object for DynamicFiltersCard
+  const stableQueryLoader = useMemo(
+    () => ({
+      hasUnsavedChanges: queryLoader.hasUnsavedChanges,
+      loadQuery: handleLoadQuery,
+      validateQueryCompatibility: queryLoader.validateQueryCompatibility,
+    }),
+    [
+      queryLoader.hasUnsavedChanges,
+      handleLoadQuery,
+      queryLoader.validateQueryCompatibility,
+    ]
+  );
+
   // Remove a specific filter
   const removeFilter = (filterKey: string) => {
     setActiveFilters((prev) => prev.filter((key) => key !== filterKey));
@@ -337,6 +351,7 @@ export default function DeviasiPage() {
             filterValues={normalizedFilterValues}
             onFilterChange={handleFilterChange}
             scope="deviasi"
+            queryLoader={stableQueryLoader}
           />
         </Suspense>
       </div>

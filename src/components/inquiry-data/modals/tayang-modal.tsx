@@ -169,7 +169,16 @@ export function TayangModal({
       "JUL", "AGS", "SEP", "OKT", "NOV", "DES", "JMLPNRK",
       "RUPIAH",
     ];
-    return summableColumns.includes(column.toUpperCase());
+    const upper = column.toUpperCase();
+    return (
+      summableColumns.includes(upper) ||
+      upper.startsWith("RENCANA_") ||
+      upper.startsWith("REALISASI_") ||
+      upper.startsWith("RENC") ||
+      upper.startsWith("REAL") ||
+      upper === "TOTAL_RENCANA" ||
+      upper === "TOTAL_REALISASI"
+    );
   };
 
   // Grand totals — prefer server-provided, fallback to client sum
@@ -238,6 +247,9 @@ export function TayangModal({
     return (
       lower.includes("pagu") ||
       lower.includes("realisasi") ||
+      lower.includes("rencana") ||
+      lower.includes("renc") ||
+      lower.includes("real") ||
       lower.includes("blokir") ||
       lower.includes("anggaran") ||
       lower === "jmlpnrk" ||
