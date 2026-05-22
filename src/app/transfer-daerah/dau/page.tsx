@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { DataKmkTab } from "@/components/transfer-daerah/data-kmk-tab";
 import { DataTransaksiTab } from "@/components/transfer-daerah/data-transaksi-tab";
@@ -15,9 +16,24 @@ import {
 } from "@/components/ui/select";
 
 export default function DAUPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("data-kmk");
   const [rekonHeaderAction, setRekonHeaderAction] = useState<React.ReactNode>(null);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      const isAdmin = user.role === "super_admin" || user.role === "co_admin";
+      const isDitpa = user.role === "ditpa";
+      if (!isAdmin && !isDitpa) {
+        router.replace("/unauthorized");
+      }
+    }
+  }, [user, isLoading, router]);
 
   // Normalize role detection
   const userRole = String(user?.role || "").toLowerCase();
@@ -51,6 +67,20 @@ export default function DAUPage() {
     kdkanwil: isKanwilUser ? userKdKanwil : undefined,
     kdkppn: isKppnUser ? userKdKppn : undefined,
   }), [isKanwilUser, isKppnUser, userKdKanwil, userKdKppn]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const isAdmin = user.role === "super_admin" || user.role === "co_admin";
+  const isDitpa = user.role === "ditpa";
+  if (!isAdmin && !isDitpa) return null;
 
   return (
     <div className="space-y-6">

@@ -263,9 +263,6 @@ export function ResponsiveSidebar({
         // Only admins can see Data Supplier
         if (item.label === "Data Supplier" && !isAdmin) return false;
 
-        // Hide Transfer Daerah from kppn (still in development)
-        if (item.label === "Transfer Daerah" && user.role === "kppn") return false;
-
         // Only admins and ditpa can see IKI Dit.PA
         if (item.label === "IKI Dit.PA" && !isAdmin && user.role !== "ditpa")
           return false;
@@ -273,6 +270,32 @@ export function ResponsiveSidebar({
         return true;
       })
       .map((item) => {
+        // Filter Transfer Daerah children based on role
+        if (item.label === "Transfer Daerah") {
+          const isDitpaOrAdmin = isAdmin || user.role === "ditpa";
+          const allowedChildren = (item.children || []).filter((child) => {
+            if (child.label === "DAU") {
+              return isDitpaOrAdmin;
+            }
+            if (child.label === "Upload Laporan") {
+              return user.role !== "kantor_pusat";
+            }
+            if (child.label === "Proyeksi TKD") {
+              return isDitpaOrAdmin;
+            }
+            if (child.label === "Penilaian IKU") {
+              return isDitpaOrAdmin;
+            }
+            if (child.label === "Dataset TKD") {
+              return true;
+            }
+            return true;
+          });
+
+          if (allowedChildren.length === 0) return null;
+          return { ...item, children: allowedChildren };
+        }
+
         // Filter Monev KKP children based on role
         if (item.label === "Monev KKP") {
           if (isAdmin) return item; // Admins see all submenus
