@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { RefreshCw, AlertCircle, FileSpreadsheet } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { RefreshCw, AlertCircle, FileSpreadsheet, Search, ChevronRight, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { apiPath } from "@/lib/config/base-path";
 import * as XLSX from "xlsx";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils/utils";
 
 interface PokModalProps {
   isOpen: boolean;
@@ -20,23 +23,39 @@ interface PokModalProps {
   title?: string;
 }
 
+interface PokRow {
+  index: number;
+  kode: string;
+  uraian: string;
+  volume: string;
+  hargaSatuan: string;
+  jumlah: string;
+  sdCp: string;
+  level: number;
+  hasChildren: boolean;
+  parentIndex: number;
+}
+
 export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalProps) {
-  const [htmlContent, setHtmlContent] = useState<string>("");
+  const [data, setData] = useState<PokRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
-  // Fetch POK HTML Content
+  // Fetch and Parse POK HTML Content into Structured typed React State
   useEffect(() => {
     if (!isOpen || !pokUrl) {
-      setHtmlContent("");
+      setData([]);
       setError(null);
+      setSearchQuery("");
+      setExpandedRows(new Set());
       return;
     }
 
     let isMounted = true;
-    const fetchHtml = async () => {
+    const fetchAndParseHtml = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -48,23 +67,77 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         const text = await response.text();
+        
         if (isMounted) {
           const parser = new DOMParser();
           const doc = parser.parseFromString(text, "text/html");
-          const sectionContent = doc.querySelector("section.content");
-          if (sectionContent) {
-            // Remove scripts to avoid execution and noise
-            sectionContent.querySelectorAll("script").forEach((el) => el.remove());
-            setHtmlContent(sectionContent.outerHTML);
-          } else {
-            // Fallback: look for pvtTable or tableFixHead
-            const tableFixHead = doc.querySelector(".tableFixHead") || doc.querySelector("table#pvtTable");
-            if (tableFixHead) {
-              setHtmlContent(tableFixHead.outerHTML);
-            } else {
-              setHtmlContent(text);
-            }
+          
+          // Locate target table element
+          const tableElement = doc.querySelector("table#pvtTable");
+          if (!tableElement) {
+            throw new Error("Format tabel POK tidak valid atau tidak ditemukan");
           }
+
+          const rows = Array.from(tableElement.querySelectorAll("tr"));
+          if (rows.length === 0) {
+            throw new Error("Tabel POK tidak memiliki data");
+          }
+
+          const parsedRows: PokRow[] = [];
+          const lastRowAtLevel: { [key: number]: number } = {};
+
+          rows.forEach((row) => {
+            const cells = Array.from(row.cells);
+            
+            // Skip header rows
+            const isHeader = row.querySelector("th") !== null || row.cells[0]?.tagName === "TH";
+            if (isHeader) return;
+
+            if (cells.length < 2) return; // Skip empty rows
+
+            // Parse level from cell class name, row class name, or default to 0
+            const cellClassName = cells[0]?.className || "";
+            const rowClassName = row.className || "";
+            const levelMatch = cellClassName.match(/level-(\d+)/) || rowClassName.match(/level-(\d+)/);
+            const level = levelMatch && levelMatch[1] ? parseInt(levelMatch[1], 10) : 0;
+
+            const index = parsedRows.length;
+            lastRowAtLevel[level] = index;
+
+            const parentIndex = level > 0 ? (lastRowAtLevel[level - 1] ?? -1) : -1;
+
+            // Extract display code by stripping the hidden parent hierarchy path if present
+            const rawKode = cells[0]?.textContent || "";
+            const kode = rawKode.includes("||") ? (rawKode.split("||")[1]?.trim() || "") : rawKode.trim();
+
+            // Correctly map cells. If there are 7 cells, the SD/CP is at index 6 (due to double-column colspan on Jumlah)
+            const sdCp = (cells.length > 6 ? cells[6] : cells[5])?.textContent?.trim() || "";
+
+            parsedRows.push({
+              index,
+              kode,
+              uraian: cells[1]?.textContent?.trim() || "",
+              volume: cells[2]?.textContent?.trim() || "",
+              hargaSatuan: cells[3]?.textContent?.trim() || "",
+              jumlah: cells[4]?.textContent?.trim() || "",
+              sdCp,
+              level,
+              hasChildren: false,
+              parentIndex,
+            });
+          });
+
+          // Mark parents who have children
+          parsedRows.forEach((row) => {
+            if (row.parentIndex !== -1) {
+              const parentRow = parsedRows[row.parentIndex];
+              if (parentRow) {
+                parentRow.hasChildren = true;
+              }
+            }
+          });
+
+          setData(parsedRows);
         }
       } catch (err: any) {
         if (isMounted) {
@@ -75,162 +148,111 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
       }
     };
 
-    fetchHtml();
+    fetchAndParseHtml();
     return () => {
       isMounted = false;
     };
   }, [isOpen, pokUrl, refreshTrigger]);
 
-  // Nested Tree Table Accordion Interactivity Handler
-  useEffect(() => {
-    if (loading || error || !htmlContent || !contentRef.current) return;
-
-    const table = contentRef.current.querySelector("table#pvtTable");
-    if (!table) return;
-
-    // Get all rows
-    const rows = Array.from(table.querySelectorAll("tr"));
-    if (rows.length === 0) return;
-
-    // Parse levels from class names
-    const levels = rows.map((row) => {
-      const className = row.className || "";
-      const levelMatch = className.match(/level-(\d+)/);
-      if (levelMatch && levelMatch[1]) {
-        return parseInt(levelMatch[1], 10);
-      }
-      return 0; // Level 0 (main rows with class 'all row-X')
-    });
-
-    // Determine parent indices for each row based on hierarchy
-    const parentIndices = new Array(rows.length).fill(-1);
-    const lastRowAtLevel: { [key: number]: number } = {};
-
-    for (let i = 0; i < rows.length; i++) {
-      const lvl = levels[i] ?? 0;
-      lastRowAtLevel[lvl] = i;
-      if (lvl > 0) {
-        parentIndices[i] = lastRowAtLevel[lvl - 1] !== undefined ? lastRowAtLevel[lvl - 1] : -1;
-      }
+  // Recursively check if row is visible under current parent expansions
+  const isRowVisible = (row: PokRow, allData: PokRow[]) => {
+    if (row.level === 0) return true;
+    let currentParentIndex = row.parentIndex;
+    while (currentParentIndex !== -1) {
+      const parentRow = allData[currentParentIndex];
+      if (!parentRow) break;
+      if (!expandedRows.has(currentParentIndex)) return false;
+      currentParentIndex = parentRow.parentIndex;
     }
+    return true;
+  };
 
-    // Set attributes and add expand/collapse icons
-    rows.forEach((row, i) => {
-      row.setAttribute("data-index", String(i));
-      row.setAttribute("data-level", String(levels[i] ?? 0));
-      row.setAttribute("data-parent-index", String(parentIndices[i] ?? -1));
-
-      const hasChildren = parentIndices.includes(i);
-      if (hasChildren) {
-        row.classList.add("tree-parent");
-        // Detail rows are hidden (collapsed) by default
-        row.setAttribute("data-expanded", "false");
-
-        // Insert toggle icon in Uraian column (second cell, or first if only one)
-        const cell = row.cells[1] || row.cells[0];
-        if (cell && !cell.querySelector(".tree-toggle-icon")) {
-          const toggleSpan = document.createElement("span");
-          toggleSpan.className = "tree-toggle-icon";
-          toggleSpan.innerHTML = "▶";
-          toggleSpan.style.marginRight = "8px";
-          toggleSpan.style.cursor = "pointer";
-          toggleSpan.style.display = "inline-block";
-          toggleSpan.style.width = "12px";
-          toggleSpan.style.color = "#4a6baf";
-          toggleSpan.style.fontWeight = "bold";
-          cell.insertBefore(toggleSpan, cell.firstChild);
-        }
-        row.style.cursor = "pointer";
-      }
-    });
-
-    // Update visibility of all rows based on state
-    const updateVisibility = () => {
-      rows.forEach((row, i) => {
-        const lvl = levels[i] ?? 0;
-        if (lvl === 0) {
-          row.style.display = ""; // Always show main level rows
-        } else {
-          const parentIdx = parentIndices[i] ?? -1;
-          let visible = true;
-          let currentParentIdx = parentIdx;
-
-          // A row is visible if all its ancestors are expanded
-          while (currentParentIdx !== -1 && currentParentIdx !== undefined) {
-            const p = rows[currentParentIdx];
-            if (!p || p.getAttribute("data-expanded") !== "true") {
-              visible = false;
+  // Toggle Node expansion
+  const toggleRow = (index: number) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+        // Recursively collapse descendants
+        data.forEach((r) => {
+          let pIdx = r.parentIndex;
+          while (pIdx !== -1) {
+            if (pIdx === index) {
+              next.delete(r.index);
               break;
             }
-            currentParentIdx = parseInt(p.getAttribute("data-parent-index") || "-1", 10);
+            const parentRow = data[pIdx];
+            pIdx = parentRow ? parentRow.parentIndex : -1;
           }
-
-          if (visible) {
-            row.style.display = "";
-            row.classList.remove("collapse");
-          } else {
-            row.style.display = "none";
-          }
-        }
-
-        // Update chevron direction
-        if (row.classList.contains("tree-parent")) {
-          const icon = row.querySelector(".tree-toggle-icon");
-          if (icon) {
-            icon.innerHTML = row.getAttribute("data-expanded") === "true" ? "▼" : "▶";
-          }
-        }
-      });
-    };
-
-    // Apply initial collapse visibility
-    updateVisibility();
-
-    // Click handler for row toggling
-    const handleTableClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const tr = target.closest("tr");
-      if (tr && tr.classList.contains("tree-parent")) {
-        // Prevent toggle if clicking on links or inputs
-        if (target.tagName === "A" || target.tagName === "BUTTON") {
-          return;
-        }
-
-        const isExpanded = tr.getAttribute("data-expanded") === "true";
-        tr.setAttribute("data-expanded", isExpanded ? "false" : "true");
-        updateVisibility();
+        });
+      } else {
+        next.add(index);
       }
-    };
+      return next;
+    });
+  };
 
-    table.addEventListener("click", handleTableClick as EventListener);
+  // Real-Time Search Filter with Hierarchy Path Preservation
+  const filteredRows = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return data.filter((row) => isRowVisible(row, data));
+    }
 
-    return () => {
-      table.removeEventListener("click", handleTableClick as EventListener);
-    };
-  }, [htmlContent, loading, error]);
+    const query = searchQuery.toLowerCase();
+    const matchingIndices = new Set<number>();
 
-  // Export POK HTML table to Excel file
+    data.forEach((row) => {
+      const matches =
+        row.kode.toLowerCase().includes(query) ||
+        row.uraian.toLowerCase().includes(query) ||
+        row.jumlah.toLowerCase().includes(query);
+      if (matches) {
+        matchingIndices.add(row.index);
+      }
+    });
+
+    const indicesToKeep = new Set<number>();
+    matchingIndices.forEach((idx) => {
+      let currentIdx = idx;
+      while (currentIdx !== -1) {
+        indicesToKeep.add(currentIdx);
+        const row = data[currentIdx];
+        currentIdx = row ? row.parentIndex : -1;
+      }
+    });
+
+    return data.filter((row) => indicesToKeep.has(row.index));
+  }, [data, searchQuery, expandedRows]);
+
+  // Clean structured Spreadsheet Excel Export
   const handleDownloadExcel = () => {
-    const table = contentRef.current?.querySelector("table#pvtTable");
-    if (!table) {
-      alert("Tabel POK tidak ditemukan");
+    if (data.length === 0) {
+      alert("Tabel POK tidak memiliki data");
       return;
     }
 
-    // Clone table to make sure original DOM is unmodified
-    const tableCopy = table.cloneNode(true) as HTMLTableElement;
+    const excelRows = data.map((row) => ({
+      "Kode": row.kode,
+      "Program/ Kegiatan/ KRO/ RO/ Komponen": row.uraian,
+      "Volume": row.volume,
+      "Harga Satuan": row.hargaSatuan,
+      "Jumlah": row.jumlah,
+      "SD/CP": row.sdCp,
+    }));
 
-    // Clean up dynamic toggle icons from the spreadsheet columns
-    tableCopy.querySelectorAll(".tree-toggle-icon").forEach((el) => {
-      el.remove();
-    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelRows);
 
-    // Make all rows visible for the exported sheet
-    tableCopy.querySelectorAll("tr").forEach((row) => {
-      row.style.display = "";
-    });
+    ws["!cols"] = [
+      { wch: 15 },
+      { wch: 45 },
+      { wch: 12 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 10 },
+    ];
 
-    const wb = XLSX.utils.table_to_book(tableCopy, { sheet: "POK" });
+    XLSX.utils.book_append_sheet(wb, ws, "POK");
     const safeTitle = (title || "POK").replace(/[\\/:*?"<>|]/g, "_");
     XLSX.writeFile(wb, `${safeTitle}.xlsx`);
   };
@@ -239,28 +261,41 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+        className="max-w-7xl sm:max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
         aria-describedby={undefined}
       >
-        <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="truncate">{title}</DialogTitle>
+        <DialogHeader className="p-6 pb-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <DialogTitle className="truncate font-semibold text-lg">{title}</DialogTitle>
+          {!loading && !error && data.length > 0 && (
+            <div className="relative w-full sm:w-72 shrink-0">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Cari kode or uraian..."
+                className="pl-9 h-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
         </DialogHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/30 p-3">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/20 p-6">
           {loading && (
             <div className="flex flex-col items-center justify-center flex-1 gap-3 text-muted-foreground">
               <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm">Memuat konten POK...</p>
+              <p className="text-sm">Memuat dan menstrukturkan konten POK...</p>
             </div>
           )}
 
           {!loading && error && (
-            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-red-600 px-6 text-center">
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-destructive px-6 text-center">
               <AlertCircle className="h-8 w-8" />
               <p className="text-sm font-medium">{error}</p>
               <Button
                 variant="outline"
                 size="sm"
+                className="mt-2"
                 onClick={() => {
                   setError(null);
                   setRefreshTrigger((prev) => prev + 1);
@@ -272,96 +307,141 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
             </div>
           )}
 
-          {!loading && !error && htmlContent && (
-            <>
-              <style dangerouslySetInnerHTML={{
-                __html: `
-                section.content, .content {
-                  padding: 0 !important;
-                  margin: 0 !important;
-                  background: transparent !important;
-                }
-                .tableFixHead {
-                  overflow: auto;
-                  max-height: 70vh;
-                  position: relative;
-                  border: 1px solid #e4e4e7;
-                  border-radius: 8px;
-                  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                  background: white;
-                }
-                #pvtTable {
-                  border-collapse: separate;
-                  border-spacing: 0;
-                  width: 100%;
-                  font-size: 0.85rem;
-                }
-                #pvtTable th {
-                  position: sticky;
-                  top: 0;
-                  background-color: hsl(var(--muted)) !important;
-                  font-weight: 600;
-                  text-align: center;
-                  z-index: 10;
-                  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-                  border-bottom: 1px solid hsl(var(--border));
-                }
-                #pvtTable th, #pvtTable td {
-                  padding: 8px 12px;
-                  border-bottom: 1px solid #f4f4f5;
-                  border-right: 1px solid #f4f4f5;
-                  vertical-align: middle;
-                }
-                #pvtTable th:last-child, #pvtTable td:last-child {
-                  border-right: none;
-                }
-                #pvtTable tr.all {
-                  background-color: #f8fafc;
-                  font-weight: 600;
-                  color: #1e293b;
-                }
-                #pvtTable tr.level-1 { font-weight: 500; color: #334155; }
-                #pvtTable tr.level-2 { color: #475569; }
-                #pvtTable tr.level-3 { color: #64748b; }
-                #pvtTable tr:hover { background-color: #f1f5f9 !important; }
-                #pvtTable td:nth-child(3),
-                #pvtTable td:nth-child(4),
-                #pvtTable td:nth-child(5) {
-                  text-align: right;
-                  font-variant-numeric: tabular-nums;
-                }
-                #pvtTable td:nth-child(1),
-                #pvtTable td:nth-child(2) { text-align: left; }
-                #pvtTable tr.level-1 td:nth-child(2) { padding-left: 28px; }
-                #pvtTable tr.level-2 td:nth-child(2) { padding-left: 48px; }
-                #pvtTable tr.level-3 td:nth-child(2) { padding-left: 68px; }
-                #pvtTable tr.level-4 td:nth-child(2) { padding-left: 88px; }
-                #pvtTable tr.level-5 td:nth-child(2) { padding-left: 108px; }
-                #pvtTable tr.level-6 td:nth-child(2) { padding-left: 128px; }
-                .tree-toggle-icon {
-                  transition: transform 0.15s ease-in-out;
-                  font-family: monospace;
-                }
-              ` }} />
-              <div
-                ref={contentRef}
-                className="pok-content text-sm"
-                dangerouslySetInnerHTML={{ __html: htmlContent }}
-              />
-            </>
+          {!loading && !error && data.length > 0 && (
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-auto border border-border rounded-xl shadow-sm bg-card max-h-full">
+                <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+                  <colgroup>
+                    <col className="w-[130px]" />
+                    <col />
+                    <col className="w-[85px]" />
+                    <col className="w-[115px]" />
+                    <col className="w-[130px]" />
+                    <col className="w-[75px]" />
+                  </colgroup>
+                  <thead className="sticky top-0 z-10 bg-muted select-none">
+                    <tr>
+                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Kode">Kode</th>
+                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Program/ Kegiatan/ KRO/ RO/ Komponen">Program/ Kegiatan/ KRO/ RO/ Komponen</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Volume">Volume</th>
+                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Harga Satuan">Harga Satuan</th>
+                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Jumlah">Jumlah</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Sumber Dana / Cara Penarikan">SD/CP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <AnimatePresence initial={false}>
+                      {filteredRows.map((row) => {
+                        const isExpanded = expandedRows.has(row.index);
+                        const isMainRow = row.level === 0;
+
+                        return (
+                          <motion.tr
+                            key={row.index}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.12 }}
+                            onClick={() => row.hasChildren && toggleRow(row.index)}
+                            className={cn(
+                              "border-b border-border/60 hover:bg-muted/40 transition-colors duration-100 align-middle",
+                              isMainRow ? "bg-muted/15 font-semibold text-foreground" : 
+                              row.level === 1 ? "font-medium text-foreground" : "text-muted-foreground",
+                              row.hasChildren && "cursor-pointer select-none"
+                            )}
+                          >
+                            {/* Column 1: Kode */}
+                            <td 
+                              className="p-3.5 px-4 font-mono text-xs tracking-tight text-left truncate max-w-0 select-all"
+                              title={row.kode}
+                            >
+                              {row.kode}
+                            </td>
+
+                            {/* Column 2: Uraian accordion */}
+                            <td 
+                              className="p-3.5 px-4 text-left truncate max-w-0"
+                              style={{ paddingLeft: `${16 + row.level * 20}px` }}
+                              title={row.uraian}
+                            >
+                              <div className="flex items-center gap-1.5 w-full min-w-0">
+                                {row.hasChildren && (
+                                  <span className="shrink-0 text-primary p-0.5 rounded hover:bg-muted transition-colors">
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-3.5 w-3.5" />
+                                    ) : (
+                                      <ChevronRight className="h-3.5 w-3.5" />
+                                    )}
+                                  </span>
+                                )}
+                                <span className={cn(
+                                  "truncate",
+                                  isMainRow && "tracking-wide"
+                                )}>
+                                  {row.uraian}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Column 3: Volume */}
+                            <td 
+                              className="p-3.5 px-4 text-center whitespace-nowrap text-xs truncate max-w-0"
+                              title={row.volume}
+                            >
+                              {row.volume}
+                            </td>
+
+                            {/* Column 4: Harga Satuan */}
+                            <td 
+                              className="p-3.5 px-4 text-right font-mono text-xs tracking-tight truncate max-w-0"
+                              title={row.hargaSatuan}
+                            >
+                              {row.hargaSatuan}
+                            </td>
+
+                            {/* Column 5: Jumlah */}
+                            <td 
+                              className={cn(
+                                "p-3.5 px-4 text-right font-mono text-xs tracking-tight truncate max-w-0",
+                                isMainRow ? "font-semibold text-foreground" : "text-muted-foreground"
+                              )}
+                              title={row.jumlah}
+                            >
+                              {row.jumlah}
+                            </td>
+
+                            {/* Column 6: SD/CP */}
+                            <td 
+                              className="p-3.5 px-4 text-center text-xs whitespace-nowrap truncate max-w-0"
+                              title={row.sdCp}
+                            >
+                              {row.sdCp}
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
 
-        <DialogFooter className="p-6 pt-4 sm:justify-between">
-          <div />
+        <DialogFooter className="p-6 pt-4 border-t border-border sm:justify-between flex items-center gap-4">
+          <div className="text-xs text-muted-foreground">
+            {!loading && !error && data.length > 0 && (
+              <p>Menampilkan {filteredRows.length} dari {data.length} baris POK</p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
-            {htmlContent && !loading && !error && (
-              <Button variant="outline" onClick={handleDownloadExcel}>
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
+            {data.length > 0 && !loading && !error && (
+              <Button variant="outline" size="sm" onClick={handleDownloadExcel}>
+                <FileSpreadsheet className="h-4 w-4 mr-1.5 text-emerald-600" />
                 Unduh Excel
               </Button>
             )}
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" size="sm" onClick={onClose}>
               Tutup
             </Button>
           </div>

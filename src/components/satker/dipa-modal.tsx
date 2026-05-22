@@ -112,7 +112,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
 
   const handleDownload = () => {
     if (!pdfFile) return;
-    const blob = new Blob([pdfFile.data], { type: "application/pdf" });
+    const blob = new Blob([pdfFile.data as any], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
