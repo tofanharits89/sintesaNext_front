@@ -19,6 +19,7 @@ export interface OnlineUser {
   connectedAt?: string;
   loginAt?: string;
   location?: string;
+  lastActivity?: number;
 }
 
 export interface UseOnlineUsersReturn {

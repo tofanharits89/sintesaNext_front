@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { FileText, Building2 } from "lucide-react";
@@ -11,8 +13,32 @@ import { LaporanMonevKppnTab } from "@/components/transfer-daerah/laporan-monev-
 import { LaporanMonevKanwilTab } from "@/components/transfer-daerah/laporan-monev-kanwil-tab";
 
 export default function UploadLaporanPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [isKppnModalOpen, setIsKppnModalOpen] = useState(false);
   const [isKanwilModalOpen, setIsKanwilModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      if (user.role === "kantor_pusat") {
+        router.replace("/unauthorized");
+      }
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user || user.role === "kantor_pusat") return null;
 
   return (
     <div className="space-y-6">

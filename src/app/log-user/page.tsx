@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, Fragment } from "react";
+import { useMemo, useState, useEffect, Fragment, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useLoginHistory } from "@/hooks/use-login-history";
@@ -97,6 +97,45 @@ export default function LogUserPage() {
 
   const [historyPage, setHistoryPage] = useState(1);
   const itemsPerPage = 20;
+
+  // Tick counter to force re-render every 60s for duration/AFK status updates
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // AFK threshold in milliseconds (15 minutes)
+  const AFK_THRESHOLD_MS = 15 * 60 * 1000;
+
+  // Determine user status based on lastActivity
+  const getUserStatus = useCallback((userInfo: (typeof onlineUsers)[number]) => {
+    const lastActivity = userInfo.lastActivity;
+    if (lastActivity) {
+      const elapsed = Date.now() - lastActivity;
+      if (elapsed >= AFK_THRESHOLD_MS) {
+        const afkDuration = elapsed - AFK_THRESHOLD_MS;
+        const afkMins = Math.floor(afkDuration / 60_000);
+        const afkLabel = afkMins >= 60
+          ? `${Math.floor(afkMins / 60)}j ${afkMins % 60}m`
+          : `${afkMins < 1 ? "<1" : afkMins}m`;
+        return {
+          label: "AFK",
+          sublabel: afkLabel,
+          badgeClassName: "text-xs bg-yellow-700 hover:bg-yellow-800 text-white border-yellow-700",
+          dotClassName: "w-2 h-2 bg-yellow-300 rounded-full mr-1",
+          isAfk: true,
+        };
+      }
+    }
+    return {
+      label: "Online",
+      sublabel: null,
+      badgeClassName: "text-xs bg-green-600 hover:bg-green-700 text-white border-green-600",
+      dotClassName: "w-2 h-2 bg-white rounded-full mr-1 animate-pulse",
+      isAfk: false,
+    };
+  }, [AFK_THRESHOLD_MS]);
 
   // Guard: only super_admin and co_admin
   const allowed =
@@ -431,9 +470,24 @@ export default function LogUserPage() {
                         <CardHeader>
                           <CardTitle className="flex items-center justify-between">
                             <span>User Online (Real-time)</span>
-                            <Badge variant="secondary" className="ml-2">
-                              {userCount} Online
-                            </Badge>
+                            <div className="flex items-center gap-2 ml-2">
+                              {(() => {
+                                const afkCount = onlineUsers.filter((u) => getUserStatus(u).isAfk).length;
+                                const activeCount = userCount - afkCount;
+                                return (
+                                  <>
+                                    <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                      {activeCount} Online
+                                    </Badge>
+                                    {afkCount > 0 && (
+                                      <Badge variant="secondary" className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
+                                        {afkCount} AFK
+                                      </Badge>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </div>
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -473,10 +527,18 @@ export default function LogUserPage() {
                                     <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
                                     <TableCell className="text-center">
-                                      <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
-                                        <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
-                                        Online
-                                      </Badge>
+                                      {(() => {
+                                        const status = getUserStatus(userInfo);
+                                        return (
+                                          <Badge variant="default" className={status.badgeClassName}>
+                                            <div className={status.dotClassName}></div>
+                                            {status.label}
+                                            {status.sublabel && (
+                                              <span className="ml-1 opacity-80 text-[10px]">({status.sublabel})</span>
+                                            )}
+                                          </Badge>
+                                        );
+                                      })()}
                                     </TableCell>
                                   </TableRow>
                                 ))}
@@ -494,10 +556,18 @@ export default function LogUserPage() {
                                     <p className="text-sm text-muted-foreground font-mono">{userInfo.user.username || "Unknown"}</p>
                                     <div className="flex items-center space-x-2">
                                       <Badge variant="outline" className="text-xs">{getRoleDisplayName(userInfo.user.role as any)}</Badge>
-                                      <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
-                                        <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
-                                        Online
-                                      </Badge>
+                                      {(() => {
+                                        const status = getUserStatus(userInfo);
+                                        return (
+                                          <Badge variant="default" className={status.badgeClassName}>
+                                            <div className={status.dotClassName}></div>
+                                            {status.label}
+                                            {status.sublabel && (
+                                              <span className="ml-1 opacity-80 text-[10px]">({status.sublabel})</span>
+                                            )}
+                                          </Badge>
+                                        );
+                                      })()}
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-xs text-muted-foreground"><span className="font-medium">Kanwil:</span> {userInfo.user.kdkanwil ? (kanwilData.find(k => k.kdkanwil === userInfo.user.kdkanwil)?.nmkanwil || userInfo.user.nmkanwil || "-") : "-"}</p>

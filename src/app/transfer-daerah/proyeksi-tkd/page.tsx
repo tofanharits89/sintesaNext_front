@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,8 +26,24 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
 export default function ProyeksiTkdPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
+
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      const isAdmin = user.role === "super_admin" || user.role === "co_admin";
+      const isDitpa = user.role === "ditpa";
+      if (!isAdmin && !isDitpa) {
+        router.replace("/unauthorized");
+      }
+    }
+  }, [user, isAuthLoading, router]);
   const [paginationState, setPaginationState] = useState({ pageIndex: 0, pageSize: 10 });
   const [isDownloading, setIsDownloading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -319,6 +337,20 @@ export default function ProyeksiTkdPage() {
       ),
     },
   ];
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const isAdmin = user.role === "super_admin" || user.role === "co_admin";
+  const isDitpa = user.role === "ditpa";
+  if (!isAdmin && !isDitpa) return null;
 
   return (
     <div className="space-y-6">
