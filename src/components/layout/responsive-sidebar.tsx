@@ -129,6 +129,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
       { label: "Revisi DIPA" },
+      { label: "Deviasi" },
       { label: "APBD" },
       { label: "Prognosis" },
     ],
@@ -482,6 +483,8 @@ export function ResponsiveSidebar({
       case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
       case "Inquiry Data__Revisi DIPA":
+        return <Database className={cls} />;
+      case "Inquiry Data__Deviasi":
         return <Database className={cls} />;
       case "Inquiry Data__Prognosis":
         return <Database className={cls} />;
@@ -875,6 +878,13 @@ export function ResponsiveSidebar({
                               href = "/inquiry-data/rkakl-detail";
                               onMouseEnterFn = () =>
                                 import("@/components/inquiry-data/dynamic-filters-card");
+                            } else if (
+                              c.label === "Deviasi" &&
+                              m.label === "Inquiry Data"
+                            ) {
+                              href = "/inquiry-data/deviasi";
+                              onMouseEnterFn = () =>
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "Dashboard Supplier" &&
                               m.label === "Data Supplier"
@@ -1699,6 +1709,29 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/inquiry-data/revisi-dipa",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Deviasi" &&
+                      m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/deviasi"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/inquiry-data/dynamic-filters-card");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/deviasi",
                           });
                           setOpen(false);
                         }}

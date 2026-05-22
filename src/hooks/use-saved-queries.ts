@@ -194,7 +194,8 @@ export function useSavedQueries(
       | "up_tup"
       | "penerimaan_pnbp"
       | "sp2d"
-      | "revisi_dipa";
+      | "revisi_dipa"
+      | "deviasi";
   } = {},
 ) {
   const queryClient = useQueryClient();
@@ -211,6 +212,7 @@ export function useSavedQueries(
       "penerimaan_pnbp",
       "sp2d",
       "revisi_dipa",
+      "deviasi",
     ] as const;
     const rawPage = typeof params.page === "number" ? params.page : undefined;
     const rawLimit =

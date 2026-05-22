@@ -30,7 +30,8 @@ interface PilihLaporanCardProps {
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa";
+    | "revisi_dipa"
+    | "deviasi";
   customTipeLaporanOptions?: { value: string; label: string }[];
   hideJenisAkumulasi?: boolean;
 }
@@ -106,6 +107,11 @@ export function PilihLaporanCard({
     { value: "revisi_dipa", label: "Revisi" },
   ];
 
+  const deviasiTipeLaporanOptions = [
+    { value: "deviasi_output", label: "1. Deviasi Output Belanja (Bulanan)" },
+    { value: "deviasi_pnbp", label: "2. Deviasi PNBP (Bulanan)" },
+  ];
+
   // Use appropriate options based on mode
   const tipeLaporanOptions =
     mode === "tematik"
@@ -122,7 +128,9 @@ export function PilihLaporanCard({
                 ? customTipeLaporanOptions || sp2dTipeLaporanOptions
                 : mode === "revisi_dipa"
                   ? customTipeLaporanOptions || revisiDipaTipeLaporanOptions
-                  : customTipeLaporanOptions || defaultTipeLaporanOptions;
+                  : mode === "deviasi"
+                    ? customTipeLaporanOptions || deviasiTipeLaporanOptions
+                    : customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
     { value: "satuan", label: "Satuan" },
@@ -189,7 +197,9 @@ export function PilihLaporanCard({
                             ? "Tipe Laporan SPM/SP2D"
                             : mode === "revisi_dipa"
                               ? "Tipe Laporan Revisi DIPA"
-                              : "Tipe Laporan"}
+                              : mode === "deviasi"
+                                ? "Tipe Laporan Deviasi"
+                                : "Tipe Laporan"}
               </label>
               <Select
                 value={
@@ -221,7 +231,9 @@ export function PilihLaporanCard({
                                   ? "Pilih tipe laporan SPM/SP2D"
                                   : mode === "revisi_dipa"
                                     ? "Pilih tipe laporan Revisi DIPA"
-                                    : "Pilih tipe laporan"
+                                    : mode === "deviasi"
+                                      ? "Pilih tipe laporan Deviasi"
+                                      : "Pilih tipe laporan"
                     }
                   />
                 </SelectTrigger>

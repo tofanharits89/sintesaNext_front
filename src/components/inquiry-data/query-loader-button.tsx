@@ -47,7 +47,8 @@ interface QueryLoaderButtonProps {
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa";
+    | "revisi_dipa"
+    | "deviasi";
 }
 
 const QueryLoaderButtonComponent = function QueryLoaderButton({

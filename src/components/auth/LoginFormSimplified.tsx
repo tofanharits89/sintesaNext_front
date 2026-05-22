@@ -254,7 +254,7 @@ export default function SimplifiedLoginForm() {
             root.classList.remove("light", "dark");
             root.classList.add(storedTheme);
           }
-        } catch {}
+        } catch { }
 
         // Wait for auth to be loaded before redirecting
         // This ensures user data is available when dashboard mounts

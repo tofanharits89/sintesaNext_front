@@ -15,7 +15,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
   | "general"
   | "revisi_dipa"
   | "belwil"
-  | "apbd",
+  | "apbd"
+  | "deviasi",
   string[]
 > = {
   belanja: [
@@ -468,6 +469,62 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on APBD
     "regional",
     "lokusAnggaran",
+  ],
+  deviasi: [
+    // Allowed filters on Deviasi page:
+    // - cutOff, kementerian, eselonI, kewenangan, kanwil, kppn, satker,
+    //   program, kegiatan, outputKro, akun, sumberDana
+    // Table: monev{tahun}.rencana_real_harian_output_{tahun}_new
+    // Everything else should be excluded
+    "provinsi",
+    "kabkota",
+    "fungsi",
+    "subFungsi",
+    // Tematik & special switches not used on Deviasi
+    "jenisPn",
+    "programPrioritas",
+    "kegiatanPrioritas",
+    "proyekPrioritas",
+    "jenisMajorProject",
+    "jenisInflasiIntervensi",
+    "jenisInflasiPengeluaran",
+    "stuntingIntervensi",
+    "mbgIntervensi",
+    "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
+    "jenisTemaAnggaran",
+    "kemiskinanEkstrim",
+    "belanjaPemilu",
+    "ibuKotaNusantara",
+    "ketahananPangan",
+    "swasembadaPangan",
+    "belanjaPemerintah",
+    // RKAKL Detail specific hierarchy not needed on Deviasi
+    "subOutputRo",
+    "komponen",
+    "subKomponen",
+    "item",
+    // Internal akun variants not shown on UI
+    "kodeBkpk",
+    "jenisBelanja",
+    // Other UI filters not required on Deviasi
+    "register",
+    "jenisBlokir",
+    // Kontrak-specific filters not needed on Deviasi
+    "jenisKontrak",
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
+    // Revisi DIPA-specific filters not used on Deviasi
+    "kewenanganRevisi",
+    "jenisRevisi",
+    // Belwil-specific filters not used on Deviasi
+    "regional",
+    "lokusAnggaran",
+    // APBD-specific filters not used on Deviasi
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
 };
 
