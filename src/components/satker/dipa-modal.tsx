@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 
 type ReactPdfModule = typeof import("react-pdf");
@@ -26,6 +26,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
   const [scale, setScale] = useState(1.1);
   const [pdfMod, setPdfMod] = useState<ReactPdfModule | null>(null);
   const [pdfFile, setPdfFile] = useState<{ data: Uint8Array } | null>(null);
+  const pdfBufferRef = useRef<ArrayBuffer | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -46,12 +47,14 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
   useEffect(() => {
     if (!isOpen || !dipaUrl) {
       setPdfFile(null);
+      pdfBufferRef.current = null;
       return;
     }
     let cancelled = false;
     setLoading(true);
     setError("");
     setPdfFile(null);
+    pdfBufferRef.current = null;
 
     const url = "/api/satudja-pdf";
 
@@ -74,6 +77,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
         if (magic !== "%PDF") {
           throw new Error("Sesi SatuDJA expired. Refresh halaman dan coba lagi.");
         }
+        pdfBufferRef.current = buf.slice(0);
         setPdfFile({ data: new Uint8Array(buf) });
       })
       .catch((err) => { if (!cancelled) setError(err?.message || "Gagal memuat PDF"); })
@@ -111,8 +115,8 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: 
   }, [isOpen]);
 
   const handleDownload = () => {
-    if (!pdfFile) return;
-    const blob = new Blob([pdfFile.data as any], { type: "application/pdf" });
+    if (!pdfBufferRef.current) return;
+    const blob = new Blob([pdfBufferRef.current], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

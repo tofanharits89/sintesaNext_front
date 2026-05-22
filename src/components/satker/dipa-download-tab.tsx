@@ -203,37 +203,6 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
       />
 
       <div className="space-y-6">
-        {/* Header Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Unduh ADK/DIPA
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Daftar revisi ADK dan DIPA berdasarkan data SatuDJA.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-              {revisions.length > 0 && (
-                <Badge variant="secondary">
-                  {revisions.length} revisi tersedia
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Loading */}
         {loading && (
           <Card>
@@ -247,9 +216,13 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
         {/* Error */}
         {!loading && error && (
           <Card>
-            <CardContent className="py-8 text-center text-red-600">
-              <AlertCircle className="h-6 w-6 mx-auto mb-2" />
+            <CardContent className="py-8 text-center text-red-600 flex flex-col items-center justify-center gap-3">
+              <AlertCircle className="h-6 w-6" />
               <p className="text-sm">{error}</p>
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Coba Lagi
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -257,11 +230,15 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
         {/* Empty */}
         {!loading && !error && revisions.length === 0 && (
           <Card>
-            <CardContent className="text-center py-8">
-              <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <CardContent className="text-center py-8 flex flex-col items-center justify-center gap-3">
+              <FileText className="h-8 w-8 text-muted-foreground" />
               <p className="text-muted-foreground text-sm">
                 Belum ada data revisi DIPA tersedia untuk satker ini.
               </p>
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Refresh
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -269,8 +246,23 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
         {/* Revisions Table */}
         {!loading && !error && revisions.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle>Daftar Revisi DIPA</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg font-semibold">Daftar Revisi DIPA</CardTitle>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">
+                  {revisions.length} revisi tersedia
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 cursor-pointer"
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  title="Refresh data"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -361,32 +353,6 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Summary Stats */}
-        {!loading && !error && revisions.length > 0 && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-primary">{revisions.length}</p>
-                  <p className="text-sm text-muted-foreground">Total Revisi</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {revisions.filter((r) => r.pokUrl).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">POK Tersedia</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-red-600">
-                    {revisions.filter((r) => r.dipaUrl).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">DIPA PDF Tersedia</p>
-                </div>
               </div>
             </CardContent>
           </Card>
