@@ -17,9 +17,10 @@ import { apiPath } from "@/lib/config/base-path";
 import { toast } from "sonner";
 import {
   Download,
+  FileDown,
   FileText,
   RefreshCw,
-  Save,
+  TextSearch,
   AlertCircle,
 } from "lucide-react";
 import { useSatkerData } from "@/hooks/use-satker-data";
@@ -267,108 +268,101 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
 
         {/* Revisions Table */}
         {!loading && !error && revisions.length > 0 && (
-          <Card className="overflow-hidden">
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-[#4a6baf] hover:bg-[#4a6baf] border-b-0">
-                    <TableHead className="text-white w-24 border-r border-white/20 text-center font-semibold">
-                      Kode
-                    </TableHead>
-                    <TableHead className="text-white border-r border-white/20 font-semibold">
-                      Uraian
-                    </TableHead>
-                    <TableHead className="text-white text-center w-40 border-r border-white/20 font-semibold">
-                      POK
-                    </TableHead>
-                    <TableHead className="text-white text-center w-40 border-r border-white/20 font-semibold">
-                      ADK Petikan
-                    </TableHead>
-                    <TableHead className="text-white text-center w-40 font-semibold">
-                      DIPA Petikan
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {/* Satker Header Row */}
-                  <TableRow className="bg-white dark:bg-card border-b hover:bg-transparent">
-                    <TableCell className="align-top font-medium text-right border-r">
-                      {kdsatker}
-                    </TableCell>
-                    <TableCell colSpan={4} className="font-semibold text-sm">
-                      {satkerData?.nmsatker || "Memuat nama satker..."}
-                    </TableCell>
-                  </TableRow>
-
-                  {/* Revision Rows */}
-                  {revisions.map((rev) => (
-                    <TableRow
-                      key={rev.norev}
-                      className="bg-white dark:bg-card border-b hover:bg-muted/30"
-                    >
-                      <TableCell className="border-r" />
-                      <TableCell className="pl-6 text-sm">{rev.label}</TableCell>
-
-                      {/* POK */}
-                      <TableCell className="text-center border-x">
-                        {rev.pokUrl ? (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="text-blue-600 dark:text-blue-400 font-normal p-0 h-auto hover:no-underline hover:text-blue-800"
-                            onClick={() => openPok(rev)}
-                          >
-                            <FileText className="h-4 w-4 mr-1.5 text-muted-foreground" />
-                            POK
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-
-                      {/* ADK Petikan */}
-                      <TableCell className="text-center border-r">
-                        {rev.adkUrl ? (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="text-blue-600 dark:text-blue-400 font-normal p-0 h-auto hover:no-underline hover:text-blue-800"
-                            onClick={() => handleAdkDownload(rev)}
-                            disabled={downloadingKey === rev.norev}
-                          >
-                            {downloadingKey === rev.norev ? (
-                              <RefreshCw className="h-4 w-4 mr-1.5 animate-spin text-muted-foreground" />
-                            ) : (
-                              <Save className="h-4 w-4 mr-1.5 text-muted-foreground" />
-                            )}
-                            ADK Petikan
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-
-                      {/* DIPA Petikan */}
-                      <TableCell className="text-center">
-                        {rev.dipaUrl ? (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="text-blue-600 dark:text-blue-400 font-normal p-0 h-auto hover:no-underline hover:text-blue-800"
-                            onClick={() => openDipa(rev)}
-                          >
-                            <FileText className="h-4 w-4 mr-1.5 text-red-500" />
-                            DIPA Petikan
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Daftar Revisi DIPA</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table className="relative border-separate border-spacing-0">
+                  <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
+                    <TableRow>
+                      <TableHead className="bg-background w-24 text-center">Kode</TableHead>
+                      <TableHead className="bg-background">Uraian</TableHead>
+                      <TableHead className="bg-background text-center w-36">POK</TableHead>
+                      <TableHead className="bg-background text-center w-36">ADK Petikan</TableHead>
+                      <TableHead className="bg-background text-center w-36">DIPA Petikan</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {/* Satker Header Row */}
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableCell className="font-medium text-center">{kdsatker}</TableCell>
+                      <TableCell colSpan={4} className="font-semibold text-sm">
+                        {satkerData?.nmsatker || "Memuat nama satker..."}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+
+                    {/* Revision Rows */}
+                    {revisions.map((rev) => (
+                      <TableRow key={rev.norev}>
+                        <TableCell />
+                        <TableCell className="pl-6 text-sm">{rev.label}</TableCell>
+
+                        {/* POK */}
+                        <TableCell className="text-center">
+                          {rev.pokUrl ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-3 cursor-pointer"
+                              onClick={() => openPok(rev)}
+                              title="Lihat POK"
+                            >
+                              <TextSearch className="h-4 w-4 mr-1.5 text-blue-600" />
+                              <span className="text-xs">POK</span>
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+
+                        {/* ADK Petikan */}
+                        <TableCell className="text-center">
+                          {rev.adkUrl ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-3 cursor-pointer"
+                              onClick={() => handleAdkDownload(rev)}
+                              disabled={downloadingKey === rev.norev}
+                              title="Unduh ADK Petikan"
+                            >
+                              {downloadingKey === rev.norev ? (
+                                <RefreshCw className="h-4 w-4 mr-1.5 animate-spin text-muted-foreground" />
+                              ) : (
+                                <FileDown className="h-4 w-4 mr-1.5 text-green-600" />
+                              )}
+                              <span className="text-xs">ADK</span>
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+
+                        {/* DIPA Petikan */}
+                        <TableCell className="text-center">
+                          {rev.dipaUrl ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-3 cursor-pointer"
+                              onClick={() => openDipa(rev)}
+                              title="Lihat DIPA Petikan (PDF)"
+                            >
+                              <FileText className="h-4 w-4 mr-1.5 text-red-500" />
+                              <span className="text-xs">DIPA</span>
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
           </Card>
         )}
 

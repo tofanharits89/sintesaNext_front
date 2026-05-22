@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, ExternalLink, Maximize2, Minimize2, Download } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Download, RefreshCw, AlertCircle, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { apiPath } from "@/lib/config/base-path";
+
+type ReactPdfModule = typeof import("react-pdf");
 
 interface DipaModalProps {
   isOpen: boolean;
@@ -13,145 +21,188 @@ interface DipaModalProps {
 }
 
 export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan" }: DipaModalProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [iframeError, setIframeError] = useState(false);
+  const [numPages, setNumPages] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.1);
+  const [pdfMod, setPdfMod] = useState<ReactPdfModule | null>(null);
+  const [pdfFile, setPdfFile] = useState<{ data: Uint8Array } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  // Build the proxy URL with inline=true so the PDF is rendered inline in the iframe
-  const proxyUrl = dipaUrl
-    ? apiPath(`/satker/satudja-proxy?url=${encodeURIComponent(dipaUrl)}&inline=true`)
-    : null;
+  const pdfOptions = useMemo(() => ({}), []);
 
-  // Reset state when modal closes
+  // Reset on open
   useEffect(() => {
-    if (!isOpen) {
-      setIframeError(false);
-      setIsFullscreen(false);
+    if (isOpen) {
+      setPageNumber(1);
+      setNumPages(0);
+      setError("");
     }
-  }, [isOpen]);
+  }, [isOpen, dipaUrl]);
 
-  // Close on Escape
+  // Fetch PDF binary via POST (IDM only intercepts GET requests)
+  useEffect(() => {
+    if (!isOpen || !dipaUrl) {
+      setPdfFile(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    setPdfFile(null);
+
+    const url = "/api/satudja-pdf";
+
+    fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url: dipaUrl }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.arrayBuffer();
+      })
+      .then((buf) => {
+        if (cancelled) return;
+        if (!buf || buf.byteLength === 0) throw new Error("File kosong");
+        const magic = String.fromCharCode(...new Uint8Array(buf.slice(0, 4)));
+        if (magic !== "%PDF") {
+          throw new Error("Sesi SatuDJA expired. Refresh halaman dan coba lagi.");
+        }
+        setPdfFile({ data: new Uint8Array(buf) });
+      })
+      .catch((err) => { if (!cancelled) setError(err?.message || "Gagal memuat PDF"); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [isOpen, dipaUrl]);
+
+  // Lazy load react-pdf
   useEffect(() => {
     if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (isFullscreen) setIsFullscreen(false);
-        else onClose();
+    let cancelled = false;
+    (async () => {
+      try {
+        const mod = await import("react-pdf");
+        mod.pdfjs.GlobalWorkerOptions.workerSrc = "/api/pdfjs-worker";
+        if (!cancelled) setPdfMod(mod as ReactPdfModule);
+      } catch {
+        if (!cancelled) setError("Penampil PDF gagal dimuat.");
       }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, isFullscreen, onClose]);
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  // Track container width
+  useEffect(() => {
+    if (!isOpen || !containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(Math.max(320, Math.floor(entry.contentRect.width - 24)));
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [isOpen]);
 
-  const panelClass = isFullscreen
-    ? "fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-900"
-    : "relative z-10 flex flex-col w-[95vw] max-w-5xl h-[90vh] bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden border border-border";
+  const handleDownload = () => {
+    if (!pdfFile) return;
+    const blob = new Blob([pdfFile.data], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(title || "DIPA").replace(/[\\/:*?"<>|]/g, "_")}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      {/* Backdrop (hidden in fullscreen) */}
-      {!isFullscreen && (
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+        aria-describedby={undefined}
+      >
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="truncate">{title}</DialogTitle>
+        </DialogHeader>
+
         <div
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Modal Panel */}
-      <div className={panelClass}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b bg-[#c0392b] text-white shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-semibold text-sm truncate">{title}</span>
-            {dipaUrl && proxyUrl && (
-              <a
-                href={proxyUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 opacity-70 hover:opacity-100 transition-opacity"
-                title="Buka di tab baru"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1 shrink-0">
-            {dipaUrl && (
-              <a
-                href={apiPath(`/satker/satudja-proxy?url=${encodeURIComponent(dipaUrl)}`)}
-                download
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none hover:bg-white/20 h-8 w-8 text-white"
-                title="Unduh PDF"
-              >
-                <Download className="h-4 w-4" />
-              </a>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFullscreen((prev) => !prev)}
-              className="text-white hover:bg-white/20 h-8 w-8"
-              aria-label={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
-              title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-white hover:bg-white/20 h-8 w-8"
-              aria-label="Tutup modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* PDF Viewer */}
-        <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-          {proxyUrl && !iframeError ? (
-            <iframe
-              src={proxyUrl}
-              title={title}
-              className="w-full h-full border-0"
-              onError={() => setIframeError(true)}
-            />
-          ) : iframeError ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground px-6 text-center">
-              <p className="text-sm">Browser tidak dapat menampilkan PDF inline.</p>
-              {proxyUrl && (
-                <a
-                  href={proxyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                >
-                  <Button variant="outline" size="sm">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Unduh PDF
-                  </Button>
-                </a>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-              Tidak ada URL dokumen PDF.
+          ref={containerRef}
+          className="flex min-h-0 flex-1 flex-col items-center justify-start overflow-auto bg-muted/30 p-3"
+        >
+          {loading && (
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-muted-foreground">
+              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm">Memuat PDF...</p>
             </div>
           )}
+
+          {!loading && error && (
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-red-600 text-center px-6">
+              <AlertCircle className="h-8 w-8" />
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && pdfMod && pdfFile && (
+            <pdfMod.Document
+              file={pdfFile}
+              options={pdfOptions}
+              onLoadSuccess={({ numPages: n }) => { setNumPages(n); setError(""); }}
+              onLoadError={(err: any) => setError(err?.message || "Gagal merender PDF")}
+              loading={<div className="p-4">Memuat PDF...</div>}
+              error={<div className="p-4 text-sm text-red-600">Gagal merender PDF</div>}
+            >
+              <pdfMod.Page
+                pageNumber={pageNumber}
+                {...(containerWidth ? { width: containerWidth } : {})}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </pdfMod.Document>
+          )}
         </div>
-      </div>
-    </div>
+
+        <DialogFooter className="p-6 pt-4 sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" disabled={pageNumber <= 1} onClick={() => setPageNumber((p) => p - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-sm font-medium min-w-[88px] text-center">
+              {pageNumber} / {numPages || 1}
+            </div>
+            <Button variant="outline" size="icon" disabled={pageNumber >= numPages} onClick={() => setPageNumber((p) => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}>
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(3, s + 0.1))}>
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            {pdfFile && (
+              <Button variant="outline" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Unduh
+              </Button>
+            )}
+            <Button variant="outline" onClick={onClose}>
+              Tutup
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

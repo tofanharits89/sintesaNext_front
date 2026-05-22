@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, ExternalLink, RefreshCw, AlertCircle, FileSpreadsheet } from "lucide-react";
+import { RefreshCw, AlertCircle, FileSpreadsheet } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { apiPath } from "@/lib/config/base-path";
 import * as XLSX from "xlsx";
@@ -202,16 +209,6 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
     };
   }, [htmlContent, loading, error]);
 
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
-
   // Export POK HTML table to Excel file
   const handleDownloadExcel = () => {
     const table = contentRef.current?.querySelector("table#pvtTable");
@@ -238,75 +235,27 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
     XLSX.writeFile(wb, `${safeTitle}.xlsx`);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+        aria-describedby={undefined}
+      >
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="truncate">{title}</DialogTitle>
+        </DialogHeader>
 
-      {/* Modal Panel */}
-      <div className="relative z-10 flex flex-col w-[95vw] max-w-5xl h-[90vh] bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden border border-border">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b bg-[#4a6baf] text-white shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-semibold text-sm truncate">{title}</span>
-            {pokUrl && (
-              <a
-                href={pokUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 opacity-70 hover:opacity-100 transition-opacity"
-                title="Buka di tab baru"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {htmlContent && !loading && !error && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDownloadExcel}
-                className="text-white hover:bg-white/20 h-8 w-8"
-                title="Unduh Excel (XLSX)"
-                aria-label="Unduh Excel"
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-white hover:bg-white/20 h-8 w-8"
-              aria-label="Tutup modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-auto p-0 bg-white dark:bg-zinc-50">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/30 p-3">
           {loading && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-              <RefreshCw className="h-8 w-8 animate-spin text-[#4a6baf]" />
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-muted-foreground">
+              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm">Memuat konten POK...</p>
             </div>
           )}
 
           {!loading && error && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 text-red-600 px-6 text-center">
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 text-red-600 px-6 text-center">
               <AlertCircle className="h-8 w-8" />
               <p className="text-sm font-medium">{error}</p>
               <Button
@@ -325,7 +274,6 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
 
           {!loading && !error && htmlContent && (
             <>
-              {/* Premium styling for POK table */}
               <style dangerouslySetInnerHTML={{
                 __html: `
                 section.content, .content {
@@ -335,11 +283,10 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
                 }
                 .tableFixHead {
                   overflow: auto;
-                  max-height: 78vh;
+                  max-height: 70vh;
                   position: relative;
                   border: 1px solid #e4e4e7;
                   border-radius: 8px;
-                  margin: 8px;
                   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
                   background: white;
                 }
@@ -352,13 +299,12 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
                 #pvtTable th {
                   position: sticky;
                   top: 0;
-                  background-color: #4a6baf !important;
-                  color: white !important;
+                  background-color: hsl(var(--muted)) !important;
                   font-weight: 600;
                   text-align: center;
                   z-index: 10;
                   box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-                  border-bottom: 2px solid #3b5490;
+                  border-bottom: 1px solid hsl(var(--border));
                 }
                 #pvtTable th, #pvtTable td {
                   padding: 8px 12px;
@@ -374,42 +320,24 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
                   font-weight: 600;
                   color: #1e293b;
                 }
-                #pvtTable tr.level-1 {
-                  background-color: #ffffff;
-                  font-weight: 500;
-                  color: #334155;
-                }
-                #pvtTable tr.level-2 {
-                  background-color: #ffffff;
-                  color: #475569;
-                }
-                #pvtTable tr.level-3 {
-                  background-color: #ffffff;
-                  color: #64748b;
-                }
-                #pvtTable tr:hover {
-                  background-color: #f1f5f9 !important;
-                }
-                /* Right align financial/numeric columns: Volume, Harga Satuan, Jumlah (columns 3, 4, 5) */
+                #pvtTable tr.level-1 { font-weight: 500; color: #334155; }
+                #pvtTable tr.level-2 { color: #475569; }
+                #pvtTable tr.level-3 { color: #64748b; }
+                #pvtTable tr:hover { background-color: #f1f5f9 !important; }
                 #pvtTable td:nth-child(3),
                 #pvtTable td:nth-child(4),
                 #pvtTable td:nth-child(5) {
                   text-align: right;
                   font-variant-numeric: tabular-nums;
                 }
-                /* Left align first column (Kode) and second column (Uraian) */
                 #pvtTable td:nth-child(1),
-                #pvtTable td:nth-child(2) {
-                  text-align: left;
-                }
-                /* Indentations for Nested Levels */
+                #pvtTable td:nth-child(2) { text-align: left; }
                 #pvtTable tr.level-1 td:nth-child(2) { padding-left: 28px; }
                 #pvtTable tr.level-2 td:nth-child(2) { padding-left: 48px; }
                 #pvtTable tr.level-3 td:nth-child(2) { padding-left: 68px; }
                 #pvtTable tr.level-4 td:nth-child(2) { padding-left: 88px; }
                 #pvtTable tr.level-5 td:nth-child(2) { padding-left: 108px; }
                 #pvtTable tr.level-6 td:nth-child(2) { padding-left: 128px; }
-                
                 .tree-toggle-icon {
                   transition: transform 0.15s ease-in-out;
                   font-family: monospace;
@@ -417,14 +345,28 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
               ` }} />
               <div
                 ref={contentRef}
-                className="pok-content p-4 text-sm"
-                // eslint-disable-next-line react/no-danger
+                className="pok-content text-sm"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
             </>
           )}
         </div>
-      </div>
-    </div>
+
+        <DialogFooter className="p-6 pt-4 sm:justify-between">
+          <div />
+          <div className="flex items-center gap-2">
+            {htmlContent && !loading && !error && (
+              <Button variant="outline" onClick={handleDownloadExcel}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Unduh Excel
+              </Button>
+            )}
+            <Button variant="outline" onClick={onClose}>
+              Tutup
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
