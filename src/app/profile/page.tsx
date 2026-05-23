@@ -74,21 +74,73 @@ export default function ProfilePage() {
     setKdkppn(current.kdkppn ?? "");
     setNmkanwil(current.nmkanwil ?? "");
     setNmkppn(current.nmkppn ?? "");
+    setAvatarUrl(current.avatar ?? undefined);
   }, [current]);
 
   function onPickFile() {
     fileInputRef.current?.click();
   }
 
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.type.startsWith("image/")) {
       toast.error("Harap pilih file gambar");
       return;
     }
-    const url = URL.createObjectURL(f);
-    setAvatarUrl(url);
+
+    const formData = new FormData();
+    formData.append("avatar", f);
+
+    const uploadToastId = toast.loading("Mengunggah foto profil...");
+
+    try {
+      await prefetchCsrf();
+      const trace = `prof_av_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      
+      const response = await apiClient.post<any>("/users/profile/avatar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "X-Debug-Source": "profile.page.uploadAvatar",
+          "X-Debug-Trace": trace,
+        },
+      });
+
+      if (response && response.success !== false) {
+        toast.success("Foto profil berhasil diunggah", { id: uploadToastId });
+        setAvatarUrl(response.data?.avatar || response.avatar);
+        refetch();
+      } else {
+        toast.error(response?.message || "Gagal mengunggah foto profil", { id: uploadToastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Terjadi kesalahan saat mengunggah foto", { id: uploadToastId });
+    }
+  }
+
+  async function onDeleteAvatar() {
+    const deleteToastId = toast.loading("Menghapus foto profil...");
+    try {
+      await prefetchCsrf();
+      const trace = `prof_av_del_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      
+      const response = await apiClient.delete<any>("/users/profile/avatar", {
+        headers: {
+          "X-Debug-Source": "profile.page.deleteAvatar",
+          "X-Debug-Trace": trace,
+        },
+      });
+
+      if (response && response.success !== false) {
+        toast.success("Foto profil berhasil dihapus", { id: deleteToastId });
+        setAvatarUrl(undefined);
+        refetch();
+      } else {
+        toast.error(response?.message || "Gagal menghapus foto profil", { id: deleteToastId });
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Terjadi kesalahan saat menghapus foto", { id: deleteToastId });
+    }
   }
 
   function onReset() {
@@ -107,7 +159,7 @@ export default function ProfilePage() {
     setConfirmPassword("");
     setShowNewPassword(false);
     setShowConfirmPassword(false);
-    setAvatarUrl(undefined);
+    setAvatarUrl(current?.avatar ?? undefined);
     toast.info("Perubahan dibatalkan");
     refetch();
   }
@@ -322,10 +374,10 @@ export default function ProfilePage() {
             </Avatar>
             <div className="flex gap-2">
               <Button variant="outline" onClick={onPickFile}>
-                Unggah Foto
+                {avatarUrl ? "Ganti Foto" : "Unggah Foto"}
               </Button>
               {avatarUrl && (
-                <Button variant="ghost" onClick={() => setAvatarUrl(undefined)}>
+                <Button variant="ghost" onClick={onDeleteAvatar}>
                   Hapus
                 </Button>
               )}
@@ -338,7 +390,7 @@ export default function ProfilePage() {
               onChange={onFileChange}
             />
             <p className="text-xs text-muted-foreground">
-              Format gambar (JPG, PNG). Maks 5MB.
+              Format gambar (PNG, JPG, JPEG, WEBP, GIF). Maks 3MB.
             </p>
           </div>
         </div>

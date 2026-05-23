@@ -29,6 +29,7 @@ export interface User {
   allowMultiSession?: boolean;
   status: "active" | "disabled";
   createdAt: string;
+  avatar?: string | null;
 }
 
 // API response interfaces
