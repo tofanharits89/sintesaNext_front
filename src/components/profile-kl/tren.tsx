@@ -35,11 +35,11 @@ interface TrenProps {
 }
 
 interface TrenForm {
-  input1: string; // Tren Dukman / Teknis
-  input2: string; // Tren Jenis Belanja
-  input3: string; // Tren Belanja Bulanan
-  input4: string; // Tren Sumber Dana
-  input5: string; // Tren UP/TUP
+  tabel1: string; // Tren Dukman / Teknis
+  tabel2: string; // Tren Jenis Belanja
+  tabel3: string; // Tren Belanja Bulanan
+  tabel4: string; // Tren Sumber Dana
+  tabel5: string; // Tren UP/TUP
 }
 
 function byTabel(isi: TrenRow[], tabel: string) {
@@ -61,21 +61,21 @@ export default function Tren({ show, handleClose, data, isi }: TrenProps) {
   const [loading, setLoading] = useState(false);
   const [updateInfo, setUpdateInfo] = useState("");
   const [formData, setFormData] = useState<TrenForm>({
-    input1: "",
-    input2: "",
-    input3: "",
-    input4: "",
-    input5: "",
+    tabel1: "",
+    tabel2: "",
+    tabel3: "",
+    tabel4: "",
+    tabel5: "",
   });
 
   useEffect(() => {
     if (show) {
       setFormData({
-        input1: byTabel(isi, "tren_dukman"),
-        input2: byTabel(isi, "tren_jenbel"),
-        input3: byTabel(isi, "tren_bulanan"),
-        input4: byTabel(isi, "tren_sdana"),
-        input5: byTabel(isi, "tren_uptup"),
+        tabel1: byTabel(isi, "tren_dukman"),
+        tabel2: byTabel(isi, "tren_jenbel"),
+        tabel3: byTabel(isi, "tren_bulanan"),
+        tabel4: byTabel(isi, "tren_sdana"),
+        tabel5: byTabel(isi, "tren_uptup"),
       });
       const first = isi[0];
       if (first) {
@@ -107,11 +107,11 @@ export default function Tren({ show, handleClose, data, isi }: TrenProps) {
   };
 
   const fields: { name: keyof TrenForm; label: string }[] = [
-    { name: "input1", label: "Tren Dukman / Teknis" },
-    { name: "input2", label: "Tren Jenis Belanja" },
-    { name: "input3", label: "Tren Belanja Bulanan" },
-    { name: "input4", label: "Tren Sumber Dana" },
-    { name: "input5", label: "Tren UP / TUP" },
+    { name: "tabel1", label: "Tren Dukman / Teknis" },
+    { name: "tabel2", label: "Tren Jenis Belanja" },
+    { name: "tabel3", label: "Tren Belanja Bulanan" },
+    { name: "tabel4", label: "Tren Sumber Dana" },
+    { name: "tabel5", label: "Tren UP / TUP" },
   ];
 
   return (

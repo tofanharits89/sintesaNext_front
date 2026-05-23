@@ -11,40 +11,47 @@ import Temuan, { type TemuanRow } from "./temuan";
 import OutputUtama, { type OutputRow } from "./output-utama";
 import IkpaForm, { type IkpaRow } from "./ikpa-form";
 import Pdf from "./pdf";
-import { LEMBAGA_CODES } from "@/components/profile-kl/landing-kl";
 import kddept from "@/data/kddept.json";
 import { Plus, FileText } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
+import { ColumnDef } from "@tanstack/react-table";
+
+// ─── kddept codes that should be classified as Lembaga ──────────────────
+export const LEMBAGA_CODES = new Set([
+  "004", "050", "051", "052", "054", "055", "057", "063", "064", "066", "075", "076", "078", "083", "084", "085", "086", "087", "088", "089", "093", "100", "103", "106", "107", "108", "110", "111", "112", "113", "115", "116", "117", "118", "119", "122", "123", "124", "125", "126", "127", "128", "153",
+]);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 type FilterData = { thang: string; periode: string; dept: string };
 
-// ─── Loading skeleton ─────────────────────────────────────────────────────────
-
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 function LoadingRows() {
   return (
     <div className="space-y-2 animate-pulse">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-4 rounded bg-gray-200 dark:bg-gray-700" />
+        <div key={i} className="h-4 rounded bg-muted" />
       ))}
     </div>
   );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-
 export default function LandingKinerja() {
   const { user } = useAuth();
-  const username = user?.name ?? user?.username ?? "";
+
+  const currentYear = new Date().getFullYear().toString();
+  const currentMonth = (new Date().getMonth() + 1).toString();
+  const defaultTA = ["2020", "2021", "2022", "2023", "2024", "2025", "2026"].includes(currentYear)
+    ? currentYear
+    : "2026";
 
   const [inputValues, setInputValues] = useState<FilterData>({
-    thang: "2025",
-    periode: "1",
+    thang: defaultTA,
+    periode: currentMonth,
     dept: "027",
   });
 
-  // Data states
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<IsuRow[]>([]);
   const [dataTren, setDataTren] = useState<TrenRow[]>([]);
@@ -52,158 +59,160 @@ export default function LandingKinerja() {
   const [dataOutput, setDataOutput] = useState<OutputRow[]>([]);
   const [dataIkpa, setDataIkpa] = useState<IkpaRow[]>([]);
 
-  // Panel visibility
   const [show, setShow] = useState(false);
   const [showTren, setShowTren] = useState(false);
   const [showTemuan, setShowTemuan] = useState(false);
   const [showOutput, setShowOutput] = useState(false);
   const [showIkpa, setShowIkpa] = useState(false);
-
-  // PDF
   const [showPdf, setShowPdf] = useState(false);
 
   // ─── Derived ────────────────────────────────────────────────────────────────
-
-  const isLembaga = LEMBAGA_CODES.has(inputValues.dept);
-  const typeLabel = isLembaga ? "Lembaga" : "Kementerian / Lembaga";
-
   const deptInfo = (kddept as { kddept: string; nmdept: string }[]).find(
     (k) => k.kddept === inputValues.dept,
   );
-
-  // Tren grouped by tabel
   const trenDukman = dataTren.filter((r) => r.tabel === "tren_dukman");
   const trenJenbel = dataTren.filter((r) => r.tabel === "tren_jenbel");
   const trenBulanan = dataTren.filter((r) => r.tabel === "tren_bulanan");
   const trenSdana = dataTren.filter((r) => r.tabel === "tren_sdana");
   const trenUptup = dataTren.filter((r) => r.tabel === "tren_uptup");
 
-  // Merged temuan for table display
   const mergedTemuan = dataTemuan.reduce<(TemuanRow & { isuList: string[] })[]>(
     (acc, curr) => {
       const existing = acc.find((x) => x.id_temuan === curr.id_temuan);
-      if (existing) {
-        existing.isuList.push(curr.isu);
-      } else {
-        acc.push({ ...curr, isuList: [curr.isu] });
-      }
+      if (existing) existing.isuList.push(curr.isu);
+      else acc.push({ ...curr, isuList: [curr.isu] });
       return acc;
     },
     [],
   );
-
   const namaoutputList = [...new Set(dataOutput.map((r) => r.namaoutput))];
 
-  // ─── Data fetchers ──────────────────────────────────────────────────────────
-
+  // ─── Fetchers ────────────────────────────────────────────────────────────────
   const fetchIsu = useCallback(async () => {
     setLoading(true);
     try {
       const res = await directBackendClient.get<{ data: IsuRow[] }>(
-        `/kinerja/isu?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}`,
+        `/kinerja/isu?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}&_t=${Date.now()}`,
       );
       setData(res.data ?? []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   }, [inputValues]);
 
   const fetchTren = useCallback(async () => {
     try {
       const res = await directBackendClient.get<{ data: TrenRow[] }>(
-        `/kinerja/tren?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}`,
+        `/kinerja/tren?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}&_t=${Date.now()}`,
       );
       setDataTren(res.data ?? []);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }, [inputValues]);
 
   const fetchOutput = useCallback(async () => {
     try {
       const res = await directBackendClient.get<{ data: OutputRow[] }>(
-        `/kinerja/output?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}`,
+        `/kinerja/output?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}&_t=${Date.now()}`,
       );
       setDataOutput(res.data ?? []);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }, [inputValues]);
 
   const fetchTemuan = useCallback(async () => {
     try {
       const res = await directBackendClient.get<{ data: TemuanRow[] }>(
-        `/kinerja/temuan?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}`,
+        `/kinerja/temuan?thang=${inputValues.thang}&dept=${inputValues.dept}&periode=${inputValues.periode}&_t=${Date.now()}`,
       );
       setDataTemuan(res.data ?? []);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }, [inputValues]);
 
   const fetchIkpa = useCallback(async () => {
     try {
       const res = await directBackendClient.get<{ data: IkpaRow[] }>(
-        `/kinerja/ikpa?dept=${inputValues.dept}&periode=${inputValues.periode}`,
+        `/kinerja/ikpa?dept=${inputValues.dept}&periode=${inputValues.periode}&_t=${Date.now()}`,
       );
       setDataIkpa(res.data ?? []);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }, [inputValues]);
 
   useEffect(() => {
-    fetchIsu();
-    fetchTren();
-    fetchOutput();
-    fetchTemuan();
-    fetchIkpa();
+    fetchIsu(); fetchTren(); fetchOutput(); fetchTemuan(); fetchIkpa();
   }, [fetchIsu, fetchTren, fetchOutput, fetchTemuan, fetchIkpa]);
 
-  const handleInputChange = (id: string, value: string) => {
+  const handleInputChange = (id: string, value: string) =>
     setInputValues((prev) => ({ ...prev, [id]: value }));
-  };
 
-  const updateReload = () => {
-    fetchTemuan();
-    fetchOutput();
-    fetchIkpa();
-  };
+  const updateReload = () => { fetchTemuan(); fetchOutput(); fetchIkpa(); };
 
-  const handleCloseIsu = () => {
-    setShow(false);
-    fetchIsu();
-  };
-  const handleCloseTren = () => {
-    setShowTren(false);
-    fetchTren();
-  };
-  const handleCloseTemuan = () => {
-    setShowTemuan(false);
-    fetchTemuan();
-  };
-  const handleCloseOutput = () => {
-    setShowOutput(false);
-    fetchOutput();
-  };
-  const handleCloseIkpa = () => {
-    setShowIkpa(false);
-    fetchIkpa();
-  };
+  // ─── Column Definitions ──────────────────────────────────────────────────────
+  const temuanColumns: ColumnDef<any>[] = [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "temuan",
+      header: () => <div className="text-center font-medium">Temuan BPK</div>,
+      cell: ({ row }) => (
+        <div className="text-left font-medium max-w-[400px] whitespace-normal break-words">
+          {row.getValue("temuan")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "nilai",
+      header: () => <div className="text-center font-medium">Nilai</div>,
+      cell: ({ row }) => (
+        <div className="text-left text-muted-foreground">{row.getValue("nilai")}</div>
+      ),
+    },
+    {
+      id: "isuList",
+      header: () => <div className="text-center font-medium">Tindak Lanjut</div>,
+      cell: ({ row }) => (
+        <ol className="ml-4 list-decimal space-y-0.5 text-xs text-muted-foreground">
+          {(row.original.isuList as string[]).map((s, i) => (
+            <li key={i}>{s}</li>
+          ))}
+        </ol>
+      ),
+    },
+  ];
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  const outputColumns: ColumnDef<any>[] = [
+    {
+      accessorKey: "tahun",
+      header: () => <div className="text-center font-medium">Tahun</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("tahun")}</div>,
+    },
+    {
+      accessorKey: "pagu",
+      header: () => <div className="text-center font-medium">Pagu</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("pagu")}</div>,
+    },
+    {
+      accessorKey: "realisasi",
+      header: () => <div className="text-center font-medium">Realisasi</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("realisasi")}</div>,
+    },
+    {
+      accessorKey: "persen",
+      header: () => <div className="text-center font-medium">Persen</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("persen")}</div>,
+    },
+  ];
 
+  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <main className="space-y-4 p-4 print:p-0">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+    <div className="space-y-6 animate-in fade-in duration-700">
+      {/* ── Header ── */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-            Profil Kinerja {typeLabel}
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Profil Kinerja K/L
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Isu Spesifik &amp; Analisa Kinerja Pelaksanaan Anggaran
           </p>
         </div>
@@ -216,17 +225,13 @@ export default function LandingKinerja() {
         </Button>
       </div>
 
-      {/* Filter */}
-      <div className="rounded-xl border bg-white dark:bg-card shadow-sm">
-        <Pilihan
-          onInputChange={handleInputChange}
-          defaultDept={inputValues.dept}
-        />
+      {/* ── Filter ── */}
+      <div className="rounded-xl border bg-card shadow-sm">
+        <Pilihan onInputChange={handleInputChange} defaultDept={inputValues.dept} />
       </div>
 
-      {/* Top section: Logo + ISU */}
-      <div className="flex gap-4 rounded-xl border-2 border-blue-200 bg-white dark:bg-card p-4">
-        {/* Logo */}
+      {/* ── Logo + ISU ── */}
+      <div className="flex gap-4 rounded-xl border-2 border-primary/20 bg-card p-4 shadow-sm">
         <div className="flex w-28 shrink-0 flex-col items-center justify-center gap-2">
           <div className="relative h-20 w-20">
             <Image
@@ -234,106 +239,87 @@ export default function LandingKinerja() {
               alt="logo"
               fill
               className="object-contain"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "/logo/null.png";
-              }}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/logo/null.png"; }}
             />
           </div>
           {deptInfo && (
-            <p className="text-center text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
+            <p className="text-center text-xs font-semibold leading-tight text-foreground">
               {deptInfo.nmdept.slice(0, 80)}
             </p>
           )}
         </div>
 
-        {/* ISU content */}
         <div
-          className="flex-1 cursor-pointer rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex-1 cursor-pointer rounded-lg p-3 hover:bg-muted transition-colors"
           onClick={() => setShow(true)}
         >
-          <p className="font-bold text-center text-sm mb-2">
-            Isu Spesifik Pelaksanaan Anggaran {Number(inputValues.thang) - 4}–
-            {inputValues.thang}
+          <p className="mb-2 text-center text-sm font-bold text-foreground">
+            Isu Spesifik Pelaksanaan Anggaran {Number(inputValues.thang) - 4}–{inputValues.thang}
           </p>
           {loading ? (
             <LoadingRows />
           ) : data.length > 0 ? (
-            <ol className="list-decimal ml-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-              {data.map((item, idx) => (
-                <li key={item.id ?? idx}>{item.isu}</li>
-              ))}
+            <ol className="ml-5 list-decimal space-y-1 text-sm text-foreground">
+              {data.map((item, idx) => <li key={item.id ?? idx}>{item.isu}</li>)}
             </ol>
           ) : (
-            <p className="text-sm italic text-gray-400">
+            <p className="text-sm italic text-muted-foreground">
               Belum ada data — klik untuk menambahkan isu.
             </p>
           )}
         </div>
       </div>
 
-      {/* Charts + Tren grid */}
+      {/* ── Tren Grid ── */}
       <div
-        className="grid cursor-pointer grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 rounded-xl border bg-white dark:bg-card p-4"
+        className="grid cursor-pointer grid-cols-1 gap-3 rounded-xl border bg-card p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-3"
         onClick={() => setShowTren(true)}
       >
         {[
-          { label: "Tren Dukman / Teknis", data: trenDukman },
-          { label: "Tren Jenis Belanja", data: trenJenbel },
-          { label: "Tren Belanja Bulanan", data: trenBulanan },
-          { label: "Tren Sumber Dana", data: trenSdana },
-          { label: "Tren UP / TUP", data: trenUptup },
+          { label: "Tren Dukman / Teknis",  data: trenDukman  },
+          { label: "Tren Jenis Belanja",    data: trenJenbel  },
+          { label: "Tren Belanja Bulanan",  data: trenBulanan },
+          { label: "Tren Sumber Dana",      data: trenSdana   },
+          { label: "Tren UP / TUP",         data: trenUptup   },
         ].map(({ label, data: d }) => (
-          <div key={label} className="rounded-lg border p-3">
-            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-              {label}
-            </p>
+          <div key={label} className="rounded-lg border bg-background p-3">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">{label}</p>
             {d.length > 0 ? (
-              <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-4">
-                {d[0]!.isu}
-              </p>
+              <p className="line-clamp-4 text-xs text-foreground">{d[0]!.isu}</p>
             ) : (
-              <p className="text-xs italic text-gray-400">
-                Belum ada data tren.
-              </p>
+              <p className="text-xs italic text-muted-foreground">Belum ada data tren.</p>
             )}
           </div>
         ))}
 
-        {/* IKPA */}
+        {/* IKPA card */}
         <div
-          className="rounded-lg border p-3 cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowIkpa(true);
-          }}
+          className="cursor-pointer rounded-lg border bg-background p-3"
+          onClick={(e) => { e.stopPropagation(); setShowIkpa(true); }}
         >
-          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-            Nilai IKPA
-          </p>
+          <p className="mb-2 text-xs font-semibold text-muted-foreground">Nilai IKPA</p>
           {dataIkpa.length > 0 ? (
             <ul className="space-y-1">
               {dataIkpa.map((item) => (
-                <li key={item.id} className="flex justify-between text-xs">
+                <li key={item.id} className="flex justify-between text-xs text-foreground">
                   <span>{item.thang}</span>
                   <span className="font-semibold">{item.nilaiikpa}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-xs italic text-gray-400">Belum ada data IKPA.</p>
+            <p className="text-xs italic text-muted-foreground">Belum ada data IKPA.</p>
           )}
         </div>
       </div>
 
-      {/* Temuan BPK */}
-      <div className="rounded-xl border bg-white dark:bg-card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-gray-700 dark:text-gray-300">
-            Temuan BPK
-          </h2>
+      {/* ── Temuan BPK ── */}
+      <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-foreground">Temuan BPK</h2>
           <button
             onClick={() => setShowTemuan(true)}
-            className="text-gray-500 hover:text-gray-700"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -341,93 +327,53 @@ export default function LandingKinerja() {
         {loading ? (
           <LoadingRows />
         ) : (
-          <div className="overflow-x-auto max-h-72 overflow-y-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-gray-100 dark:bg-gray-700 text-left sticky top-0">
-                  <th className="border px-3 py-2">No</th>
-                  <th className="border px-3 py-2">Temuan BPK</th>
-                  <th className="border px-3 py-2">Nilai</th>
-                  <th className="border px-3 py-2">Tindak Lanjut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mergedTemuan.map((item, idx) => (
-                  <tr
-                    key={item.id_temuan}
-                    className="even:bg-gray-50 dark:even:bg-gray-800"
-                  >
-                    <td className="border px-3 py-2">{idx + 1}</td>
-                    <td className="border px-3 py-2">{item.temuan}</td>
-                    <td className="border px-3 py-2">{item.nilai}</td>
-                    <td className="border px-3 py-2">
-                      <ol className="list-decimal ml-4 space-y-0.5">
-                        {item.isuList.map((s, i) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ol>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="max-h-72 overflow-x-auto overflow-y-auto">
+            <DataTable
+              columns={temuanColumns}
+              data={mergedTemuan}
+              hidePagination={mergedTemuan.length <= 10}
+              initialPageSize={10}
+              emptyMessage="Belum ada data temuan."
+            />
           </div>
         )}
       </div>
 
-      {/* Output Utama */}
-      <div className="rounded-xl border bg-white dark:bg-card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-gray-700 dark:text-gray-300">
+      {/* ── Output Utama ── */}
+      <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-foreground">
             Output Utama Belanja K/L
           </h2>
           <button
             onClick={() => setShowOutput(true)}
-            className="text-gray-500 hover:text-gray-700"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             <Plus className="h-5 w-5" />
           </button>
         </div>
         {loading ? (
           <LoadingRows />
-        ) : (
+        ) : namaoutputList.length > 0 ? (
           <div className="space-y-4">
             {namaoutputList.map((outputName, idx) => {
-              const rows = dataOutput.filter(
-                (r) => r.namaoutput === outputName,
-              );
+              const rows = dataOutput.filter((r) => r.namaoutput === outputName);
               return (
                 <div key={idx}>
-                  <h3 className="text-xs font-bold text-center mb-2">
+                  <h3 className="mb-2 text-center text-xs font-bold text-foreground">
                     {outputName || "—"}
                   </h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-700 text-left">
-                          <th className="border px-3 py-2">Tahun</th>
-                          <th className="border px-3 py-2">Pagu</th>
-                          <th className="border px-3 py-2">Realisasi</th>
-                          <th className="border px-3 py-2">Persen</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((r, i) => (
-                          <tr
-                            key={i}
-                            className="even:bg-gray-50 dark:even:bg-gray-800"
-                          >
-                            <td className="border px-3 py-2">{r.tahun}</td>
-                            <td className="border px-3 py-2">{r.pagu}</td>
-                            <td className="border px-3 py-2">{r.realisasi}</td>
-                            <td className="border px-3 py-2">{r.persen}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <DataTable
+                      columns={outputColumns}
+                      data={rows}
+                      hidePagination={true}
+                      initialPageSize={10}
+                      emptyMessage="Belum ada data output."
+                    />
                   </div>
                   {rows[0]?.catatan && (
-                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 text-justify">
+                    <p className="mt-1 text-justify text-xs text-muted-foreground">
                       {rows[0].catatan}
                     </p>
                   )}
@@ -435,41 +381,50 @@ export default function LandingKinerja() {
               );
             })}
           </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable 
+              columns={[
+                {
+                  id: "no",
+                  header: () => <div className="text-center font-medium">No</div>,
+                  cell: () => <div className="text-center">—</div>,
+                },
+                {
+                  accessorKey: "namaoutput",
+                  header: () => <div className="text-center font-medium">Nama Output</div>,
+                  cell: () => <div className="text-center">—</div>,
+                },
+                {
+                  accessorKey: "catatan",
+                  header: () => <div className="text-center font-medium">Keterangan</div>,
+                  cell: () => <div className="text-center">—</div>,
+                }
+              ]} 
+              data={[]} 
+              hidePagination={true}
+              emptyMessage="Belum ada data output utama."
+            />
+          </div>
         )}
       </div>
 
       {/* ── Panels ── */}
-      <Isu
-        show={show}
-        data={inputValues}
-        isi={data}
-        handleClose={handleCloseIsu}
-      />
-      <Tren
-        show={showTren}
-        data={inputValues}
-        isi={dataTren}
-        handleClose={handleCloseTren}
-      />
+      <Isu  show={show}  data={inputValues} isi={data}  handleClose={() => { setShow(false); fetchIsu(); }} />
+      <Tren show={showTren} data={inputValues} isi={dataTren} handleClose={() => { setShowTren(false); fetchTren(); }} />
       <Temuan
-        show={showTemuan}
-        data={inputValues}
-        isi={dataTemuan}
-        handleClose={handleCloseTemuan}
+        show={showTemuan} data={inputValues} isi={dataTemuan}
+        handleClose={() => { setShowTemuan(false); fetchTemuan(); }}
         updateReload={updateReload}
       />
       <OutputUtama
-        show={showOutput}
-        data={inputValues}
-        isi={dataOutput}
-        handleClose={handleCloseOutput}
+        show={showOutput} data={inputValues} isi={dataOutput}
+        handleClose={() => { setShowOutput(false); fetchOutput(); }}
         updateReload={updateReload}
       />
       <IkpaForm
-        show={showIkpa}
-        data={inputValues}
-        isi={dataIkpa}
-        handleClose={handleCloseIkpa}
+        show={showIkpa} data={inputValues} isi={dataIkpa}
+        handleClose={() => { setShowIkpa(false); fetchIkpa(); }}
         updateReload={updateReload}
       />
 
@@ -487,6 +442,6 @@ export default function LandingKinerja() {
           onDone={() => setShowPdf(false)}
         />
       )}
-    </main>
+    </div>
   );
 }

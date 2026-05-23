@@ -200,8 +200,8 @@ const defaultMenu: MenuItem[] = [
   },
 
   {
-    label: "Profil K/L",
-    children: [{ label: "Kementerian" }, { label: "Lembaga" }],
+    label: "Profil Kinerja K/L",
+    children: [{ label: "Dashboard Kinerja K/L" }],
   },
   {
     label: "Tentang Kita",
@@ -225,7 +225,7 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/epa", parent: "EPA" },
   { prefix: "/spending-review", parent: "Spending Review" },
   { prefix: "/iku-pa", parent: "IKI Dit.PA" },
-  { prefix: "/profile-kl", parent: "Profil K/L" },
+  { prefix: "/profile-kl", parent: "Profil Kinerja K/L" },
   { prefix: "/tentang-kita", parent: "Tentang Kita" },
 ];
 
@@ -348,7 +348,7 @@ export function ResponsiveSidebar({
             className={`${cls} text-emerald-600 dark:text-emerald-400`}
           />
         );
-      case "Profil K/L":
+      case "Profil Kinerja K/L":
         return (
           <Building2
             className={`${cls} text-indigo-600 dark:text-indigo-400`}
@@ -404,7 +404,7 @@ export function ResponsiveSidebar({
         return (
           <BookOpen className={`${cls} text-orange-600 dark:text-orange-400`} />
         );
-      case "Profil K/L":
+      case "Profil Kinerja K/L":
         return (
           <IdCard className={`${cls} text-orange-600 dark:text-orange-400`} />
         );
@@ -442,10 +442,8 @@ export function ResponsiveSidebar({
         return <TrendingUp className={cls} />;
       case "Makan Bergizi__Proyeksi Power Bi":
         return <Search className={cls} />;
-      case "Profil K/L__Kementerian":
-        return <Users className={cls} />;
-      case "Profil K/L__Lembaga":
-        return <Building2 className={cls} />;
+      case "Profil Kinerja K/L__Dashboard Kinerja K/L":
+        return <LayoutDashboard className={cls} />;
       case "EPA__Summary":
         return <LineChart className={cls} />;
       case "EPA__Analisa EPA":
@@ -551,9 +549,8 @@ export function ResponsiveSidebar({
       case "Monev KKP__Direktorat PA":
         return <Building2 className={cls} />;
       case "Profil KL__Kementerian":
-        return <BotOffIcon className={cls} />;
       case "Profil KL__Lembaga":
-        return <BottleWine className={cls} />;
+        return <LayoutDashboard className={cls} />;
       default:
         return null;
     }
@@ -1048,19 +1045,12 @@ export function ResponsiveSidebar({
                               onMouseEnterFn = () =>
                                 import("@/components/iku-pa/kontraktual");
                             } else if (
-                              c.label === "Kementerian" &&
-                              m.label === "Profil K/L"
+                              c.label === "Dashboard Kinerja K/L" &&
+                              m.label === "Profil Kinerja K/L"
                             ) {
-                              href = "/profile-kl/kementerian";
+                              href = "/profile-kl/dashboard";
                               onMouseEnterFn = () =>
-                                import("@/components/profile-kl/landing-kl");
-                            } else if (
-                              c.label === "Lembaga" &&
-                              m.label === "Profil K/L"
-                            ) {
-                              href = "/profile-kl/lembaga";
-                              onMouseEnterFn = () =>
-                                import("@/components/profile-kl/landing-lembaga");
+                                import("@/components/profile-kl/landing");
                             }
 
                             return (
@@ -2361,42 +2351,20 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Kementerian" &&
-                      m.label === "Profil K/L" ? (
+                    ) : c.label === "Dashboard Kinerja K/L" &&
+                      m.label === "Profil Kinerja K/L" ? (
                       <Link
                         key={c.label}
-                        href="/profile-kl/kementerian"
+                        href="/profile-kl/dashboard"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import("@/components/profile-kl/landing-kl");
+                          import("@/components/profile-kl/landing");
                         }}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
-                            path: "/profile-kl/kementerian",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "Lembaga" && m.label === "Profil K/L" ? (
-                      <Link
-                        key={c.label}
-                        href="/profile-kl/lembaga"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => {
-                          import("@/components/profile-kl/landing-lembaga");
-                        }}
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/profile-kl/lembaga",
+                            path: "/profile-kl/dashboard",
                           });
                           setOpen(false);
                         }}
