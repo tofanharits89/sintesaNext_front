@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, RefreshCw, AlertCircle, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, RefreshCw, AlertCircle, ZoomIn, ZoomOut, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -67,12 +67,6 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan", ta
     }
   }, [isOpen, dipaUrl]);
 
-  // Reset rendering state on page or zoom change for clean rendering fade
-  useEffect(() => {
-    if (isOpen) {
-      setIsPageRendered(false);
-    }
-  }, [pageNumber, scale]);
 
   // Fetch PDF binary via POST (IDM only intercepts GET requests)
   useEffect(() => {
@@ -179,7 +173,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan", ta
           className="flex-1 min-h-0 flex flex-col items-center justify-start overflow-auto bg-muted/30 p-3 w-full"
         >
           {/* CSS Grid Wrapper: keeps the layout size perfectly stable for both skeleton and PDF */}
-          <div className="relative w-full max-w-7xl grid grid-cols-1 grid-rows-1 justify-items-center items-start my-2">
+          <div className="relative w-full max-w-7xl grid grid-cols-1 grid-rows-1 justify-items-center items-center my-auto">
             {/* Skeleton Overlay: fades out only when both fetching is complete and the first page has successfully rendered */}
             <AnimatePresence>
               {(loading || !isPageRendered) && !error && (
@@ -189,10 +183,10 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan", ta
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35, ease: "easeInOut" }}
-                  className="col-start-1 row-start-1 w-full bg-card border border-border rounded-xl shadow-lg p-5 sm:p-6 space-y-4 animate-pulse min-h-[350px] flex flex-col justify-start z-10"
+                  className="col-start-1 row-start-1 w-full bg-card border border-border rounded-xl shadow-lg p-6 sm:p-8 space-y-4 animate-pulse min-h-[350px] flex flex-col justify-start z-10 overflow-hidden"
                   style={
                     expectedPdfWidth && expectedPdfHeight
-                      ? { width: Math.floor(expectedPdfWidth * 0.9), height: Math.floor(expectedPdfHeight * 0.9) }
+                      ? { width: expectedPdfWidth, height: expectedPdfHeight }
                       : {}
                   }
                 >
@@ -299,32 +293,43 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan", ta
           </div>
         </div>
 
-        <DialogFooter className="p-6 pt-4 sm:justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" disabled={pageNumber <= 1} onClick={() => setPageNumber((p) => p - 1)}>
+        <DialogFooter className="p-6 pt-4 flex flex-col sm:grid sm:grid-cols-3 gap-4 sm:gap-0 items-center justify-between w-full border-t border-border/10">
+          {/* Left section: Zoom Controls */}
+          <div className="flex items-center justify-start gap-2 w-full sm:w-auto">
+            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, s - 0.1))} title="Perkecil">
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(3, s + 0.1))} title="Perbesar">
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Center section: Page Navigation Controls */}
+          <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" size="icon" disabled={pageNumber <= 1} onClick={() => setPageNumber((p) => p - 1)} title="Halaman Sebelumnya">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm font-medium min-w-[88px] text-center">
+            <div className="text-sm font-semibold min-w-[88px] text-center text-foreground/80 tabular-nums">
               {pageNumber} / {numPages || 1}
             </div>
-            <Button variant="outline" size="icon" disabled={pageNumber >= numPages} onClick={() => setPageNumber((p) => p + 1)}>
+            <Button variant="outline" size="icon" disabled={pageNumber >= numPages} onClick={() => setPageNumber((p) => p + 1)} title="Halaman Selanjutnya">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}>
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(3, s + 0.1))}>
-              <ZoomIn className="h-4 w-4" />
-            </Button>
+
+          {/* Right section: Action Buttons */}
+          <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
             {pdfFile && (
-              <Button variant="outline" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
-                Unduh
+              <Button 
+                variant="outline" 
+                onClick={handleDownload}
+                className="bg-red-700 text-white hover:bg-red-600 hover:text-white border-red-700 hover:border-red-600 cursor-pointer"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Unduh PDF
               </Button>
             )}
-            <Button variant="outline" onClick={onClose}>
+            <Button onClick={onClose} className="cursor-pointer">
               Tutup
             </Button>
           </div>

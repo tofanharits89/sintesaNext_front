@@ -137,6 +137,15 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
             }
           });
 
+          // Expand level 0 and root rows by default so that programs are visible on initial load
+          const initialExpanded = new Set<number>();
+          parsedRows.forEach((row) => {
+            if ((row.level === 0 || row.parentIndex === -1) && row.hasChildren) {
+              initialExpanded.add(row.index);
+            }
+          });
+          setExpandedRows(initialExpanded);
+
           setData(parsedRows);
         }
       } catch (err: any) {
@@ -264,7 +273,7 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
         className="max-w-7xl sm:max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
         aria-describedby={undefined}
       >
-        <DialogHeader className="p-6 pb-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <DialogHeader className="p-6 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <DialogTitle className="truncate font-semibold text-lg">{title}</DialogTitle>
           {!loading && !error && data.length > 0 && (
             <div className="relative w-full sm:w-72 shrink-0">
@@ -284,22 +293,22 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
           {loading && (
             <div className="flex flex-col flex-1 min-h-0">
               <div className="overflow-auto border border-border rounded-xl shadow-sm bg-card max-h-full">
-                <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+                <table className="w-full table-fixed border-separate border-spacing-0 text-xs">
                   <colgroup>
-                    <col className="w-[130px]" />
+                    <col className="w-[110px]" />
                     <col />
-                    <col className="w-[85px]" />
-                    <col className="w-[115px]" />
+                    <col className="w-[150px]" />
+                    <col className="w-[125px]" />
                     <col className="w-[130px]" />
-                    <col className="w-[75px]" />
+                    <col className="w-[85px]" />
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-muted select-none">
                     <tr>
-                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Kode">Kode</th>
-                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Program/ Kegiatan/ KRO/ RO/ Komponen">Program/ Kegiatan/ KRO/ RO/ Komponen</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Kode">Kode</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Program/ Kegiatan/ KRO/ RO/ Komponen">Program/ Kegiatan/ KRO/ RO/ Komponen</th>
                       <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Volume">Volume</th>
-                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Harga Satuan">Harga Satuan</th>
-                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Jumlah">Jumlah</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase whitespace-normal leading-tight" title="Harga Satuan">Harga Satuan</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Jumlah">Jumlah</th>
                       <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Sumber Dana / Cara Penarikan">SD/CP</th>
                     </tr>
                   </thead>
@@ -378,22 +387,22 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
           {!loading && !error && data.length > 0 && (
             <div className="flex flex-col flex-1 min-h-0">
               <div className="overflow-auto border border-border rounded-xl shadow-sm bg-card max-h-full">
-                <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+                <table className="w-full table-fixed border-separate border-spacing-0 text-xs">
                   <colgroup>
-                    <col className="w-[130px]" />
+                    <col className="w-[110px]" />
                     <col />
-                    <col className="w-[85px]" />
-                    <col className="w-[115px]" />
+                    <col className="w-[150px]" />
+                    <col className="w-[125px]" />
                     <col className="w-[130px]" />
-                    <col className="w-[75px]" />
+                    <col className="w-[85px]" />
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-muted select-none">
                     <tr>
-                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Kode">Kode</th>
-                      <th className="h-12 px-4 text-left font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Program/ Kegiatan/ KRO/ RO/ Komponen">Program/ Kegiatan/ KRO/ RO/ Komponen</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Kode">Kode</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Program/ Kegiatan/ KRO/ RO/ Komponen">Program/ Kegiatan/ KRO/ RO/ Komponen</th>
                       <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Volume">Volume</th>
-                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Harga Satuan">Harga Satuan</th>
-                      <th className="h-12 px-4 text-right font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Jumlah">Jumlah</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase whitespace-normal leading-tight" title="Harga Satuan">Harga Satuan</th>
+                      <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Jumlah">Jumlah</th>
                       <th className="h-12 px-4 text-center font-semibold text-muted-foreground border-b border-border text-xs tracking-wider uppercase truncate" title="Sumber Dana / Cara Penarikan">SD/CP</th>
                     </tr>
                   </thead>
@@ -496,7 +505,7 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
           )}
         </div>
 
-        <DialogFooter className="p-6 pt-4 border-t border-border sm:justify-between flex items-center gap-4">
+        <DialogFooter className="p-6 pt-4 sm:justify-between flex items-center gap-4">
           <div className="text-xs text-muted-foreground">
             {!loading && !error && data.length > 0 && (
               <p>Menampilkan {filteredRows.length} dari {data.length} baris POK</p>
@@ -504,12 +513,17 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
           </div>
           <div className="flex items-center gap-2">
             {data.length > 0 && !loading && !error && (
-              <Button variant="outline" size="sm" onClick={handleDownloadExcel}>
-                <FileSpreadsheet className="h-4 w-4 mr-1.5 text-emerald-600" />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDownloadExcel}
+                className="bg-green-700 text-white hover:bg-green-600 hover:text-white border-green-700 hover:border-green-600 cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
                 Unduh Excel
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <Button size="sm" onClick={onClose} className="cursor-pointer">
               Tutup
             </Button>
           </div>
