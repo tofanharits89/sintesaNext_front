@@ -585,17 +585,6 @@ export function IkpaLanding() {
                                                     <TableCell><div className="flex justify-center"><StatusBadge status={item.approval} /></div></TableCell>
                                                     <TableCell className="text-center">
                                                          <div className="flex items-center justify-center gap-2">
-                                                             {item.file && (
-                                                                 <Button
-                                                                     variant="outline"
-                                                                     size="icon"
-                                                                     className="h-8 w-8 cursor-pointer"
-                                                                     onClick={() => handleOpenPreview(item.file!, `Nota Dinas: ${item.no_nd}`)}
-                                                                     title="Lihat Nota Dinas (PDF)"
-                                                                 >
-                                                                     <Eye className="h-4 w-4 text-amber-600" />
-                                                                 </Button>
-                                                             )}
                                                              <Button
                                                                  variant="outline"
                                                                  size="icon"
@@ -608,6 +597,17 @@ export function IkpaLanding() {
                                                              >
                                                                  <Edit className="h-4 w-4 text-blue-600" />
                                                              </Button>
+                                                             {item.file && (
+                                                                 <Button
+                                                                     variant="outline"
+                                                                     size="icon"
+                                                                     className="h-8 w-8 cursor-pointer"
+                                                                     onClick={() => handleOpenPreview(item.file!, `Nota Dinas: ${item.no_nd}`)}
+                                                                     title="Lihat Nota Dinas (PDF)"
+                                                                 >
+                                                                     <Eye className="h-4 w-4 text-amber-600" />
+                                                                 </Button>
+                                                             )}
                                                          </div>
                                                      </TableCell>
                                                 </TableRow>

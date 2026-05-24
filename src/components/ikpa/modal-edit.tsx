@@ -35,6 +35,7 @@ import { apiClient } from "@/lib/api/httpClient";
 import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import { Loader2, Save, X, Edit, FilePlus } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
+import kppnData from "@/data/kdkppn.json";
 import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 import { AxiosError } from "axios";
@@ -186,15 +187,17 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
 
         // Find satker details
         const satker = (satkerData as any[]).find(s => s.kdsatker === values.kdsatker);
+        // Find KPPN details
+        const kppn = (kppnData as any[]).find(k => k.kdkppn === satker?.kdkppn);
         // Find indicator code
         const indicator = resolveIndikatorOption(values.nm_indikator);
 
         const payload = {
             ...values,
-            kdkanwil: satker?.kdkanwil || "",
-            nmkanwil: satker?.nmkanwil || "",
+            kdkanwil: satker?.kdkanwil || kppn?.kdkanwil || "",
+            nmkanwil: kppn?.nmkanwil || "",
             kdkppn: satker?.kdkppn || "",
-            nmkppn: satker?.nmkppn || "",
+            nmkppn: kppn?.nmkppn || "",
             nmsatker: satker?.nmsatker || "",
             kd_indikator: indicator?.code || "",
             id_approval: values.approval === "Disetujui" ? "1" : values.approval === "Ditolak" ? "2" : "0"
@@ -244,6 +247,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
+                                                    <SelectItem value="2026">2026</SelectItem>
                                                     <SelectItem value="2025">2025</SelectItem>
                                                     <SelectItem value="2024">2024</SelectItem>
                                                     <SelectItem value="2023">2023</SelectItem>

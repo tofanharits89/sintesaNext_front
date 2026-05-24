@@ -37,6 +37,7 @@ import { apiClient } from "@/lib/api/httpClient";
 import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import { FilePlus, Loader2, Save } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
+import kppnData from "@/data/kdkppn.json";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
@@ -134,16 +135,18 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
         // Find satker details
         const satker = (satkerData as any[]).find(s => s.kdsatker === values.kdsatker);
+        // Find KPPN details
+        const kppn = (kppnData as any[]).find(k => k.kdkppn === satker?.kdkppn);
         // Find indicator code
         const indicator = INDIKATOR_OPTIONS.find(i => i.value === values.nm_indikator);
 
         const payload = {
             ...values,
             date_input: new Date().toISOString().split('T')[0],
-            kdkanwil: satker?.kdkanwil || "",
-            nmkanwil: satker?.nmkanwil || "",
+            kdkanwil: satker?.kdkanwil || kppn?.kdkanwil || "",
+            nmkanwil: kppn?.nmkanwil || "",
             kdkppn: satker?.kdkppn || "",
-            nmkppn: satker?.nmkppn || "",
+            nmkppn: kppn?.nmkppn || "",
             nmsatker: satker?.nmsatker || "",
             kd_indikator: indicator?.code || "",
             approval: "Pending",
