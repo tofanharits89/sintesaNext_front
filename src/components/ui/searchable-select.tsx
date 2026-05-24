@@ -222,7 +222,7 @@ export function SearchableSelect({
       </PopoverTrigger>
       <PopoverContent
         className={cn(
-          "w-[var(--radix-popover-trigger-width)] p-0 border border-border rounded-md shadow-md",
+          "w-[var(--radix-popover-trigger-width)] p-0 bg-zinc-100 dark:bg-black border border-border rounded-md shadow-md",
           contentClassName
         )}
         align="start"
@@ -275,9 +275,9 @@ export function SearchableSelect({
                     }}
                     className={cn(
                       "flex items-center gap-2 rounded-sm px-2 cursor-pointer text-sm select-none",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      isSelected && "bg-accent/50 font-medium",
-                      isActive && "bg-accent text-accent-foreground"
+                      "hover:bg-zinc-200 hover:text-accent-foreground dark:hover:bg-zinc-950",
+                      isSelected && "bg-zinc-200/70 dark:bg-zinc-950/70 font-medium",
+                      isActive && "bg-zinc-200 text-accent-foreground dark:bg-zinc-950"
                     )}
                     onClick={() => handleSelect(option.value)}
                     onMouseEnter={() => setActiveIndex(virtualRow.index)}

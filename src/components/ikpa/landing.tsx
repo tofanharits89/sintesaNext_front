@@ -17,9 +17,6 @@ import {
     Plus,
     FilePlus,
     Edit,
-    ChevronsUpDown,
-    Check,
-    Search,
     Eye
 } from "lucide-react";
 import { ModalRekamIkpa } from "./modal-rekam";
@@ -36,15 +33,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
     Table,
     TableBody,
@@ -143,7 +132,6 @@ export function IkpaLanding() {
     const [selectedSatker, setSelectedSatker] = useState("all");
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<IkpaRequest | null>(null);
-    const [satkerComboboxOpen, setSatkerComboboxOpen] = useState(false);
     const [isPdfOpen, setIsPdfOpen] = useState(false);
     const [pdfUrl, setPdfUrl] = useState("");
     const [pdfTitle, setPdfTitle] = useState("");
@@ -342,62 +330,28 @@ export function IkpaLanding() {
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Pilih Satker</label>
-                            <Popover open={satkerComboboxOpen} onOpenChange={setSatkerComboboxOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={satkerComboboxOpen}
-                                        noAnimate
-                                        className="w-full justify-between font-normal h-9 px-3 bg-zinc-100 hover:bg-zinc-200 hover:text-foreground dark:bg-black dark:hover:bg-zinc-950 border-input shadow-xs"
-                                    >
-                                        <span className="truncate">
-                                            {selectedSatker === "all"
-                                                ? "Semua Satker"
-                                                : (() => {
-                                                    const satker = filteredSatkerList.find(s => s.kdsatker === selectedSatker);
-                                                    return satker ? `${satker.kdsatker} - ${satker.nmsatker}` : "Pilih Satker";
-                                                })()}
-                                        </span>
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Cari satker..." />
-                                        <CommandList>
-                                            <CommandEmpty>Satker tidak ditemukan.</CommandEmpty>
-                                            <CommandGroup>
-                                                <CommandItem
-                                                    value="Semua Satker"
-                                                    onSelect={() => {
-                                                        setSelectedSatker("all");
-                                                        setSearchQuery("");
-                                                        setSatkerComboboxOpen(false);
-                                                    }}
-                                                >
-                                                    <Check className={cn("mr-2 h-4 w-4", selectedSatker === "all" ? "opacity-100" : "opacity-0")} />
-                                                    Semua Satker
-                                                </CommandItem>
-                                                {filteredSatkerList.map((satker) => (
-                                                    <CommandItem
-                                                        key={satker.kdsatker}
-                                                        value={`${satker.kdsatker} - ${satker.nmsatker}`}
-                                                        onSelect={() => {
-                                                            setSelectedSatker(satker.kdsatker);
-                                                            setSearchQuery(satker.nmsatker);
-                                                            setSatkerComboboxOpen(false);
-                                                        }}
-                                                    >
-                                                        <Check className={cn("mr-2 h-4 w-4", selectedSatker === satker.kdsatker ? "opacity-100" : "opacity-0")} />
-                                                        {satker.kdsatker} - {satker.nmsatker}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
+                            <SearchableSelect
+                                options={[
+                                    { value: "all", label: "Semua Satker" },
+                                    ...filteredSatkerList.map(s => ({
+                                        value: s.kdsatker,
+                                        label: `${s.kdsatker} - ${s.nmsatker}`
+                                    }))
+                                ]}
+                                value={selectedSatker}
+                                onValueChange={(val) => {
+                                    setSelectedSatker(val);
+                                    if (val !== "all") {
+                                        const satker = filteredSatkerList.find(s => s.kdsatker === val);
+                                        if (satker) setSearchQuery(satker.nmsatker);
+                                    } else {
+                                        setSearchQuery("");
+                                    }
+                                    setCurrentPage(0);
+                                }}
+                                placeholder="Pilih Satker"
+                                emptyMessage="Satker tidak ditemukan."
+                            />
                         </div>
                     </div>
                 </CardContent>
