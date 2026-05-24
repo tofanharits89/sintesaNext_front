@@ -6,7 +6,7 @@
     "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
     "dev:turbo": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbopack",
     "dev:no-turbo": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
-    "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build",
+    "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build && node -e \"const fs = require('fs'); fs.cpSync('public', '.next/standalone/public', { recursive: true }); fs.cpSync('.next/static', '.next/standalone/.next/static', { recursive: true });\"",
     "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true next build",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
