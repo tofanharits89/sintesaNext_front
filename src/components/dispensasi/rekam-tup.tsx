@@ -15,10 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Formik, Field, ErrorMessage, FormikHelpers } from "formik";
-import * as Yup from "yup";
-import { useAuth } from "@/hooks/useAuth";
-import Swal from "sweetalert2";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { toast } from "sonner";
 import { PlusSquare, Trash2, Save } from "lucide-react";
 import { format, parse } from "date-fns";
@@ -33,8 +32,8 @@ interface FormRow {
 }
 
 interface FormValues {
-  id: string;
-  tahun: string;
+  id?: string | undefined;
+  tahun?: string | undefined;
   formRows: FormRow[];
 }
 
@@ -48,6 +47,22 @@ interface RekamTupProps {
   tahun: string;
 }
 
+const validationSchema = z.object({
+  id: z.string().optional(),
+  tahun: z.string().optional(),
+  formRows: z.array(
+    z.object({
+      notup: z.string().min(1, "harus diisi"),
+      nilaitup: z.any()
+        .refine((val) => val !== "" && val !== null && val !== undefined, "hanya angka")
+        .transform((val) => Number(val))
+        .pipe(z.number({ message: "hanya angka" })),
+      tgtup: z.any().refine((val) => val !== null && val !== undefined && val !== "", "harus diisi"),
+      status: z.string().min(1, "harus diisi"),
+    })
+  ),
+});
+
 export default function RekamTup({
   show,
   onHide,
@@ -57,20 +72,41 @@ export default function RekamTup({
   nmsatker,
   tahun,
 }: RekamTupProps) {
-  const { isAuthenticated } = useAuth();
-
   const [loading, setLoading] = useState(false);
   const [cek, setCek] = useState(false);
   const [activeTab, setActiveTab] = useState("dispensasi-overview");
-  const [formRows, setFormRows] = useState<FormRow[]>([
-    {
-      nilaitup: "",
-      notup: "",
-      tgtup: null,
-      status: "Setuju",
-    },
-  ]);
   const [cekupload, setCekupload] = useState(false);
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: {
+      id,
+      tahun,
+      formRows: [
+        {
+          nilaitup: "",
+          notup: "",
+          tgtup: null,
+          status: "Setuju",
+        },
+      ],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "formRows",
+  });
+
+  const watchFormRows = watch("formRows");
 
   const handleCek = () => {
     setCek(true);
@@ -83,102 +119,49 @@ export default function RekamTup({
   };
 
   const addRow = () => {
-    setFormRows([
-      ...formRows,
-      {
-        nilaitup: "",
-        notup: "",
-        tgtup: null,
-        status: "Setuju",
-      },
-    ]);
+    append({
+      nilaitup: "",
+      notup: "",
+      tgtup: null,
+      status: "Setuju",
+    });
   };
 
   const removeRow = (index: number) => {
-    const updatedRows = [...formRows];
-    updatedRows.splice(index, 1);
-    setFormRows(updatedRows);
+    remove(index);
   };
 
-  const initialValues: FormValues = {
-    id,
-    tahun: tahun,
-    formRows,
-  };
-
-  const validationSchema = Yup.object().shape({
-    formRows: Yup.array().of(
-      Yup.object().shape({
-        notup: Yup.string().required("harus diisi"),
-        nilaitup: Yup.number().required("hanya angka"),
-        tgtup: Yup.date().required("harus diisi"),
-        status: Yup.string().required("harus diisi"),
-      })
-    ),
-  });
-
-  const handleSubmitdata = async (
-    values: FormValues,
-    { setSubmitting }: FormikHelpers<FormValues>
-  ) => {
+  const handleSubmitdata = async (values: FormValues) => {
     setCek(false);
     setLoading(true);
     try {
       const url = "/dispensasi/simpan-lampiran-tup";
+      await apiClient.post(url, values);
 
-      // Using apiClient.post instead of fetch
-      await apiClient.post(url, values.formRows); // Note: Original code sent values (including id/tahun), but rekam-kontrak sent values.formRows. 
-      // Checking original rekam-tup: `body: JSON.stringify(values)`
-      // Checking rekam-kontrak: `body: JSON.stringify(values.formRows)` (Wait, let me double check rekam-kontrak template I used)
-      // I used `apiClient.post(url, values.formRows);` in `rekam-kontrak.tsx`.
-      // Let's stick to what was there before but using apiClient. 
-      // The original rekam-tup sent `values` (containing id, tahun, formRows).
-      // The original rekam-kontrak sent `values.formRows`.
-      // Wait, let's look at `rekam-tup.tsx` lines 126: `body: JSON.stringify(values),`
-      // Wait, let's look at `rekam-kontrak.tsx` lines 127: `body: JSON.stringify(values.formRows),`
-      // So there IS a difference in the payload. I must respect that.
-
-      // Correction: I should use `values` here if I want to match original behavior, but let's check if I should standardize.
-      // If the backend expects different structures, I must use different structures.
-      // I will keep `values` as the payload for TUP, as per original file.
-      // But wait, if I look at `rekam-kontrak.tsx` I implemented `apiClient.post(url, values.formRows);`
-      // Original rekam-kontrak: `body: JSON.stringify(values.formRows),`
-      // Original rekam-tup: `body: JSON.stringify(values),`
-
-      // I will use `values` here.
-
-      Swal.fire({
-        html: `<div class='text-success mt-4'>Data TUP Berhasil Disimpan</div>`,
-        icon: "success",
-        position: "top",
-        buttonsStyling: false,
-        customClass: {
-          popup: "swal2-animation",
-          confirmButton: "bg-primary text-white px-4 py-2 rounded",
-        },
-        confirmButtonText: "Tutup",
-      });
       setCek(true);
       toast.success("Data TUP Berhasil Disimpan");
     } catch (error: any) {
       const message =
         error?.message || "Terjadi Permasalahan Koneksi atau Server Backend";
       toast.error(message);
-      setSubmitting(false);
     } finally {
       setLoading(false);
     }
   };
 
   const handleModalClose = () => {
-    setFormRows([
-      {
-        nilaitup: "",
-        notup: "",
-        tgtup: null,
-        status: "Setuju",
-      },
-    ]);
+    reset({
+      id,
+      tahun,
+      formRows: [
+        {
+          nilaitup: "",
+          notup: "",
+          tgtup: null,
+          status: "Setuju",
+        },
+      ],
+    });
     onHide();
   };
 
@@ -230,185 +213,140 @@ export default function RekamTup({
 
               <TabsContents className="mt-4 space-y-4">
                 <TabsContent value="dispensasi-overview" className="mt-0 space-y-4">
-                  <Formik
-                    validationSchema={validationSchema}
-                    onSubmit={async (values, helpers) => {
-                      // Custom logic to handle the difference in payload structure if needed
-                      // For TUP it seems to send the whole values object
-                      setCek(false);
-                      setLoading(true);
-                      try {
-                        const url = "/dispensasi/simpan-lampiran-tup";
-                        // Using values directly as per original code
-                        await apiClient.post(url, values);
+                  <form onSubmit={handleSubmit(handleSubmitdata)} className="space-y-4">
+                    <div className="p-4 bg-background border rounded-lg shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">SATKER</p>
+                        <p className="font-bold text-lg">{nmsatker} ({kdsatker})</p>
+                        <p className="text-sm text-muted-foreground mt-1">Nomor Permohonan : <span className="font-medium text-foreground">{nomor}</span></p>
+                      </div>
+                    </div>
 
-                        Swal.fire({
-                          html: `<div class='text-success mt-4'>Data TUP Berhasil Disimpan</div>`,
-                          icon: "success",
-                          position: "top",
-                          buttonsStyling: false,
-                          customClass: {
-                            popup: "swal2-animation",
-                            confirmButton: "bg-primary text-white px-4 py-2 rounded",
-                          },
-                          confirmButtonText: "Tutup",
-                        });
-                        setCek(true);
-                        toast.success("Data TUP Berhasil Disimpan");
-                      } catch (error: any) {
-                        const message = error?.message || "Terjadi Permasalahan Koneksi atau Server Backend";
-                        toast.error(message);
-                        helpers.setSubmitting(false);
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                    initialValues={initialValues}
-                  >
-                    {({
-                      handleSubmit,
-                      setFieldValue,
-                      values,
-                      touched,
-                      errors,
-                    }) => (
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="p-4 bg-background border rounded-lg shadow-sm">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">SATKER</p>
-                            <p className="font-bold text-lg">{nmsatker} ({kdsatker})</p>
-                            <p className="text-sm text-muted-foreground mt-1">Nomor Permohonan : <span className="font-medium text-foreground">{nomor}</span></p>
-                          </div>
-                        </div>
+                    <div className="bg-transparent border rounded-lg p-4 shadow-sm">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-semibold text-lg">Detail TUP</h3>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                          onClick={addRow}
+                        >
+                          <PlusSquare className="mr-2 h-5 w-5" />
+                          Tambah Baris
+                        </Button>
+                      </div>
 
-                        <div className="bg-transparent border rounded-lg p-4 shadow-sm">
-                          <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-semibold text-lg">Detail TUP</h3>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-primary hover:text-primary/80 hover:bg-primary/10"
-                              onClick={addRow}
-                            >
-                              <PlusSquare className="mr-2 h-5 w-5" />
-                              Tambah Baris
-                            </Button>
-                          </div>
+                      <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+                        {fields.map((field, index) => (
+                          <div key={field.id} className="p-4 pr-16 border rounded-md bg-muted/5 space-y-4 relative group">
+                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => removeRow(index)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
 
-                          <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
-                            {formRows.map((row, index) => (
-                              <div key={index} className="p-4 pr-16 border rounded-md bg-muted/5 space-y-4 relative group">
-                                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => removeRow(index)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                  {/* Row 1: Tgl TUP, No TUP, Nilai TUP */}
-                                  <div className="md:col-span-3 space-y-2">
-                                    <Label>Tgl TUP</Label>
-                                    <DatePicker
-                                      date={
-                                        values.formRows[index]?.tgtup
-                                          ? parse(values.formRows[index].tgtup as string, "yyyy-MM-dd", new Date())
-                                          : undefined
-                                      }
-                                      onDateChange={(date: Date | undefined) => {
-                                        if (date) {
-                                          setFieldValue(
-                                            `formRows[${index}].tgtup`,
-                                            format(date, "yyyy-MM-dd")
-                                          );
-                                        } else {
-                                          setFieldValue(`formRows[${index}].tgtup`, null);
-                                        }
-                                      }}
-                                      placeholder="Tgl TUP"
-                                    />
-                                    <ErrorMessage
-                                      name={`formRows[${index}].tgtup`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                              {/* Row 1: Tgl TUP, No TUP, Nilai TUP */}
+                              <div className="md:col-span-3 space-y-2">
+                                <Label>Tgl TUP</Label>
+                                <DatePicker
+                                  date={
+                                    watchFormRows?.[index]?.tgtup
+                                      ? parse(watchFormRows[index].tgtup as string, "yyyy-MM-dd", new Date())
+                                      : undefined
+                                  }
+                                  onDateChange={(date: Date | undefined) => {
+                                    if (date) {
+                                      setValue(
+                                        `formRows.${index}.tgtup` as const,
+                                        format(date, "yyyy-MM-dd"),
+                                        { shouldValidate: true }
+                                      );
+                                    } else {
+                                      setValue(`formRows.${index}.tgtup` as const, null, { shouldValidate: true });
+                                    }
+                                  }}
+                                  placeholder="Tgl TUP"
+                                />
+                                {errors.formRows?.[index]?.tgtup && (
+                                  <div className="text-red-500 text-xs">
+                                    {errors.formRows[index]?.tgtup?.message}
                                   </div>
-
-                                  <div className="md:col-span-5 space-y-2">
-                                    <Label>Nomor TUP</Label>
-                                    <Field
-                                      name={`formRows[${index}].notup`}
-                                      type="text"
-                                      placeholder="Nomor TUP"
-                                      as={Input}
-                                      className={touched.formRows?.[index]?.notup && (errors.formRows as any)?.[index]?.notup ? "border-red-500" : ""}
-                                    />
-                                    <ErrorMessage
-                                      name={`formRows[${index}].notup`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
-                                  </div>
-
-                                  <div className="md:col-span-4 space-y-2">
-                                    <Label>Nilai TUP</Label>
-                                    <Field
-                                      name={`formRows[${index}].nilaitup`}
-                                      type="number"
-                                      placeholder="Nilai TUP"
-                                      as={Input}
-                                      className={touched.formRows?.[index]?.nilaitup && (errors.formRows as any)?.[index]?.nilaitup ? "border-red-500" : ""}
-                                    />
-                                    <ErrorMessage
-                                      name={`formRows[${index}].nilaitup`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
-                                  </div>
-
-                                  {/* Row 2: Status */}
-                                  <div className="md:col-span-12 space-y-2">
-                                    <Label>Status</Label>
-                                    <div className="flex gap-4 pt-1">
-                                      <label className="flex items-center space-x-2 cursor-pointer">
-                                        <Field
-                                          type="radio"
-                                          name={`formRows[${index}].status`}
-                                          value="Setuju"
-                                          className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
-                                        />
-                                        <span>Disetujui</span>
-                                      </label>
-                                      <label className="flex items-center space-x-2 cursor-pointer">
-                                        <Field
-                                          type="radio"
-                                          name={`formRows[${index}].status`}
-                                          value="Tolak"
-                                          className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
-                                        />
-                                        <span>Ditolak</span>
-                                      </label>
-                                    </div>
-                                    <ErrorMessage
-                                      name={`formRows[${index}].status`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
-                                  </div>
-                                </div>
+                                )}
                               </div>
-                            ))}
+
+                              <div className="md:col-span-5 space-y-2">
+                                <Label>Nomor TUP</Label>
+                                <Input
+                                  type="text"
+                                  placeholder="Nomor TUP"
+                                  {...register(`formRows.${index}.notup` as const)}
+                                  className={errors.formRows?.[index]?.notup ? "border-red-500" : ""}
+                                />
+                                {errors.formRows?.[index]?.notup && (
+                                  <div className="text-red-500 text-xs">
+                                    {errors.formRows[index]?.notup?.message}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="md:col-span-4 space-y-2">
+                                <Label>Nilai TUP</Label>
+                                <Input
+                                  type="number"
+                                  placeholder="Nilai TUP"
+                                  {...register(`formRows.${index}.nilaitup` as const)}
+                                  className={errors.formRows?.[index]?.nilaitup ? "border-red-500" : ""}
+                                />
+                                {errors.formRows?.[index]?.nilaitup && (
+                                  <div className="text-red-500 text-xs">
+                                    {errors.formRows[index]?.nilaitup?.message}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Row 2: Status */}
+                              <div className="md:col-span-12 space-y-2">
+                                <Label>Status</Label>
+                                <div className="flex gap-4 pt-1">
+                                  <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      value="Setuju"
+                                      {...register(`formRows.${index}.status` as const)}
+                                      className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                    />
+                                    <span>Disetujui</span>
+                                  </label>
+                                  <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      value="Tolak"
+                                      {...register(`formRows.${index}.status` as const)}
+                                      className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                    />
+                                    <span>Ditolak</span>
+                                  </label>
+                                </div>
+                                {errors.formRows?.[index]?.status && (
+                                  <div className="text-red-500 text-xs">
+                                    {errors.formRows[index]?.status?.message}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </form>
-                    )}
-                  </Formik>
+                        ))}
+                      </div>
+                    </div>
+                  </form>
                 </TabsContent>
                 <TabsContent value="dispensasi-edit" className="mt-0 space-y-4">
                   <div className="bg-background rounded-lg p-4 shadow-sm">

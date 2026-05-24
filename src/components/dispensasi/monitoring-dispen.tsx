@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
 import { DatePicker } from "@/components/ui/date-picker";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 
 interface MonitoringProps {
   cek: number;
@@ -80,26 +81,12 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      const apiUrl = apiPath("/dispensasi/query");
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: encryptedQuery,
-          limit,
-          page,
-        }),
+      const result = await apiClient.post("/dispensasi/query", {
+        query: encryptedQuery,
+        limit,
+        page,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
       setData(result.result || []);
       setPages(result.totalPages || 0);
       setRows(result.totalRows || 0);
@@ -107,7 +94,7 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
       setTotalNilaiSPM(result.totalNilaiSPM || 0);
       setLoading(false);
       setIsDataFetched(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Data fetch error:", error);
       toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
       setLoading(false);

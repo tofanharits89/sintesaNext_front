@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import { FileText } from "lucide-react";
 import {
   Dialog,
@@ -11,25 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
 import { Spinner } from "@/components/ui/spinner";
-// import {
-//   Modal,
-//   Form,
-//   Button,
-//   Container,
-//   Row,
-//   Col,
-//   Spinner,
-//   ModalFooter,
-//   Nav,
-//   Tab,
-// } from "react-bootstrap";
-import DatePicker from "react-datepicker";
-import { Formik, Field, ErrorMessage, FormikHelpers } from "formik";
-import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
 import moment from "moment";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -59,16 +45,34 @@ interface Rekam2Props {
 }
 
 interface FormValues {
-  id: string | number;
-  tahun: string | number;
-  triwulan: string | number;
-  kdsatker: string;
+  id?: string | number | undefined;
+  tahun?: string | number | undefined;
+  triwulan?: string | number | undefined;
+  kdsatker?: string | undefined;
   no_surat: string;
   tgl_surat: string | Date;
   ringkasan: string;
   file_surat: File | string | null;
   laporan: File | string | null;
 }
+
+const fileValidation = z.any()
+  .refine((val) => val !== null && val !== undefined && val !== "", "File belum dipilih")
+  .refine((val) => typeof val === "string" || val instanceof File, "File belum dipilih")
+  .refine((val) => typeof val === "string" || (val instanceof File && val.size <= 2 * 1024 * 1024), "Ukuran file terlalu besar (maks 2MB)")
+  .refine((val) => typeof val === "string" || (val instanceof File && val.type === "application/pdf"), "Hanya file PDF yang diperbolehkan");
+
+const validationSchema = z.object({
+  id: z.any().optional(),
+  tahun: z.any().optional(),
+  triwulan: z.any().optional(),
+  kdsatker: z.string().optional(),
+  no_surat: z.string().min(1, "harus diisi"),
+  tgl_surat: z.any().refine(val => val !== null && val !== undefined && val !== "", "harus diisi"),
+  ringkasan: z.string().min(1, "harus diisi"),
+  file_surat: fileValidation,
+  laporan: fileValidation,
+});
 
 export default function Rekam2({
   show,
@@ -96,7 +100,6 @@ export default function Rekam2({
   const [laporan, setLaporan] = useState<any>("");
   const [file_surat, setFilesurat] = useState<any>("");
 
-  // Update waktu setiap detik
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentDateTime(new Date());
@@ -105,7 +108,6 @@ export default function Rekam2({
     return () => clearInterval(interval);
   }, []);
 
-  // Konversi waktu ke GMT+7
   const getGMT7Time = (): string => {
     const utcTime =
       currentDateTime.getTime() + currentDateTime.getTimezoneOffset() * 60000;
@@ -132,145 +134,109 @@ export default function Rekam2({
     filesuratpilih,
   ]);
 
-  // Logic from original JSX: duplicate keys overwrite earlier ones.
-  // nosuratpilih || "" overwrites ""
-  // file_surat: null overwrites filesuratpilih || ""
   const initialValues: FormValues = {
     id,
     tahun,
     triwulan,
     kdsatker,
     no_surat: nosuratpilih || "",
-    tgl_surat: tglsuratpilih || "",
+    tgl_surat: tglsuratpilih ? moment(tglsuratpilih).format("YYYY-MM-DD") : "",
     ringkasan: ringkasanpilih || "",
-    file_surat: null, // As in original
-    laporan: null, // As in original
+    file_surat: filesuratpilih || null,
+    laporan: laporanpilih || null,
   };
 
-  const validationSchema = Yup.object().shape({
-    no_surat: Yup.string().required("harus diisi"),
-    tgl_surat: Yup.date().nullable().required("harus diisi"),
-    ringkasan: Yup.string().required("harus diisi"),
-    file_surat: Yup.mixed()
-      .required("File belum dipilih")
-      .test(
-        "fileSize",
-        "Ukuran file terlalu besar (maks 2MB)",
-        (value: any) => {
-          return !value || (value && value.size <= 2 * 1024 * 1024);
-        },
-      )
-      .test("fileType", "Hanya file PDF yang diperbolehkan", (value: any) => {
-        return !value || (value && value.type === "application/pdf");
-      }),
-    laporan: Yup.mixed()
-      .required("File belum dipilih")
-      .test(
-        "fileSize",
-        "Ukuran file terlalu besar (maks 2MB)",
-        (value: any) => {
-          return !value || (value && value.size <= 2 * 1024 * 1024);
-        },
-      )
-      .test("fileType", "Hanya file PDF yang diperbolehkan", (value: any) => {
-        return !value || (value && value.type === "application/pdf");
-      }),
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(validationSchema),
+    values: initialValues,
   });
 
+  useEffect(() => {
+    if (show) {
+      reset({
+        id,
+        tahun,
+        triwulan,
+        kdsatker,
+        no_surat: nosuratpilih || "",
+        tgl_surat: tglsuratpilih ? moment(tglsuratpilih).format("YYYY-MM-DD") : "",
+        ringkasan: ringkasanpilih || "",
+        file_surat: filesuratpilih || null,
+        laporan: laporanpilih || null,
+      });
+    }
+  }, [
+    show,
+    ringkasanpilih,
+    nosuratpilih,
+    tglsuratpilih,
+    laporanpilih,
+    filesuratpilih,
+  ]);
+
   const handleRingkasanChange = (
-    event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
-    setFieldValue: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean,
-    ) => void,
+    value: string,
   ) => {
-    const value = event.target.value;
     setRingkasan(value);
-    setFieldValue("ringkasan", value);
+    setValue("ringkasan", value, { shouldValidate: true });
   };
 
   const handleNosuratChange = (
-    event: ChangeEvent<HTMLInputElement>,
-    setFieldValue: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean,
-    ) => void,
+    value: string,
   ) => {
-    const value = event.target.value;
     setNosurat(value);
-    setFieldValue("no_surat", value);
+    setValue("no_surat", value, { shouldValidate: true });
   };
 
   const handleTglSuratChange = (
-    date: Date | null,
-    setFieldValue: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean,
-    ) => void,
+    dateStr: string,
   ) => {
-    const formattedDate = date ? moment(date).format("YYYY-MM-DD") : "";
-    setTglsurat(formattedDate);
-    setFieldValue("tgl_surat", formattedDate);
+    setTglsurat(dateStr);
+    setValue("tgl_surat", dateStr, { shouldValidate: true });
   };
 
-  // Fungsi untuk menangani perubahan file laporan
   const handleLaporanChange = (
     event: ChangeEvent<HTMLInputElement>,
-    setFieldValue: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean,
-    ) => void,
   ) => {
     const file = event.target.files ? event.target.files[0] : null;
     if (file) {
-      setLaporan(file); // Update state
-      setFieldValue("laporan", file); // Update Formik
+      setLaporan(file);
+      setValue("laporan", file, { shouldValidate: true });
     }
   };
 
-  // Fungsi untuk menangani perubahan file surat
   const handleFilesuratChange = (
     event: ChangeEvent<HTMLInputElement>,
-    setFieldValue: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean,
-    ) => void,
   ) => {
     const file = event.target.files ? event.target.files[0] : null;
-
     if (file) {
-      setFilesurat(file); // Update state
-      setFieldValue("file_surat", file); // Update Formik
+      setFilesurat(file);
+      setValue("file_surat", file, { shouldValidate: true });
     }
   };
 
-  const handleSubmitdata = async (
-    values: FormValues,
-    { setSubmitting }: FormikHelpers<FormValues>,
-  ) => {
+  const onSubmit = async (values: FormValues) => {
     if (!user) {
-      Swal.fire("Error", "User tidak ditemukan, silakan login ulang", "error");
+      toast.error("User tidak ditemukan, silakan login ulang");
       return;
     }
 
     setLoading(true);
     const formData = new FormData();
 
-    formData.append("id", values.id.toString());
-    formData.append("no_surat", values.no_surat || ""); // Pastikan tidak undefined
+    if (values.id !== undefined) formData.append("id", values.id.toString());
+    formData.append("no_surat", values.no_surat || "");
     formData.append(
       "tgl_surat",
       values.tgl_surat ? moment(values.tgl_surat).format("YYYY-MM-DD") : "",
-    ); // Format tanggal
-    formData.append("ringkasan", values.ringkasan || ""); // Pastikan ringkasan tidak undefined
-    // values.file_surat can be File object or string (filename) or null
-    // If it's a File object, we append it. If string, do we append it?
-    // Original code: if (values.file_surat) formData.append(...)
+    );
+    formData.append("ringkasan", values.ringkasan || "");
     if (values.file_surat)
       formData.append("file_surat", values.file_surat as any);
     if (values.laporan) formData.append("laporan", values.laporan as any);
@@ -282,41 +248,27 @@ export default function Rekam2({
         },
       });
       setLoading(false);
-      Swal.fire({
-        html: `<div class='text-green-600 mt-4'>Hasil Monev Berhasil Disimpan</div>`,
-        icon: "success",
-        confirmButtonText: "Tutup",
-      })
-        // onSaveSuccess(values.ringkasan, values.no_surat, values.tgl_surat, values.laporan, values.file_surat);
-        .then(() => {
-          onSaveSuccess(
-            values.ringkasan,
-            values.no_surat,
-            values.tgl_surat as string,
-            values.laporan,
-            values.file_surat,
-          );
-          onHide(); // **Menutup modal setelah sukses**
-        });
+      toast.success("Hasil Monev Berhasil Disimpan");
+      onSaveSuccess(
+        values.ringkasan,
+        values.no_surat,
+        values.tgl_surat as string,
+        values.laporan,
+        values.file_surat,
+      );
+      onHide();
     } catch (error: any) {
       const { status, data } = error.response || {};
-
-      // Debugging error
       console.error("Error Response:", error.response);
-
-      // Perbaikan handling error
       const errorMessage = data?.error || "Terjadi kesalahan pada server";
       toast.error(`Error ${status || ""}: ${errorMessage}`);
-
       setLoading(false);
-      setSubmitting(false);
     }
   };
 
   const handleModalClose = () => {
     onHide();
   };
-  // console.log("nmkanwil:", nmkanwil);
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleModalClose()}>
@@ -333,202 +285,144 @@ export default function Rekam2({
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-6 pt-2">
-          <Formik
-            validationSchema={validationSchema}
-            onSubmit={handleSubmitdata}
-            initialValues={initialValues}
-            enableReinitialize
-          >
-            {({ handleSubmit, setFieldValue, values }) => {
-              useEffect(() => {
-                setFieldValue("ringkasan", ringkasanpilih || "");
-                setFieldValue("no_surat", nosuratpilih || "");
-                setFieldValue(
-                  "tgl_surat",
-                  tglsuratpilih
-                    ? moment(tglsuratpilih).format("YYYY-MM-DD")
-                    : "",
-                );
-                setFieldValue("laporan", laporanpilih || "");
-                setFieldValue("file_surat", filesuratpilih || "");
-              }, [
-                show,
-                ringkasanpilih,
-                nosuratpilih,
-                tglsuratpilih,
-                laporanpilih,
-                filesuratpilih,
-                setFieldValue,
-              ]);
-              return (
-                <div className="mt-2">
-                  <form id="rekam2-form" noValidate onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                      <div className="col-span-1">
-                        <div className="flex flex-col gap-2 my-1">
-                          <Label className="font-bold">Nomor Surat</Label>
-                          <Field
-                            name="no_surat"
-                            type="text"
-                            placeholder="Nomor Surat"
-                            as={Input}
-                            className="w-full"
-                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                              handleNosuratChange(e, setFieldValue)
-                            }
-                            value={no_surat}
-                          />
-                          <ErrorMessage
-                            name="no_surat"
-                            component="div"
-                            className="text-red-500 text-sm"
-                          />
-                        </div>
+          <div className="mt-2">
+            <form id="rekam2-form" noValidate onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div className="col-span-1">
+                  <div className="flex flex-col gap-2 my-1">
+                    <Label className="font-bold">Nomor Surat</Label>
+                    <Input
+                      placeholder="Nomor Surat"
+                      className="w-full"
+                      value={no_surat}
+                      {...register("no_surat")}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        handleNosuratChange(e.target.value)
+                      }
+                    />
+                    {errors.no_surat && (
+                      <div className="text-red-500 text-sm">
+                        {errors.no_surat.message}
                       </div>
-                      <div className="col-span-1">
-                        <div className="flex flex-col gap-2 my-1">
-                          <Label className="font-bold">
-                            File Surat (Maks. 2 MB)
-                          </Label>
-
-                          <div className="flex items-center gap-2">
-                            {/* Input File */}
-                            <Input
-                              className="flex-grow"
-                              type="file"
-                              name="file_surat"
-                              accept=".pdf"
-                              onChange={(e) =>
-                                handleFilesuratChange(e, setFieldValue)
-                              }
-                            />
-
-                            {/* Link jika surat sudah ada */}
-                            {file_surat && (
-                              <a
-                                href={`${(import.meta as any).env.VITE_REACT_APP_LOCAL_BASIC?.replace("http://", "https://") || "https://sintesa.kemenkeu.go.id:88"}/monev_pnbp/${file_surat}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
-                              >
-                                <FileText className="w-4 h-4" />
-                                Surat
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center mt-4">
-                      <div className="col-span-1">
-                        <div className="flex flex-col gap-2 my-1">
-                          <Label className="font-bold">Tanggal Surat</Label>
-                          {/* <DatePicker
-                                name="tgl_surat"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                selected={
-                                  values.tgl_surat
-                                    ? moment(values.tgl_surat).toDate()
-                                    : null
-                                }
-                                onChange={(date: Date | null) =>
-                                  handleTglSuratChange(date, setFieldValue)
-                                }
-                                dateFormat="dd/MM/yyyy"
-                                placeholderText="Tanggal Surat"
-                                autoComplete="off"
-                                timeZone="UTC"
-                                value={tgl_surat}
-                              /> */}
-                          <Field
-                            name="tgl_surat"
-                            type="date"
-                            as={Input}
-                            onChange={(
-                              e: ChangeEvent<HTMLInputElement>,
-                            ) => {
-                              const date = e.target.value
-                                ? new Date(e.target.value)
-                                : null;
-                              handleTglSuratChange(date, setFieldValue);
-                            }}
-                            value={tgl_surat}
-                          />
-                          <ErrorMessage
-                            name="tgl_surat"
-                            component="div"
-                            className="text-red-500 text-sm"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-span-1">
-                        <div className="flex flex-col gap-2 my-1">
-                          <Label className="font-bold">
-                            Upload Laporan (Maks. 2 MB)
-                          </Label>
-
-                          <div className="flex items-center gap-2">
-                            {/* Input File */}
-                            <Input
-                              className="flex-grow"
-                              type="file"
-                              name="laporan"
-                              accept=".pdf"
-                              onChange={(e) =>
-                                handleLaporanChange(e, setFieldValue)
-                              }
-                            />
-
-                            {/* Link jika laporan sudah ada */}
-                            {laporan && (
-                              <a
-                                href={`${(import.meta as any).env.VITE_REACT_APP_LOCAL_BASIC?.replace("http://", "https://") || "https://sintesa.kemenkeu.go.id:88"}/monev_pnbp/${laporan}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
-                              >
-                                <FileText className="w-4 h-4" />
-                                Laporan
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 items-center mt-4">
-                      <div className="col-span-1">
-                        <div className="flex flex-col gap-2 my-1">
-                          <Label className="font-bold">
-                            Ringkasan Pelaksanaan Koordinasi dengan Satker
-                          </Label>
-                          <Field
-                            name="ringkasan"
-                            as={Textarea}
-                            placeholder="Masukkan Ringkasan"
-                            className="min-h-[100px]"
-                            rows={4}
-                            onChange={(
-                              e: ChangeEvent<HTMLTextAreaElement>,
-                            ) => handleRingkasanChange(e, setFieldValue)}
-                            value={ringkasan}
-                          />
-                          <ErrorMessage
-                            name="ringkasan"
-                            component="div"
-                            className="text-red-500 text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>{" "}
-                    <div>
-                      <p className="mt-2 text-xl">{getGMT7Time()} </p>
-                      <p className="text-sm">Waktu Server (GMT +7)</p>
-                    </div>
-                  </form>
+                    )}
+                  </div>
                 </div>
-              );
-            }}
-          </Formik>
+                <div className="col-span-1">
+                  <div className="flex flex-col gap-2 my-1">
+                    <Label className="font-bold">
+                      File Surat (Maks. 2 MB)
+                    </Label>
+
+                    <div className="flex items-center gap-2">
+                      <Input
+                        className="flex-grow"
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFilesuratChange}
+                      />
+
+                      {file_surat && typeof file_surat === "string" && (
+                        <a
+                          href={`${(import.meta as any).env.VITE_REACT_APP_LOCAL_BASIC?.replace("http://", "https://") || "https://sintesa.kemenkeu.go.id:88"}/monev_pnbp/${file_surat}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Surat
+                        </a>
+                      )}
+                    </div>
+                    {errors.file_surat && (
+                      <div className="text-red-500 text-sm">
+                        {errors.file_surat.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center mt-4">
+                <div className="col-span-1">
+                  <div className="flex flex-col gap-2 my-1">
+                    <Label className="font-bold">Tanggal Surat</Label>
+                    <Input
+                      type="date"
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        handleTglSuratChange(e.target.value);
+                      }}
+                      value={tgl_surat}
+                    />
+                    {errors.tgl_surat && (
+                      <div className="text-red-500 text-sm">
+                        {errors.tgl_surat.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="col-span-1">
+                  <div className="flex flex-col gap-2 my-1">
+                    <Label className="font-bold">
+                      Upload Laporan (Maks. 2 MB)
+                    </Label>
+
+                    <div className="flex items-center gap-2">
+                      <Input
+                        className="flex-grow"
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleLaporanChange}
+                      />
+
+                      {laporan && typeof laporan === "string" && (
+                        <a
+                          href={`${(import.meta as any).env.VITE_REACT_APP_LOCAL_BASIC?.replace("http://", "https://") || "https://sintesa.kemenkeu.go.id:88"}/monev_pnbp/${laporan}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Laporan
+                        </a>
+                      )}
+                    </div>
+                    {errors.laporan && (
+                      <div className="text-red-500 text-sm">
+                        {errors.laporan.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 items-center mt-4">
+                <div className="col-span-1">
+                  <div className="flex flex-col gap-2 my-1">
+                    <Label className="font-bold">
+                      Ringkasan Pelaksanaan Koordinasi dengan Satker
+                    </Label>
+                    <Textarea
+                      placeholder="Masukkan Ringkasan"
+                      className="min-h-[100px]"
+                      rows={4}
+                      value={ringkasan}
+                      {...register("ringkasan")}
+                      onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                        handleRingkasanChange(e.target.value)
+                      }
+                    />
+                    {errors.ringkasan && (
+                      <div className="text-red-500 text-sm">
+                        {errors.ringkasan.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="mt-2 text-xl">{getGMT7Time()} </p>
+                <p className="text-sm">Waktu Server (GMT +7)</p>
+              </div>
+            </form>
+          </div>
         </div>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button size="default" variant="secondary" onClick={onHide}>

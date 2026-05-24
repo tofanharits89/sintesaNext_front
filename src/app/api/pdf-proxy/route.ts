@@ -8,7 +8,7 @@ const insecureAgent = new https.Agent({
   rejectUnauthorized: false,
 });
 
-async function proxyPdf(url: string, origin: string, incomingHost: string) {
+async function proxyPdf(url: string, origin: string, incomingHost: string, request?: NextRequest) {
   if (!url) {
     return NextResponse.json(
       { error: "Missing url parameter" },
@@ -36,10 +36,20 @@ async function proxyPdf(url: string, origin: string, incomingHost: string) {
     return NextResponse.json({ error: "URL not allowed" }, { status: 403 });
   }
 
+  // Forward incoming session cookies / headers for auth
+  const headers: Record<string, string> = {};
+  if (request) {
+    const cookie = request.headers.get("cookie");
+    if (cookie) headers["cookie"] = cookie;
+    const auth = request.headers.get("authorization");
+    if (auth) headers["authorization"] = auth;
+  }
+
   let response: Awaited<ReturnType<typeof nodeFetch>>;
   const isHttps = parsedUrl.protocol === "https:";
   try {
     response = await nodeFetch(parsedUrl.toString(), {
+      headers,
       ...(isHttps ? { agent: insecureAgent } : {}),
       redirect: "follow",
     });
@@ -104,7 +114,7 @@ async function proxyPdf(url: string, origin: string, incomingHost: string) {
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const url = searchParams.get("url");
-  return proxyPdf(url || "", request.nextUrl.origin, request.nextUrl.hostname);
+  return proxyPdf(url || "", request.nextUrl.origin, request.nextUrl.hostname, request);
 }
 
 export async function POST(request: NextRequest) {
@@ -115,5 +125,5 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  return proxyPdf(url, request.nextUrl.origin, request.nextUrl.hostname);
+  return proxyPdf(url, request.nextUrl.origin, request.nextUrl.hostname, request);
 }

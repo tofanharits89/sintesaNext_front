@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 
 interface UploadKontrakProps {
   id?: string;
@@ -43,7 +44,7 @@ export default function UploadKontrak({ id, cekupload }: UploadKontrakProps) {
   async function fetchFormData() {
     try {
       const query =
-        `SELECT id,thang,kddept,kdunit,kdkanwil,kdlokasi,kdsatker,tgpermohonan,nopermohonan FROM  laporan_2023.dispensasi_kontrak WHERE id='${id}' GROUP BY id`
+        `SELECT id,thang,kddept,kdunit,kdkanwil,kdlokasi,kdsatker,tgpermohonan,nopermohonan FROM  laporan_2023.dispensasi_kontrak WHERE id='${id}'`
       ;
       const encryptedQuery = btoa(query);
       const url = apiPath(`/dispensasi/${encryptedQuery}?limit=1&page=0`);
@@ -164,29 +165,20 @@ export default function UploadKontrak({ id, cekupload }: UploadKontrakProps) {
     setProcessError(null);
     setProcessSuccess(null);
     try {
-      const url = apiPath("/dispensasi/upload-kontrak");
+      const path = "/dispensasi/upload-kontrak";
 
       const body = { formData, data };
 
-      const resp = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        throw new Error(errJson?.error || `Server error: ${resp.status}`);
-      }
+      await apiClient.post(path, body);
 
       setProcessSuccess("Data berhasil di Upload.");
       toast.success("Data berhasil di Upload.");
       setData([]);
       setFileName("Pilih File Excel");
     } catch (err: any) {
-      setProcessError(err?.message || "Gagal upload data");
-      toast.error(err?.message || "Gagal upload data");
+      const errMsg = err?.response?.data?.error || err?.message || "Gagal upload data";
+      setProcessError(errMsg);
+      toast.error(errMsg);
     } finally {
       setProcessing(false);
     }

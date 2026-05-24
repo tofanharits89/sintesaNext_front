@@ -191,7 +191,7 @@ const DispensasiPage: React.FC = () => {
         </section>
       </div>
 
-      <Rekam show={showModalRekam} onHide={() => setShowModalRekam(false)} />
+      <Rekam show={showModalRekam} onHide={() => setShowModalRekam(false)} onSuccess={handleCek} />
 
       <FilterData
         show={showModalFilter}

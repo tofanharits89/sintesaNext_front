@@ -14,16 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Formik, Field, ErrorMessage, FormikHelpers } from "formik";
-import * as Yup from "yup";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
-import Swal from "sweetalert2";
 import { toast } from "sonner";
 import { PlusSquare, Save, Trash2 } from "lucide-react";
 import DataKontrakDetail from "./data-kontrak-detail";
-import { format, parse } from "date-fns";
 import moment from "moment";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 
 interface RekamKontrakProps {
   show: boolean;
@@ -36,14 +36,36 @@ interface RekamKontrakProps {
 }
 
 interface FormRow {
-  nilaikontrak: string;
+  nilaikontrak: string | number;
   nokontrak: string;
   tgkontrak: string | null;
-  kdkppn: string;
+  kdkppn?: string | undefined;
+}
+
+interface FormValues {
+  id?: string | undefined;
+  formRows: FormRow[];
+  kdkppn?: string | undefined;
 }
 
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+
+const validationSchema = z.object({
+  id: z.string().optional(),
+  kdkppn: z.string().optional(),
+  formRows: z.array(
+    z.object({
+      nokontrak: z.string().min(1, "harus diisi"),
+      nilaikontrak: z.any()
+        .refine((val) => val !== "" && val !== null && val !== undefined, "hanya angka")
+        .transform((val) => Number(val))
+        .pipe(z.number({ message: "hanya angka" })),
+      tgkontrak: z.any().refine((val) => val !== null && val !== undefined && val !== "", "harus diisi"),
+      kdkppn: z.string().optional(),
+    })
+  ),
+});
 
 export default function ModalRekamKontrak({
   show,
@@ -58,100 +80,80 @@ export default function ModalRekamKontrak({
   const [loading, setLoading] = useState(false);
   const [cek, setCek] = useState(false);
   const [activeTab, setActiveTab] = useState("dispensasi-overview");
-  const [formRows, setFormRows] = useState<FormRow[]>([
-    {
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: {
+      id,
+      kdkppn,
+      formRows: [
+        {
+          nilaikontrak: "",
+          nokontrak: "",
+          tgkontrak: null,
+          kdkppn: kdkppn,
+        },
+      ],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "formRows",
+  });
+
+  const watchFormRows = watch("formRows");
+
+  const addRow = () => {
+    append({
       nilaikontrak: "",
       nokontrak: "",
       tgkontrak: null,
       kdkppn: kdkppn,
-    },
-  ]);
-
-  const addRow = () => {
-    setFormRows([
-      ...formRows,
-      {
-        nilaikontrak: "",
-        nokontrak: "",
-        tgkontrak: null,
-        kdkppn: kdkppn,
-      },
-    ]);
+    });
   };
 
   const removeRow = (index: number) => {
-    const updatedRows = [...formRows];
-    updatedRows.splice(index, 1);
-    setFormRows(updatedRows);
+    remove(index);
   };
 
-  const initialValues = {
-    id,
-    formRows,
-    kdkppn,
-  };
-
-  const validationSchema = Yup.object().shape({
-    formRows: Yup.array().of(
-      Yup.object().shape({
-        nokontrak: Yup.string().required("harus diisi"),
-        nilaikontrak: Yup.number().required("hanya angka"),
-        tgkontrak: Yup.date().required("harus diisi"),
-      })
-    ),
-  });
-
-  const handleSubmitdata = async (
-    values: any,
-    { setSubmitting }: FormikHelpers<any>
-  ) => {
+  const handleSubmitdata = async (values: FormValues) => {
     setCek(false);
     setLoading(true);
     try {
-      const response = await fetch(
-        apiPath("/dispensasi/simpan-lampiran-kontrak"),
-        {
-          credentials: "include",
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values.formRows.map((row: any) => ({ ...row, id_dispensasi: id }))),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const payload = values.formRows.map((row: any) => ({ ...row, id_dispensasi: id }));
+      await apiClient.post("/dispensasi/simpan-lampiran-kontrak", payload);
 
       setLoading(false);
-      Swal.fire({
-        html: `<div class='text-success mt-4'>Data Kontrak Berhasil Disimpan</div>`,
-        icon: "success",
-        position: "top",
-        buttonsStyling: false,
-        customClass: {
-          confirmButton: "bg-green-600 text-white px-4 py-2 rounded",
-        },
-        confirmButtonText: "Tutup",
-      });
+      toast.success("Data Kontrak Berhasil Disimpan");
       setCek(true);
-    } catch (error) {
-      toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Terjadi Permasalahan Koneksi atau Server Backend");
       setLoading(false);
-      setSubmitting(false);
     }
   };
 
   const handleModalClose = () => {
-    setFormRows([
-      {
-        nilaikontrak: "",
-        nokontrak: "",
-        tgkontrak: null,
-        kdkppn: kdkppn,
-      },
-    ]);
+    reset({
+      id,
+      kdkppn,
+      formRows: [
+        {
+          nilaikontrak: "",
+          nokontrak: "",
+          tgkontrak: null,
+          kdkppn: kdkppn,
+        },
+      ],
+    });
     setActiveTab("dispensasi-overview");
     onHide();
   };
@@ -200,122 +202,108 @@ export default function ModalRekamKontrak({
             <TabsContents className="mt-4 space-y-4">
               <TabsContent value="dispensasi-overview" className="mt-0 space-y-4">
                 {user?.role !== "kanwil_djpb" && (
-                  <Formik
-                    validationSchema={validationSchema}
-                    onSubmit={handleSubmitdata}
-                    initialValues={initialValues}
-                    enableReinitialize
-                  >
-                    {({
-                      handleSubmit,
-                      setFieldValue,
-                      values,
-                      touched,
-                      errors,
-                    }) => (
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="p-4 bg-background border rounded-lg shadow-sm">
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">SATKER</p>
-                            <p className="font-bold text-lg">{nmsatker} ({kdsatker})</p>
-                            <p className="text-sm text-muted-foreground mt-1">Nomor Permohonan : <span className="font-medium text-foreground">{nomor}</span></p>
-                          </div>
-                        </div>
+                  <form onSubmit={handleSubmit(handleSubmitdata)} className="space-y-4">
+                    <div className="p-4 bg-background border rounded-lg shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">SATKER</p>
+                        <p className="font-bold text-lg">{nmsatker} ({kdsatker})</p>
+                        <p className="text-sm text-muted-foreground mt-1">Nomor Permohonan : <span className="font-medium text-foreground">{nomor}</span></p>
+                      </div>
+                    </div>
 
-                        <div className="bg-transparent border rounded-lg p-4 shadow-sm">
-                          <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-semibold text-lg">Detail Kontrak</h3>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-primary hover:text-primary/80 hover:bg-primary/10"
-                              onClick={addRow}
-                            >
-                              <PlusSquare className="mr-2 h-5 w-5" />
-                              Tambah Baris
-                            </Button>
-                          </div>
+                    <div className="bg-transparent border rounded-lg p-4 shadow-sm">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-semibold text-lg">Detail Kontrak</h3>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                          onClick={addRow}
+                        >
+                          <PlusSquare className="mr-2 h-5 w-5" />
+                          Tambah Baris
+                        </Button>
+                      </div>
 
-                          <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
-                            {values.formRows && values.formRows.length > 0 && values.formRows.map((row, index) => (
-                              <div key={index} className="p-4 pr-16 border rounded-md bg-muted/5 space-y-4 relative group">
-                                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => removeRow(index)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                      <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+                        {fields.map((field, index) => (
+                          <div key={field.id} className="p-4 pr-16 border rounded-md bg-muted/5 space-y-4 relative group">
+                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => removeRow(index)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                  <div className="md:col-span-5 space-y-2">
-                                    <Label>Nomor Kontrak/ Adendum</Label>
-                                    <Field
-                                      name={`formRows[${index}].nokontrak`}
-                                      placeholder="Nomor Kontrak/ Adendum"
-                                      className={inputClass}
-                                    />
-                                    <ErrorMessage
-                                      name={`formRows[${index}].nokontrak`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                              <div className="md:col-span-5 space-y-2">
+                                <Label>Nomor Kontrak/ Adendum</Label>
+                                <Input
+                                  {...register(`formRows.${index}.nokontrak` as const)}
+                                  placeholder="Nomor Kontrak/ Adendum"
+                                  className={inputClass}
+                                />
+                                {errors.formRows?.[index]?.nokontrak && (
+                                  <div className="text-red-500 text-xs">
+                                    {errors.formRows[index]?.nokontrak?.message}
                                   </div>
-
-                                  <div className="md:col-span-3 space-y-2">
-                                    <Label>Tgl Kontrak</Label>
-                                    <DatePicker
-                                      date={
-                                        values.formRows[index]?.tgkontrak
-                                          ? moment(values.formRows[index].tgkontrak).toDate()
-                                          : undefined
-                                      }
-                                      onDateChange={(date: Date | undefined) => {
-                                        if (date) {
-                                          setFieldValue(
-                                            `formRows[${index}].tgkontrak`,
-                                            moment(date).format("YYYY-MM-DD")
-                                          );
-                                        } else {
-                                          setFieldValue(`formRows[${index}].tgkontrak`, null);
-                                        }
-                                      }}
-                                      placeholder="Tgl Kontrak"
-                                    />
-                                    <ErrorMessage
-                                      name={`formRows[${index}].tgkontrak`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
-                                  </div>
-
-                                  <div className="md:col-span-4 space-y-2">
-                                    <Label>Nilai Kontrak</Label>
-                                    <Field
-                                      name={`formRows[${index}].nilaikontrak`}
-                                      type="number"
-                                      placeholder="Nilai Kontrak"
-                                      className={inputClass}
-                                    />
-                                    <ErrorMessage
-                                      name={`formRows[${index}].nilaikontrak`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
-                                  </div>
-                                </div>
+                                )}
                               </div>
-                            ))}
+
+                              <div className="md:col-span-3 space-y-2">
+                                <Label>Tgl Kontrak</Label>
+                                <DatePicker
+                                  date={
+                                    watchFormRows?.[index]?.tgkontrak
+                                      ? moment(watchFormRows[index].tgkontrak).toDate()
+                                      : undefined
+                                  }
+                                  onDateChange={(date: Date | undefined) => {
+                                    if (date) {
+                                      setValue(
+                                        `formRows.${index}.tgkontrak` as const,
+                                        moment(date).format("YYYY-MM-DD"),
+                                        { shouldValidate: true }
+                                      );
+                                    } else {
+                                      setValue(`formRows.${index}.tgkontrak` as const, null, { shouldValidate: true });
+                                    }
+                                  }}
+                                  placeholder="Tgl Kontrak"
+                                />
+                                {errors.formRows?.[index]?.tgkontrak && (
+                                  <div className="text-red-500 text-xs">
+                                    {errors.formRows[index]?.tgkontrak?.message}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="md:col-span-4 space-y-2">
+                                <Label>Nilai Kontrak</Label>
+                                <Input
+                                  {...register(`formRows.${index}.nilaikontrak` as const)}
+                                  type="number"
+                                  placeholder="Nilai Kontrak"
+                                  className={inputClass}
+                                />
+                                {errors.formRows?.[index]?.nilaikontrak && (
+                                  <div className="text-red-500 text-xs">
+                                    {errors.formRows[index]?.nilaikontrak?.message}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </form>
-                    )}
-                  </Formik>
+                        ))}
+                      </div>
+                    </div>
+                  </form>
                 )}
               </TabsContent>
 

@@ -1,13 +1,4 @@
-import React, { useState, useContext, useEffect, ChangeEvent } from "react";
-// import {
-//   Modal,
-//   Form,
-//   Button,
-//   Container,
-//   Row,
-//   Col,
-//   Spinner,
-// } from "react-bootstrap";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,10 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { Formik, FormikHelpers } from "formik";
-import * as Yup from "yup";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
@@ -52,9 +43,19 @@ interface Rekaman {
 interface FormValues {
   tahun: number | string;
   triwulan: number | string;
-  kdkanwil: string;
+  kdkanwil?: string | undefined;
   nd_kanwil: File | null;
 }
+
+const validationSchema = z.object({
+  tahun: z.any().refine(val => val !== "" && val !== null && val !== undefined, "Tahun wajib dipilih"),
+  triwulan: z.any().refine(val => val !== "" && val !== null && val !== undefined, "Triwulan wajib dipilih"),
+  kdkanwil: z.string().optional(),
+  nd_kanwil: z.any()
+    .refine((val) => val instanceof File, "File belum dipilih")
+    .refine((file) => !(file instanceof File) || file.size <= 2 * 1024 * 1024, "Ukuran file maksimal 2MB")
+    .refine((file) => !(file instanceof File) || file.type === "application/pdf", "Hanya file PDF diperbolehkan")
+});
 
 const Rekam: React.FC<RekamProps> = ({
   show,
@@ -90,10 +91,35 @@ const Rekam: React.FC<RekamProps> = ({
     return gmt7Time.toLocaleTimeString("id-ID");
   };
 
+  const initialValues: FormValues = {
+    tahun: tahun || "",
+    triwulan: triwulan || "",
+    kdkanwil,
+    nd_kanwil: null,
+  };
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(validationSchema),
+    values: initialValues,
+  });
+
   useEffect(() => {
     if (show) {
       setNdkanwil(ndkanwilpilih || "");
       fetchDataRekaman();
+      reset({
+        tahun: tahun || "",
+        triwulan: triwulan || "",
+        kdkanwil,
+        nd_kanwil: null,
+      });
     }
   }, [show, ndkanwilpilih]);
 
@@ -106,51 +132,19 @@ const Rekam: React.FC<RekamProps> = ({
     }
   };
 
-  const initialValues: FormValues = {
-    tahun: tahun || "",
-    triwulan: triwulan || "",
-    kdkanwil,
-    nd_kanwil: null,
-  };
-
-  const validationSchema = Yup.object().shape({
-    tahun: Yup.string().required("Tahun wajib dipilih"),
-    triwulan: Yup.string().required("Triwulan wajib dipilih"),
-    nd_kanwil: Yup.mixed()
-      .required("File belum dipilih")
-      .test(
-        "fileSize",
-        "Ukuran file maksimal 2MB",
-        (value: any) => !value || value.size <= 2 * 1024 * 1024,
-      )
-      .test(
-        "fileType",
-        "Hanya file PDF diperbolehkan",
-        (value: any) => !value || value.type === "application/pdf",
-      ),
-  });
-
   const handleNdkanwilChange = (
     event: ChangeEvent<HTMLInputElement>,
-    setFieldValue: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean,
-    ) => void,
   ) => {
     const file = event.target.files ? event.target.files[0] : null;
     if (file) {
       setNdkanwil(file);
-      setFieldValue("nd_kanwil", file);
+      setValue("nd_kanwil", file, { shouldValidate: true });
     }
   };
 
-  const handleSubmit = async (
-    values: FormValues,
-    { setSubmitting }: FormikHelpers<FormValues>,
-  ) => {
+  const onSubmit = async (values: FormValues) => {
     if (!user) {
-      Swal.fire("Error", "User tidak ditemukan, silakan login ulang", "error");
+      toast.error("User tidak ditemukan, silakan login ulang");
       return;
     }
 
@@ -158,7 +152,7 @@ const Rekam: React.FC<RekamProps> = ({
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("kdkanwil", values.kdkanwil);
+    formData.append("kdkanwil", values.kdkanwil || "");
     formData.append("tahun", values.tahun.toString());
     formData.append("triwulan", values.triwulan.toString());
     if (values.nd_kanwil) {
@@ -172,21 +166,19 @@ const Rekam: React.FC<RekamProps> = ({
         },
       });
 
-      Swal.fire("Sukses", "Data berhasil disimpan", "success").then(() => {
-        onSaveSuccess(values.nd_kanwil);
-        onHide();
-      });
+      toast.success("Data berhasil disimpan");
+      onSaveSuccess(values.nd_kanwil);
+      onHide();
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Terjadi kesalahan");
     } finally {
       setLoading(false);
-      setSubmitting(false);
     }
   };
 
-  const isDisabled = (tahun: number | string, triwulan: number | string) => {
+  const isDisabled = (tahunVal: number | string, triwulanVal: number | string) => {
     return rekamanSebelumnya.some(
-      (rekam) => rekam.tahun == tahun && rekam.triwulan == triwulan,
+      (rekam) => rekam.tahun == tahunVal && rekam.triwulan == triwulanVal,
     );
   };
 
@@ -199,25 +191,23 @@ const Rekam: React.FC<RekamProps> = ({
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>Kirim Nota Dinas</DialogTitle>
         </DialogHeader>
-        <Formik
-          validationSchema={validationSchema}
-          onSubmit={handleSubmit}
-          initialValues={initialValues}
+        <form
+          id={formId}
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-1 flex-col overflow-hidden"
         >
-          {({ handleSubmit, setFieldValue, values }) => (
-            <form
-              id={formId}
-              noValidate
-              onSubmit={handleSubmit}
-              className="flex flex-1 flex-col overflow-hidden"
-            >
-              <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-1">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="col-span-1 space-y-2">
-                    <Label>Tahun</Label>
+          <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="col-span-1 space-y-2">
+                <Label>Tahun</Label>
+                <Controller
+                  control={control}
+                  name="tahun"
+                  render={({ field }) => (
                     <Select
-                      value={values.tahun?.toString()}
-                      onValueChange={(val) => setFieldValue("tahun", val)}
+                      value={field.value?.toString()}
+                      onValueChange={(val) => field.onChange(val)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih Tahun" />
@@ -236,48 +226,66 @@ const Rekam: React.FC<RekamProps> = ({
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="col-span-1 space-y-2">
-                    <Label>Triwulan</Label>
+                  )}
+                />
+                {errors.tahun && (
+                  <p className="text-sm text-destructive">{errors.tahun.message}</p>
+                )}
+              </div>
+              <div className="col-span-1 space-y-2">
+                <Label>Triwulan</Label>
+                <Controller
+                  control={control}
+                  name="triwulan"
+                  render={({ field }) => (
                     <Select
-                      value={values.triwulan?.toString()}
-                      onValueChange={(val) => setFieldValue("triwulan", val)}
+                      value={field.value?.toString()}
+                      onValueChange={(val) => field.onChange(val)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih Triwulan" />
                       </SelectTrigger>
                       <SelectContent>
-                        {triwulanOptions.map((tri) => (
-                          <SelectItem
-                            key={tri}
-                            value={tri.toString()}
-                            disabled={isDisabled(values.tahun, tri)}
-                          >
-                            Triwulan {tri}
-                          </SelectItem>
-                        ))}
+                        {triwulanOptions.map((tri) => {
+                          const currentTahun = control._formValues.tahun;
+                          return (
+                            <SelectItem
+                              key={tri}
+                              value={tri.toString()}
+                              disabled={isDisabled(currentTahun, tri)}
+                            >
+                              Triwulan {tri}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 mt-3 space-y-2">
-                  <div className="col-span-1 space-y-2">
-                    <Label>File Nota Dinas (Maks. 2 MB)</Label>
-                    <Input
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => handleNdkanwilChange(e, setFieldValue)}
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 text-center">
-                  <p className="font-bold text-xl">{getGMT7Time()}</p>
-                  <p className="text-sm">Waktu Server (GMT +7)</p>
-                </div>
+                  )}
+                />
+                {errors.triwulan && (
+                  <p className="text-sm text-destructive">{errors.triwulan.message}</p>
+                )}
               </div>
-            </form>
-          )}
-        </Formik>
+            </div>
+            <div className="grid grid-cols-1 mt-3 space-y-2">
+              <div className="col-span-1 space-y-2">
+                <Label>File Nota Dinas (Maks. 2 MB)</Label>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleNdkanwilChange}
+                />
+                {errors.nd_kanwil && (
+                  <p className="text-sm text-destructive">{errors.nd_kanwil.message}</p>
+                )}
+              </div>
+            </div>
+            <div className="mt-3 text-center">
+              <p className="font-bold text-xl">{getGMT7Time()}</p>
+              <p className="text-sm">Waktu Server (GMT +7)</p>
+            </div>
+          </div>
+        </form>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="secondary" type="button" onClick={onHide}>
             Tutup

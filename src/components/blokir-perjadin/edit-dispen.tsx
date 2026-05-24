@@ -1,8 +1,8 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
-import { Formik, ErrorMessage } from "formik";
-import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { toast } from "sonner";
 import { Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,15 +29,33 @@ interface EditDispenProps {
 }
 
 interface DispenData {
-  id?: string | number;
-  kddept: string;
-  kdunit: string;
-  target: number | string;
+  id?: string | number | undefined;
+  kddept?: string | undefined;
+  kdunit?: string | undefined;
+  target?: number | string | undefined;
   dispensasi_blokir: number | string;
-  blokir_7: number | string;
-  blokir_A: number | string;
-  deviasi: number | string;
+  blokir_7?: number | string | undefined;
+  blokir_A?: number | string | undefined;
+  deviasi?: number | string | undefined;
 }
+
+const validationSchema = z.object({
+  id: z.any().optional(),
+  kddept: z.string().optional(),
+  kdunit: z.string().optional(),
+  target: z.any().optional(),
+  dispensasi_blokir: z.any()
+    .refine((val) => val !== "" && val !== null && val !== undefined, "Harus diisi")
+    .transform((val) => Number(val))
+    .pipe(
+      z.number({ message: "Harus berupa angka" })
+        .min(0, "Harus berupa angka non-negatif atau nol")
+        .int("Harus berupa angka bulat")
+    ),
+  blokir_7: z.any().optional(),
+  blokir_A: z.any().optional(),
+  deviasi: z.any().optional(),
+});
 
 const EditDispen: React.FC<EditDispenProps> = ({
   show,
@@ -59,6 +77,15 @@ const EditDispen: React.FC<EditDispenProps> = ({
     blokir_A: "",
     deviasi: "",
     id: id,
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<DispenData>({
+    resolver: zodResolver(validationSchema),
+    values: initialValues,
   });
 
   useEffect(() => {
@@ -128,10 +155,7 @@ const EditDispen: React.FC<EditDispenProps> = ({
     }
   };
 
-  const handleSubmitdata = async (
-    values: DispenData,
-    { setSubmitting }: any,
-  ) => {
+  const onSubmit = async (values: DispenData) => {
     setLoading(true);
 
     try {
@@ -158,18 +182,8 @@ const EditDispen: React.FC<EditDispenProps> = ({
       toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
     } finally {
       setLoading(false);
-      setSubmitting(false);
     }
   };
-
-  const validationSchema = Yup.object().shape({
-    dispensasi_blokir: Yup.number()
-      .nullable()
-      .typeError("Harus berupa angka")
-      .min(0, "Harus berupa angka non-negatif atau nol")
-      .integer("Harus berupa angka bulat")
-      .required("Harus diisi"),
-  });
 
   const handleModalClose = () => {
     if (onUpdate) {
@@ -191,64 +205,49 @@ const EditDispen: React.FC<EditDispenProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <Formik
-          validationSchema={validationSchema}
-          onSubmit={handleSubmitdata}
-          enableReinitialize={true}
-          initialValues={initialValues}
-        >
-          {({ handleSubmit, handleChange, values, touched, errors }) => (
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 space-y-6 overflow-y-auto p-6">
-              <div className="rounded-lg border bg-card p-4 sm:p-6">
-                <div className="space-y-2">
-                  <Label htmlFor="dispensasi_blokir">Nilai Dispensasi</Label>
-                  <Input
-                    id="dispensasi_blokir"
-                    type="number"
-                    name="dispensasi_blokir"
-                    value={values.dispensasi_blokir}
-                    onChange={handleChange}
-                    placeholder="Masukkan nilai dispensasi"
-                    aria-invalid={
-                      touched.dispensasi_blokir && errors.dispensasi_blokir
-                        ? true
-                        : undefined
-                    }
-                  />
-                  <ErrorMessage name="dispensasi_blokir">
-                    {(msg) => <p className="text-sm text-destructive">{msg}</p>}
-                  </ErrorMessage>
-                </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 space-y-6 overflow-y-auto p-6">
+            <div className="rounded-lg border bg-card p-4 sm:p-6">
+              <div className="space-y-2">
+                <Label htmlFor="dispensasi_blokir">Nilai Dispensasi</Label>
+                <Input
+                  id="dispensasi_blokir"
+                  type="number"
+                  {...register("dispensasi_blokir")}
+                  placeholder="Masukkan nilai dispensasi"
+                  aria-invalid={errors.dispensasi_blokir ? true : undefined}
+                />
+                {errors.dispensasi_blokir && (
+                  <p className="text-sm text-destructive">{errors.dispensasi_blokir.message}</p>
+                )}
               </div>
             </div>
+          </div>
 
-              <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleModalClose}
-                >
-                  <X className="h-4 w-4" />
-                  Tutup
-                </Button>
-                <Button type="submit" variant="destructive" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Spinner size="sm" className="text-white" />
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Simpan
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </Formik>
+          <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleModalClose}
+            >
+              <X className="h-4 w-4" />
+              Tutup
+            </Button>
+            <Button type="submit" variant="destructive" disabled={loading}>
+              {loading ? (
+                <>
+                  <Spinner size="sm" className="text-white" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Simpan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

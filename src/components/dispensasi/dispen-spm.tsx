@@ -7,10 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
-import { PlusSquare, Trash2, Download, AlertTriangle } from "lucide-react";
+import { PlusSquare, Trash2, Download, AlertTriangle, Eye } from "lucide-react";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import Rekam2 from "./rekam2";
 import { DataTable } from "@/components/ui/data-table";
+import { PdfViewerModal } from "@/components/transfer-daerah/modals/pdf-viewer-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +63,19 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteTargetCount, setDeleteTargetCount] = useState(0);
 
+  // States for PDF Viewer Modal
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [pdfTitle, setPdfTitle] = useState("");
+
+  const handleOpenPreview = (id: string, nopermohonan: string) => {
+    const intId = parseInt(id, 10);
+    const fileUrl = `/api/v1/dispensasi/download-spm/${intId}`;
+    setPdfUrl(fileUrl);
+    setPdfTitle(`Dokumen SPM: ${nopermohonan}`);
+    setIsPdfOpen(true);
+  };
+
   // Load data on initial mount and reload when filter/page changes
   useEffect(() => {
     if (user) {
@@ -106,7 +120,7 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
   FROM laporan_2023.dispensasi_spm a
   LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker = c.kdsatker
   ${finalFilter ? `WHERE ${finalFilter}` : ""}
-  ORDER BY a.id DESC`
+  ORDER BY a.tgpermohonan DESC`
     );
 
     const cleanedQuery = decodeURIComponent(encodedQuery)
@@ -154,20 +168,7 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
 
   const confirmDelete = async () => {
     try {
-      const response = await fetch(
-        apiPath(`/dispensasi/dispspm/${deleteTargetId}`),
-        {
-          method: "DELETE",
-          credentials: "include",
-          headers: {
-            // Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await apiClient.delete(`/dispensasi/dispspm/${deleteTargetId}`);
 
       toast.success("Data telah dihapus.");
       getData();
@@ -230,6 +231,7 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
 
   const handleCloseModalSPM = () => {
     setShowModalRekam(false);
+    getData();
   };
 
   const columns: ColumnDef<SpmData>[] = [
@@ -279,54 +281,64 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
       cell: ({ row }) => <div className="text-center">{row.original.jmlspm ?? "-"}</div>,
     },
     {
-      id: "aksi",
-      header: () => <div className="text-center font-medium">Opsi</div>,
+      id: "file",
+      header: () => <div className="text-center font-medium">File</div>,
       cell: ({ row }) => (
-        <div className="flex items-center justify-center gap-2">
-          {user?.role !== "kppn" && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="Rekam SPM"
-              onClick={() =>
-                handleRekamSPM(
-                  String(row.original.id),
-                  row.original.nopermohonan?.trim() || "",
-                  row.original.nmsatker?.trim() || "",
-                  row.original.kdsatker,
-                  row.original.thang
-                )
-              }
-            >
-              <PlusSquare className="h-4 w-4 text-blue-600" />
-            </Button>
-          )}
-          {user?.role !== "kppn" && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="Hapus Dispensasi"
-              onClick={() =>
-                handleHapusDispSPM(
-                  String(row.original.id),
-                  row.original.jmlspm ?? 0
-                )
-              }
-            >
-              <Trash2 className="h-4 w-4 text-red-600" />
-            </Button>
-          )}
+        <div className="text-center">
           <Button
             variant="outline"
             size="sm"
             className="h-8 w-8 p-0"
-            title="Download Dokumen"
-            onClick={() => handledownload(String(row.original.id))}
+            title="Pratinjau Dokumen (PDF)"
+            onClick={() => handleOpenPreview(String(row.original.id), row.original.nopermohonan)}
           >
-            <Download className="h-4 w-4 text-amber-600" />
+            <Eye className="h-4 w-4 text-amber-600" />
           </Button>
+        </div>
+      ),
+    },
+    {
+      id: "aksi",
+      header: () => <div className="text-center font-medium">Opsi</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          {user?.role !== "kppn" ? (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Rekam SPM"
+                onClick={() =>
+                  handleRekamSPM(
+                    String(row.original.id),
+                    row.original.nopermohonan?.trim() || "",
+                    row.original.nmsatker?.trim() || "",
+                    row.original.kdsatker,
+                    row.original.thang
+                  )
+                }
+              >
+                <PlusSquare className="h-4 w-4 text-blue-600" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Hapus Dispensasi"
+                onClick={() =>
+                  handleHapusDispSPM(
+                    String(row.original.id),
+                    row.original.jmlspm ?? 0
+                  )
+                }
+              >
+                <Trash2 className="h-4 w-4 text-red-600" />
+              </Button>
+            </div>
+          ) : (
+            "-"
+          )}
         </div>
       ),
     },
@@ -356,6 +368,13 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
         nomor={nomor}
         kdsatker={kdsatker}
         nmsatker={nmsatker}
+      />
+
+      <PdfViewerModal
+        open={isPdfOpen}
+        onOpenChange={setIsPdfOpen}
+        url={pdfUrl}
+        title={pdfTitle}
       />
 
       {/* Delete Confirmation Dialog */}
