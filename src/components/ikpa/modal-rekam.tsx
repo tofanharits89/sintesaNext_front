@@ -211,7 +211,6 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                     date={form.watch("tg_nd")}
                                     onDateChange={(date) => form.setValue("tg_nd", date || new Date())}
                                     placeholder="Pilih tanggal ND"
-                                    className="w-full"
                                 />
                             </div>
 

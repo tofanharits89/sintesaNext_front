@@ -367,10 +367,6 @@ export function SatkerDetailModal({
                       date={tanggalPks} 
                       onDateChange={setTanggalPks}
                       placeholder="Pilih Tanggal PKS"
-                      className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
-                      captionLayout="dropdown"
-                      startMonth={new Date(2000, 0)}
-                      endMonth={new Date(new Date().getFullYear() + 10, 11)}
                     />
                   </div>
                 </div>
@@ -408,10 +404,6 @@ export function SatkerDetailModal({
                       date={tanggalDispen} 
                       onDateChange={setTanggalDispen}
                       placeholder="Pilih Tanggal Dispensasi"
-                      className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
-                      captionLayout="dropdown"
-                      startMonth={new Date(2000, 0)}
-                      endMonth={new Date(new Date().getFullYear() + 10, 11)}
                     />
                   </div>
                 </div>

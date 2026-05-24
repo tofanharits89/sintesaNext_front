@@ -493,10 +493,6 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
                   date={formData.tanggalKmk}
                   onDateChange={(date) => setFormData({ ...formData, tanggalKmk: date })}
                   placeholder="Pilih tanggal KMK"
-                  className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors border-none"
-                  captionLayout="dropdown"
-                  startMonth={new Date(2000, 0)}
-                  endMonth={new Date(new Date().getFullYear() + 10, 11)}
                 />
               </div>
 
