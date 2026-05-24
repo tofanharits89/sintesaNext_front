@@ -64,12 +64,6 @@ export function PdfViewerModal({
     }
   }, [open, url, isLandscape]);
 
-  // Reset rendering state on page or zoom change for clean rendering fade
-  useEffect(() => {
-    if (open) {
-      setIsPageRendered(false);
-    }
-  }, [pageNumber, scale, open]);
 
   // Pre-fetch the PDF as a local blob so pdfjs never makes a direct network
   // request. This avoids cross-origin / credential issues with pdfjs's
@@ -84,9 +78,15 @@ export function PdfViewerModal({
     setPdfData(null);
     setPdfFile(null);
 
-    const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(url)}`;
-    console.log("Fetching PDF from:", proxyUrl);
-    fetch(proxyUrl, { credentials: "include" })
+    console.log("Fetching PDF via POST proxy to bypass IDM:", url);
+    fetch("/api/pdf-proxy", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url }),
+    })
       .then((res) => {
         console.log("PDF proxy response status:", res.status, res.statusText);
         if (!res.ok) {

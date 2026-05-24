@@ -19,11 +19,14 @@ import {
     Edit,
     ChevronsUpDown,
     Check,
-    Search
+    Search,
+    Eye
 } from "lucide-react";
 import { ModalRekamIkpa } from "./modal-rekam";
 import { ModalEditIkpa } from "./modal-edit";
 import { cn } from "@/lib/utils/utils";
+import { PdfViewerModal } from "@/components/transfer-daerah/modals/pdf-viewer-modal";
+import { apiPath } from "@/lib/config/base-path";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -106,6 +109,7 @@ type IkpaRequest = {
     perbaikan?: string;
     thang: string;
     date_input: string;
+    file?: string | null;
 };
 
 type IkpaStats = {
@@ -140,6 +144,17 @@ export function IkpaLanding() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<IkpaRequest | null>(null);
     const [satkerComboboxOpen, setSatkerComboboxOpen] = useState(false);
+    const [isPdfOpen, setIsPdfOpen] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState("");
+    const [pdfTitle, setPdfTitle] = useState("");
+
+    const handleOpenPreview = useCallback((file: string, title: string) => {
+        if (!file) return;
+        const fileUrl = apiPath(`/uploads/Setuju_ikpa/${encodeURIComponent(file)}`);
+        setPdfUrl(fileUrl);
+        setPdfTitle(title);
+        setIsPdfOpen(true);
+    }, []);
 
     // Fetch Global Stats
     const { data: statsData, isLoading: isStatsLoading } = useQuery<IkpaStats>({
@@ -397,6 +412,13 @@ export function IkpaLanding() {
                 data={editingItem}
             />
 
+            <PdfViewerModal
+                open={isPdfOpen}
+                onOpenChange={setIsPdfOpen}
+                url={pdfUrl}
+                title={pdfTitle}
+            />
+
             {/* Top Dashboard Grid */}
             <div className="space-y-6 mb-8">
                 {/* Quick Stats Row */}
@@ -562,19 +584,32 @@ export function IkpaLanding() {
                                                     </TableCell>
                                                     <TableCell><div className="flex justify-center"><StatusBadge status={item.approval} /></div></TableCell>
                                                     <TableCell className="text-center">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8 cursor-pointer"
-                                                            onClick={() => {
-                                                                setEditingItem(item);
-                                                                setIsEditModalOpen(true);
-                                                            }}
-                                                            title="Edit Permohonan"
-                                                        >
-                                                            <Edit className="h-4 w-4 text-blue-600" />
-                                                        </Button>
-                                                    </TableCell>
+                                                         <div className="flex items-center justify-center gap-2">
+                                                             {item.file && (
+                                                                 <Button
+                                                                     variant="outline"
+                                                                     size="icon"
+                                                                     className="h-8 w-8 cursor-pointer"
+                                                                     onClick={() => handleOpenPreview(item.file!, `Nota Dinas: ${item.no_nd}`)}
+                                                                     title="Lihat Nota Dinas (PDF)"
+                                                                 >
+                                                                     <Eye className="h-4 w-4 text-amber-600" />
+                                                                 </Button>
+                                                             )}
+                                                             <Button
+                                                                 variant="outline"
+                                                                 size="icon"
+                                                                 className="h-8 w-8 cursor-pointer"
+                                                                 onClick={() => {
+                                                                     setEditingItem(item);
+                                                                     setIsEditModalOpen(true);
+                                                                 }}
+                                                                 title="Edit Permohonan"
+                                                             >
+                                                                 <Edit className="h-4 w-4 text-blue-600" />
+                                                             </Button>
+                                                         </div>
+                                                     </TableCell>
                                                 </TableRow>
                                             ))
                                         ) : (

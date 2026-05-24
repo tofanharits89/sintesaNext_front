@@ -8,10 +8,7 @@ const insecureAgent = new https.Agent({
   rejectUnauthorized: false,
 });
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const url = searchParams.get("url");
-
+async function proxyPdf(url: string, origin: string, incomingHost: string) {
   if (!url) {
     return NextResponse.json(
       { error: "Missing url parameter" },
@@ -19,23 +16,31 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Only allow fetching from trusted domain
+  // Only allow fetching from trusted domain, localhost, same host, or relative paths
   let parsedUrl: URL;
   try {
-    parsedUrl = new URL(url);
+    if (url.startsWith("/")) {
+      parsedUrl = new URL(url, origin);
+    } else {
+      parsedUrl = new URL(url);
+    }
   } catch {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
 
   const allowedHostname = "sintesa.kemenkeu.go.id";
-  if (parsedUrl.hostname !== allowedHostname) {
+  const isLocalhost = parsedUrl.hostname === "localhost" || parsedUrl.hostname === "127.0.0.1";
+  const isSameHost = parsedUrl.hostname === incomingHost;
+
+  if (parsedUrl.hostname !== allowedHostname && !isLocalhost && !isSameHost) {
     return NextResponse.json({ error: "URL not allowed" }, { status: 403 });
   }
 
   let response: Awaited<ReturnType<typeof nodeFetch>>;
+  const isHttps = parsedUrl.protocol === "https:";
   try {
-    response = await nodeFetch(url, {
-      agent: insecureAgent,
+    response = await nodeFetch(parsedUrl.toString(), {
+      ...(isHttps ? { agent: insecureAgent } : {}),
       redirect: "follow",
     });
   } catch (err: unknown) {
@@ -56,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   const contentType =
     response.headers.get("content-type") ?? "application/pdf";
-  
+
   // Check if content is actually PDF
   if (!contentType.includes("pdf") && !contentType.includes("application/octet-stream")) {
     console.error("PDF proxy invalid content type:", contentType);
@@ -68,7 +73,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const buffer = await response.arrayBuffer();
-    
+
     if (buffer.byteLength === 0) {
       return NextResponse.json(
         { error: "Empty PDF content" },
@@ -83,7 +88,7 @@ export async function GET(request: NextRequest) {
         "Content-Length": String(buffer.byteLength),
         "Cache-Control": "private, max-age=3600",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Methods": "GET, POST",
         "Access-Control-Allow-Headers": "Content-Type",
       },
     });
@@ -94,4 +99,21 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+  const url = searchParams.get("url");
+  return proxyPdf(url || "", request.nextUrl.origin, request.nextUrl.hostname);
+}
+
+export async function POST(request: NextRequest) {
+  let url = "";
+  try {
+    const body = await request.json();
+    url = body.url || "";
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  return proxyPdf(url, request.nextUrl.origin, request.nextUrl.hostname);
 }
