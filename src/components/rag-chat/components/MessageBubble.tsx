@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ChatMessage as ChatMessageType } from "../types";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 

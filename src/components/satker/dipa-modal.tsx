@@ -11,7 +11,7 @@ import {
 } from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 type ReactPdfModule = typeof import("react-pdf");
 

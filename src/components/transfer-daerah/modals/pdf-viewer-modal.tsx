@@ -10,7 +10,7 @@ import {
 } from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils/utils";
 
 type ReactPdfModule = typeof import("react-pdf");
