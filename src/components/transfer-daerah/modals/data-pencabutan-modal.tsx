@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { useKmkPencabutan } from "@/hooks/use-kmk-pencabutan";
 import { useMemo } from "react";

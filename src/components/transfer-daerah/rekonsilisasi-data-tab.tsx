@@ -121,7 +121,7 @@ export function RekonsiliasiDataTab({ onHeaderActionChange, kdkanwil, kdkppn }: 
     (currentYear - i).toString()
   );
 
-  const defaultMonth = "00"; // Default to 'Semua Bulan'
+  const defaultMonth = String(new Date().getMonth() + 1).padStart(2, "0");
 
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);

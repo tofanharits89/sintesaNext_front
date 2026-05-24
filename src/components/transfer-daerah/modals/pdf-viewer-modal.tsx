@@ -7,7 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -243,10 +243,10 @@ export function PdfViewerModal({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.35, ease: "easeInOut" }}
-                    className="col-start-1 row-start-1 w-full bg-card border border-border rounded-xl shadow-lg p-5 sm:p-6 space-y-4 animate-pulse min-h-[350px] flex flex-col justify-start z-10"
+                    className="col-start-1 row-start-1 w-full bg-card border border-border rounded-xl shadow-lg p-5 sm:p-6 space-y-6 animate-pulse min-h-[350px] flex flex-col justify-start z-10 overflow-hidden"
                     style={
                       expectedPdfWidth && expectedPdfHeight
-                        ? { width: Math.floor(expectedPdfWidth * 0.9), height: Math.floor(expectedPdfHeight * 0.9) }
+                        ? { width: expectedPdfWidth, height: expectedPdfHeight }
                         : {}
                     }
                   >
@@ -280,31 +280,13 @@ export function PdfViewerModal({
                         <div className="h-3 bg-muted-foreground/15 rounded w-full" />
                         <div className="h-3 bg-muted-foreground/15 rounded w-[96%]" />
                         <div className="h-3 bg-muted-foreground/15 rounded w-[98%]" />
-                        <div className="h-3 bg-muted-foreground/15 rounded w-[92%]" />
                         <div className="h-3 bg-muted-foreground/15 rounded w-[60%]" />
                       </div>
 
                       <div className="space-y-2 pt-4">
-                        <div className="h-3 bg-muted-foreground/15 rounded w-full" />
                         <div className="h-3 bg-muted-foreground/15 rounded w-[94%]" />
-                        <div className="h-3 bg-muted-foreground/15 rounded w-[90%]" />
+                        <div className="h-3 bg-muted-foreground/15 rounded w-[88%]" />
                         <div className="h-3 bg-muted-foreground/15 rounded w-[45%]" />
-                      </div>
-
-                      {/* Simulated content block/table */}
-                      <div className="border border-border/60 rounded-lg p-4 space-y-3 bg-muted/5 mt-6">
-                        <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                          <div className="h-3 bg-muted-foreground/15 rounded w-1/4" />
-                          <div className="h-3 bg-muted-foreground/15 rounded w-1/6" />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className="h-3 bg-muted-foreground/15 rounded w-1/3" />
-                          <div className="h-3 bg-muted-foreground/15 rounded w-[10%]" />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className="h-3 bg-muted-foreground/15 rounded w-1/2" />
-                          <div className="h-3 bg-muted-foreground/15 rounded w-[8%]" />
-                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -349,8 +331,27 @@ export function PdfViewerModal({
             </div>
           )}
         </div>
-        <DialogFooter className="p-6 pt-4 sm:justify-between">
+        <DialogFooter className="p-6 pt-4 flex flex-row items-center justify-between sm:justify-between w-full relative">
+          {/* Zoom controls on the left */}
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setScale((s) => Math.min(3, s + 0.1))}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Page buttons in the center */}
+          <div className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
             <Button
               variant="outline"
               size="icon"
@@ -373,22 +374,10 @@ export function PdfViewerModal({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+
+          {/* Close button on the right */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setScale((s) => Math.min(3, s + 0.1))}
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button onClick={() => onOpenChange(false)}>
               Tutup
             </Button>
           </div>
