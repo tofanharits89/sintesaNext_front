@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/config/base-path";
+import { useAuth } from "@/hooks/useAuth";
 
 interface RawUploadLaporanMonevKppnRow {
   id: number | string;
@@ -58,13 +59,18 @@ const fetcher = async (url: string) => {
 };
 
 export function useUploadLaporanMonevKppn() {
+  const { user } = useAuth();
+
   const { data, isLoading, error, refetch } = useQuery<
     RawUploadLaporanMonevKppnRow[]
   >({
-    queryKey: ["upload-laporan-monev-kppn"],
+    queryKey: ["upload-laporan-monev-kppn", user?.role, user?.kdkppn],
     queryFn: () => fetcher(apiPath("/transfer-daerah/upload-laporan/kppn/monev")),
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: "always",
+    refetchOnMount: "always",
     staleTime: 0,
+    gcTime: 0,
+    enabled: !!user,
   });
 
   const uniqueRawRows = (data || []).filter((row, index, arr) => {

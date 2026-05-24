@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   Dialog,
@@ -209,7 +210,7 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onHide}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

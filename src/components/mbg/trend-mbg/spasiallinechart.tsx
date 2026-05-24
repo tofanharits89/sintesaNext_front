@@ -134,6 +134,7 @@ function MultiSelectProv({
             open && "ring-2 ring-ring",
           )}
         >
+          <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground mr-1" />
           <span className="truncate text-left leading-none">
             {isLoading ? (
               <span className="text-muted-foreground">Memuat...</span>
@@ -143,7 +144,6 @@ function MultiSelectProv({
               displayText
             )}
           </span>
-          <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[260px] p-0" align="start" sideOffset={4}>

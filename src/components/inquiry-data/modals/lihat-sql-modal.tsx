@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger, TabsContents } from "@/components/animate-ui/components/animate/tabs";
-import {
+import { X, 
   Code,
   Copy,
   Download,
@@ -376,11 +376,10 @@ export function LihatSqlModal({
 
         <DialogFooter className="flex-shrink-0 pt-4 border-t border-border/50">
           <Button
-            variant="destructive"
             className="w-full sm:w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

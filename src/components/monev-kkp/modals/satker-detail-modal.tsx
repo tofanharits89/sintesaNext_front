@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Save } from "lucide-react";
+import { X,  Loader2, Save } from "lucide-react";
 import { apiPath } from "@/lib/config/base-path";
 import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -471,7 +471,7 @@ export function SatkerDetailModal({
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            Batal
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button onClick={handleSave} disabled={isSaving || !data}>
             {isSaving ? (

@@ -10,7 +10,7 @@ import {
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X,  Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { PenundaanTable } from "./_penundaan-table";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
 import { useKmkPotongan, RawPotonganItem } from "@/hooks/use-kmk-potongan";
@@ -220,11 +220,10 @@ export function DataPenundaanModal({
             </Button>
           </div>
           <Button
-            variant="destructive"
             className="w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

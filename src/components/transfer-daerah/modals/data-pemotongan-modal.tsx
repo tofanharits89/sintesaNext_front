@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useKmkPemotongan } from "@/hooks/use-kmk-pemotongan";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
-import { Trash2 } from "lucide-react";
+import { X,  Trash2 } from "lucide-react";
 import tkdData from "@/data/kdkppn_tkd.json";
 
 interface DataPemotonganModalProps {
@@ -236,11 +236,10 @@ export function DataPemotonganModal({
         </div>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2 flex items-center justify-end">
           <Button
-            variant="destructive"
             className="w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

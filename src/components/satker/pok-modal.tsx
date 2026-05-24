@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { RefreshCw, AlertCircle, FileSpreadsheet, Search, ChevronRight, ChevronDown } from "lucide-react";
+import { X,  RefreshCw, AlertCircle, FileSpreadsheet, Search, ChevronRight, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -524,7 +524,7 @@ export function PokModal({ isOpen, onClose, pokUrl, title = "POK" }: PokModalPro
               </Button>
             )}
             <Button size="sm" onClick={onClose} className="cursor-pointer">
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </div>
         </DialogFooter>

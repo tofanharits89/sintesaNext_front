@@ -19,7 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { PlusSquare, Save, Trash2 } from "lucide-react";
+import { X,  PlusSquare, Save, Trash2 } from "lucide-react";
 import DataKontrakDetail from "./data-kontrak-detail";
 import moment from "moment";
 import { apiPath } from "@/lib/config/base-path";
@@ -318,7 +318,7 @@ export default function ModalRekamKontrak({
 
         <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
           <Button variant="outline" onClick={handleModalClose}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           {(activeTab === 'dispensasi-overview' && user?.role !== "kanwil_djpb") && (
             <Button

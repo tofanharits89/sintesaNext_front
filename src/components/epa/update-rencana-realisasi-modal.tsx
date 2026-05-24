@@ -24,7 +24,7 @@ import {
   FieldDescription,
 } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { X,  Save,  Loader2 } from "lucide-react";
 
 interface UpdateRencanaRealisasiModalProps {
   open: boolean;
@@ -219,7 +219,7 @@ export function UpdateRencanaRealisasiModal({
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Batal
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button type="submit" disabled={!isFormValid || isSubmitting}>
               {isSubmitting ? (
@@ -228,7 +228,7 @@ export function UpdateRencanaRealisasiModal({
                   Menyimpan...
                 </>
               ) : (
-                "Simpan"
+                <><Save className="h-4 w-4 mr-2" /> Simpan</>
               )}
             </Button>
           </DialogFooter>

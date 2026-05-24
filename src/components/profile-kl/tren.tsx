@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus } from "lucide-react";
+import { X,  Save,  Loader2, Plus } from "lucide-react";
 
 export interface TrenRow {
   isu: string;
@@ -161,7 +161,7 @@ export default function Tren({ show, handleClose, data, isi }: TrenProps) {
             disabled={loading}
             className="px-6"
           >
-            Batal
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
@@ -176,8 +176,7 @@ export default function Tren({ show, handleClose, data, isi }: TrenProps) {
               </>
             ) : (
               <span className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Simpan
+                <Save className="h-4 w-4" /> Simpan
               </span>
             )}
           </Button>

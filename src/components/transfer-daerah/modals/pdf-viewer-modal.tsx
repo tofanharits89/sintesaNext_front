@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { X,  ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils/utils";
 
@@ -378,7 +378,7 @@ export function PdfViewerModal({
           {/* Close button on the right */}
           <div className="flex items-center gap-2">
             <Button onClick={() => onOpenChange(false)}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </div>
         </DialogFooter>

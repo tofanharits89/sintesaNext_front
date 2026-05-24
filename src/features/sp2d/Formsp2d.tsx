@@ -1,3 +1,4 @@
+import { Save } from "lucide-react";
 import React, { useState, useEffect, useContext } from "react";
 // @ts-ignore
 import { Row, Col, Card, Button, Form, Spinner } from "react-bootstrap";
@@ -1937,7 +1938,7 @@ const InquirySP2D: React.FC = () => {
                               className="button fade-in me-2"
                               onClick={handleSimpan}
                             >
-                              Simpan
+                              <Save className="h-4 w-4 mr-2" /> Simpan
                             </Button>
                           </Col>
                         </Row>

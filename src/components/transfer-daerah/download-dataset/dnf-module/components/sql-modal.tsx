@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export const SQLModal: React.FC<SQLModalProps> = ({
           </Button>
         </div>
         <div className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>Close</Button>
+          <Button variant="outline" onClick={onClose}><X className="h-4 w-4 mr-2" /> Tutup</Button>
         </div>
       </CardContent>
     </Card>

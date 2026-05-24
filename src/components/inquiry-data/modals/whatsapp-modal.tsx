@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Send, Loader2, Settings, AlertCircle } from "lucide-react";
+import { X,  MessageCircle, Send, Loader2, Settings, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   useInquiryQueryBuilder,
@@ -252,7 +252,7 @@ export function WhatsappModal({
             onClick={handleClose}
             disabled={isLoading}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
           {isAuthenticated !== false && (
             <Button

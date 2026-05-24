@@ -5,7 +5,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Save,  X,  Loader2 } from "lucide-react";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 import {
@@ -296,7 +296,7 @@ export function ModalKanwil({
         <DialogFooter className="p-6 pt-4 flex flex-col sm:flex-row sm:justify-end gap-3">
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               onClick={form.handleSubmit(onSubmit)}
@@ -305,7 +305,7 @@ export function ModalKanwil({
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Simpan
+              <Save className="h-4 w-4 mr-2" /> Simpan
             </Button>
           </div>
         </DialogFooter>

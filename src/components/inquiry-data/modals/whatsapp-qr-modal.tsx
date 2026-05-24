@@ -11,7 +11,7 @@ import {
 import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Loader2, QrCode, RefreshCcw } from "lucide-react";
+import { X,  AlertTriangle, Loader2, QrCode, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
 
@@ -191,7 +191,7 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

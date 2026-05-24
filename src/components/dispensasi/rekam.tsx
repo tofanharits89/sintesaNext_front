@@ -625,7 +625,7 @@ export default function Rekam({
             </Button>
             {loading ? (
               <Button disabled>
-                <Spinner className="mr-2 h-4 w-4" /> Simpan
+                <Spinner className="mr-2 h-4 w-4" /> <Save className="h-4 w-4 mr-2" /> Simpan
               </Button>
             ) : (
               <Button

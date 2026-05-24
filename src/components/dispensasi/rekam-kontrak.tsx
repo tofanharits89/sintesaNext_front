@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { PlusSquare, Trash2, Save } from "lucide-react";
+import { X,  PlusSquare, Trash2, Save } from "lucide-react";
 import { format, parse } from "date-fns";
 import UploadKontrak from "./upload-kontrak";
 
@@ -346,7 +346,7 @@ export default function RekamKontrak({
 
           <DialogFooter className="flex-shrink-0 border-t pt-4">
             <Button variant="outline" onClick={handleModalClose}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               type="button"

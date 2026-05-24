@@ -274,7 +274,7 @@ export function KendalaHambatanModal({
 
                 <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Batal
+                        <X className="h-4 w-4 mr-2" /> Batal
                     </Button>
                     <Button onClick={handleSubmit} disabled={isSubmitting || isLoading}>
                         {isSubmitting ? (

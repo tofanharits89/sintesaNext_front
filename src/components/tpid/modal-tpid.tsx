@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Save,  X,  Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
 
@@ -204,7 +204,7 @@ export default function ModalTpid({
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={onHide} type="button">
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
@@ -214,7 +214,7 @@ export default function ModalTpid({
             className="bg-primary hover:bg-primary/90"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Simpan
+            <Save className="h-4 w-4 mr-2" /> Simpan
           </Button>
         </DialogFooter>
       </DialogContent>

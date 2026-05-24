@@ -1,5 +1,6 @@
 "use client";
 
+import { Save,  X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -470,7 +471,7 @@ export default function RekamKesimpulan({
         </div>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={onHide}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           {activeTab !== "hasil" ? (
             <Button variant="default" disabled={loading} onClick={handleSaveByTab}>
@@ -480,7 +481,7 @@ export default function RekamKesimpulan({
                   Simpan...
                 </>
               ) : (
-                "Simpan"
+                <><Save className="h-4 w-4 mr-2" /> Simpan</>
               )}
             </Button>
           ) : null}

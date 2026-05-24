@@ -758,8 +758,8 @@ export const QueryManagement = React.memo(function QueryManagement({
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!hasNextPage || isLoading}
                   >
+                    <ChevronRight className="w-4 h-4 mr-1" />
                     Selanjutnya
-                    <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
               </div>

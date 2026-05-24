@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
     Dialog,
@@ -216,7 +217,7 @@ export function LihatKendalaModal({
                 </div>
 
                 <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
-                    <Button onClick={() => onOpenChange(false)}>Tutup</Button>
+                    <Button onClick={() => onOpenChange(false)}><X className="h-4 w-4 mr-2" /> Tutup</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

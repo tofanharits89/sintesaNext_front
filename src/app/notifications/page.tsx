@@ -47,7 +47,7 @@ import {
   useUserNotifications,
 } from "@/lib/stores/notifications-store";
 
-import {
+import { X, 
   AlertCircle,
   Bell,
   CheckCircle,
@@ -802,7 +802,7 @@ export default function NotificationsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowBroadcast(false)}>
-              Batal
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               onClick={handleBroadcast}
@@ -838,7 +838,7 @@ export default function NotificationsPage() {
               variant="outline"
               onClick={() => setShowDeleteConfirm(false)}
             >
-              Batal
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
@@ -890,7 +890,7 @@ export default function NotificationsPage() {
               variant="outline"
               onClick={() => setShowMultipleDeleteConfirm(false)}
             >
-              Batal
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
@@ -1022,7 +1022,7 @@ export default function NotificationsPage() {
                 variant="outline"
                 onClick={() => setSelectedNotification(null)}
               >
-                Tutup
+                <X className="h-4 w-4 mr-2" /> Tutup
               </Button>
             </DialogFooter>
           </DialogContent>

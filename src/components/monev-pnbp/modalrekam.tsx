@@ -1,3 +1,4 @@
+import { Save,  X } from "lucide-react";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import {
   Dialog,
@@ -288,7 +289,7 @@ const Rekam: React.FC<RekamProps> = ({
         </form>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="secondary" type="button" onClick={onHide}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
@@ -296,7 +297,7 @@ const Rekam: React.FC<RekamProps> = ({
             variant="destructive"
             disabled={loading}
           >
-            {loading ? <Spinner size="sm" /> : "Simpan"}
+            {loading ? <Spinner size="sm" /> : <><Save className="h-4 w-4 mr-2" /> Simpan</>}
           </Button>
         </DialogFooter>
       </DialogContent>

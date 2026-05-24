@@ -595,7 +595,7 @@ export default function KontraktualContent() {
               Unduh Data Excel
             </Button>
             <Button variant="outline" size="sm" onClick={() => setModal({ open: false, row: null })}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         </DialogContent>

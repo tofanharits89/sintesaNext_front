@@ -32,7 +32,7 @@ import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useAuth } from "@/hooks/useAuth";
 import { useTematikConfig } from "@/hooks/use-tematik-config";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
-import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
+import { X,  Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 import {
   getCategoryMandatoryFilters,
@@ -612,7 +612,7 @@ export default function TematikPage() {
               className="w-24"
               onClick={() => setIsQueryManagementOpen(false)}
             >
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
-import { FileText } from "lucide-react";
+import { Save,  X,  FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -426,7 +426,7 @@ export default function Rekam2({
         </div>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button size="default" variant="secondary" onClick={onHide}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             size="default"
@@ -438,7 +438,7 @@ export default function Rekam2({
               form?.requestSubmit();
             }}
           >
-            {loading ? <Spinner size="sm" /> : "Simpan Data"}
+            {loading ? <Spinner size="sm" /> : <><Save className="h-4 w-4 mr-2" /> Simpan Data</>}
           </Button>
         </DialogFooter>
       </DialogContent>

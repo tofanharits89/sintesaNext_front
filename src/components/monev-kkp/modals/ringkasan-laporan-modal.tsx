@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { X,  Loader2 } from "lucide-react";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 interface RingkasanLaporanModalProps {
@@ -186,11 +186,10 @@ export function RingkasanLaporanModal({
 
                 <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
                     <Button
-                        variant="destructive"
                         className="w-24"
                         onClick={() => onOpenChange(false)}
                     >
-                        Tutup
+                        <X className="h-4 w-4 mr-2" /> Tutup
                     </Button>
                 </DialogFooter>
             </DialogContent>

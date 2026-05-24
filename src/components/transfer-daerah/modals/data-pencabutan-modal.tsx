@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { useKmkPencabutan } from "@/hooks/use-kmk-pencabutan";
@@ -94,8 +95,8 @@ export function DataPencabutanModal({ open, onOpenChange, noKmk, kdkanwil, kdkpp
           )}
         </div>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
-          <Button variant="destructive" className="w-24" onClick={() => onOpenChange(false)}>
-            Tutup
+          <Button className="w-24" onClick={() => onOpenChange(false)}>
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

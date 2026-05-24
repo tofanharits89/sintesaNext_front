@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, RefreshCw, AlertCircle, ZoomIn, ZoomOut, FileText } from "lucide-react";
+import { X,  ChevronLeft, ChevronRight, Download, RefreshCw, AlertCircle, ZoomIn, ZoomOut, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -330,7 +330,7 @@ export function DipaModal({ isOpen, onClose, dipaUrl, title = "DIPA Petikan", ta
               </Button>
             )}
             <Button onClick={onClose} className="cursor-pointer">
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </div>
         </DialogFooter>

@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Mail, FileText, Calendar, ArrowRight, Building2, User, Hash } from "lucide-react";
+import { X,  Mail, FileText, Calendar, ArrowRight, Building2, User, Hash } from "lucide-react";
 import { apiClient } from "@/lib/api/httpClient";
 
 interface DetailKeluarProps {
@@ -268,7 +268,7 @@ export default function DetailKeluar({
 
         <DialogFooter className="p-8 pt-4">
           <Button variant="default" onClick={handleCloseModal} className="px-8">
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/animate-ui/components/radix/dialog";
-import { Pencil, Trash2, Loader2, Plus } from "lucide-react";
+import { X,  Save,  Pencil, Trash2, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -285,7 +285,7 @@ export default function IkpaForm({
             disabled={loading}
             className="px-6"
           >
-            Batal
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
@@ -300,8 +300,7 @@ export default function IkpaForm({
               </>
             ) : (
               <span className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Simpan
+                <Save className="h-4 w-4" /> Simpan
               </span>
             )}
           </Button>

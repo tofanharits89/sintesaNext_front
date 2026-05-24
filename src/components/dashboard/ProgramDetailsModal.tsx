@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useMemo } from "react";
 import {
   Dialog,
@@ -164,7 +165,7 @@ export function ProgramDetailsModal({
 
         <DialogFooter className="p-6 pt-4">
           <DialogClose asChild>
-            <Button type="button" variant="secondary">Tutup</Button>
+            <Button type="button"><X className="h-4 w-4 mr-2" /> Tutup</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

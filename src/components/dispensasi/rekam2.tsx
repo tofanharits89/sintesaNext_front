@@ -414,7 +414,7 @@ export default function Rekam2({
 
           <DialogFooter className="flex-shrink-0 border-t pt-4">
             <Button variant="outline" onClick={handleModalClose}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               type="button"

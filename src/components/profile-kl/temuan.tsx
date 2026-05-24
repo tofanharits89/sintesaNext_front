@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Pencil, Trash2, Loader2, Plus } from "lucide-react";
+import { X,  Save,  Pencil, Trash2, Loader2, Plus } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -352,7 +352,7 @@ export default function Temuan({
             disabled={loading}
             className="px-6"
           >
-            Batal
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
@@ -367,8 +367,7 @@ export default function Temuan({
               </>
             ) : (
               <span className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Simpan
+                <Save className="h-4 w-4" /> Simpan
               </span>
             )}
           </Button>

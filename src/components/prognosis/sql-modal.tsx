@@ -7,7 +7,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Database } from "lucide-react";
+import { X,  Database } from "lucide-react";
 import Swal from "sweetalert2";
 
 interface PrognosisSQLModalProps {
@@ -35,7 +35,7 @@ export const PrognosisSQLModal = ({
                 </div>
                 <DialogFooter className="mt-4">
                     <Button variant="outline" onClick={() => setShowModalSQL(false)}>
-                        Tutup
+                        <X className="h-4 w-4 mr-2" /> Tutup
                     </Button>
                     <Button
                         onClick={() => {

@@ -231,7 +231,7 @@ const EditDispen: React.FC<EditDispenProps> = ({
               onClick={handleModalClose}
             >
               <X className="h-4 w-4" />
-              Tutup
+              Batal
             </Button>
             <Button type="submit" variant="destructive" disabled={loading}>
               {loading ? (

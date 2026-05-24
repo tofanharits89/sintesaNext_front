@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
-import { FileSpreadsheet, Loader2 } from "lucide-react";
+import { Save,  X,  FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -369,7 +369,7 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={onHide} type="button">
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           {activeTab === "form" ? (
             <Button
@@ -379,7 +379,7 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
               disabled={loading}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Simpan
+              <Save className="h-4 w-4 mr-2" /> Simpan
             </Button>
           ) : (
             <Button

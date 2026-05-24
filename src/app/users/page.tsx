@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Pencil, Trash2, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { X,  Save,  Pencil, Trash2, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { ModernUsersTable } from "@/components/lazy";
 import { TableLoadingFallback, UsersPageSkeleton } from "@/components/ui/loading-fallback";
 import { Suspense } from "react";
@@ -779,9 +779,9 @@ export default function UsersPage() {
           </div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setOpen(false)}>
-              Batal
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
-            <Button onClick={save}>Simpan</Button>
+            <Button onClick={save}><Save className="h-4 w-4 mr-2" /> Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

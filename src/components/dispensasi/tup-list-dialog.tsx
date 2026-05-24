@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -154,7 +155,7 @@ export function TupListDialog({
 
         <DialogFooter className="flex-shrink-0 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

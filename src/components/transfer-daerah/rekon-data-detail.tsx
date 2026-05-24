@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { apiPath } from "@/lib/config/base-path";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, GitCompareArrows } from "lucide-react";
+import { X,  Loader2, GitCompareArrows } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -317,7 +317,7 @@ export function RekonDataDetailModal({
         </div>
         <DialogFooter className="p-6 pt-4 gap-2 sm:justify-end">
           <Button onClick={() => onOpenChange(false)} className="min-w-24">
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>
