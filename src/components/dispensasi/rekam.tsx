@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import DatePicker from "react-datepicker";
 import {
   Formik,
@@ -523,7 +523,7 @@ export default function Rekam({
 
                 <div className="space-y-2">
                   <Label className="font-bold">Satker</Label>
-                  <VirtualizedSelect
+                  <SearchableSelect
                     options={searchResults.map((item) => ({
                       value: item.kdsatker,
                       label: `${item.kdsatker} - ${item.nmsatker}`,

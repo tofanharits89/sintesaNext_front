@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { BaseFilter } from "./BaseFilter";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFilterOptions } from "@/hooks/inquiry-data/useFilterOptions";
@@ -98,7 +98,7 @@ export function SelectFilter({
         {/* Selection Dropdown */}
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">Pilihan</Label>
-          <VirtualizedSelect
+          <SearchableSelect
             value={filterData.selection || "all"}
             onValueChange={handleSelectionChange}
             options={options}

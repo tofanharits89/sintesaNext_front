@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { VirtualizedSelect } from '@/components/ui/virtualized-select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -80,7 +80,7 @@ export function FilterInput({
         <Label htmlFor={`${filterKey}-selection`} className="text-sm font-medium">
           Pilih {filterKey.replace(/kd/g, '').toUpperCase()}
         </Label>
-        <VirtualizedSelect
+        <SearchableSelect
           options={options}
           value={currentValue.selection || ''}
           onValueChange={handleSelectionChange}

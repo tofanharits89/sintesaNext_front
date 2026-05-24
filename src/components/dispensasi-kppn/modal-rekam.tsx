@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Formik, ErrorMessage, FormikProps, FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -347,7 +347,7 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
 
                 <div className="space-y-2">
                   <Label className="font-bold">Satker</Label>
-                  <VirtualizedSelect
+                  <SearchableSelect
                     options={searchResults.map((item) => ({
                       value: item.kdsatker,
                       label: `${item.kdsatker} - ${item.nmsatker}`,
