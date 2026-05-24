@@ -32,7 +32,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api/httpClient";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Loader2, Save, X, Edit, FilePlus } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 import kppnData from "@/data/kdkppn.json";
@@ -138,6 +138,23 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
             file: undefined,
         },
     });
+
+    const watchedKdSatker = form.watch("kdsatker");
+
+    const satkerOptions = useMemo(() => {
+        let subset = [...filteredSatkerList];
+        if (watchedKdSatker) {
+            const exists = subset.find(s => s.kdsatker === watchedKdSatker);
+            if (!exists) {
+                const missing = (satkerData as any[]).find(s => s.kdsatker === watchedKdSatker);
+                if (missing) subset = [missing, ...subset];
+            }
+        }
+        return subset.map(s => ({
+            value: s.kdsatker,
+            label: `${s.kdsatker} - ${s.nmsatker}`
+        }));
+    }, [filteredSatkerList, watchedKdSatker]);
 
     // Update form values when data changes
     useEffect(() => {
@@ -296,25 +313,13 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                         <FormItem className="md:col-span-2">
                                             <FormLabel>Satuan Kerja</FormLabel>
                                             <FormControl>
-                                                <VirtualizedSelect
-                                                    options={(() => {
-                                                        const val = field.value;
-                                                        let subset = [...filteredSatkerList];
-                                                        if (val) {
-                                                            const exists = subset.find(s => s.kdsatker === val);
-                                                            if (!exists) {
-                                                                const missing = (satkerData as any[]).find(s => s.kdsatker === val);
-                                                                if (missing) subset = [missing, ...subset];
-                                                            }
-                                                        }
-                                                        return subset.map(s => ({
-                                                            value: s.kdsatker,
-                                                            label: `${s.kdsatker} - ${s.nmsatker}`
-                                                        }));
-                                                    })()}
+                                                <SearchableSelect
+                                                    options={satkerOptions}
                                                     value={field.value}
                                                     onValueChange={field.onChange}
                                                     placeholder="Pilih Satker"
+                                                    searchPlaceholder="Cari kode atau nama satker..."
+                                                    emptyMessage="Satker tidak ditemukan."
                                                 />
                                             </FormControl>
                                             <FormMessage />

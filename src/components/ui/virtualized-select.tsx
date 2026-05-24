@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback, CSSProperties, ReactElement } from "react";
+import { List, type RowComponentProps } from "react-window";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import {
@@ -25,6 +26,35 @@ interface VirtualizedSelectProps {
   itemHeight?: number;
 }
 
+interface RowCustomProps {
+  items: Option[];
+  selectedValue: string;
+  onSelect: (value: string) => void;
+}
+
+function OptionRow(props: RowComponentProps<RowCustomProps>): ReactElement | null {
+  const { index, style, items, selectedValue, onSelect } = props;
+  const option = items[index]!;
+  const isSelected = option.value === selectedValue;
+
+  return (
+    <div
+      style={style}
+      className={cn(
+        "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:!bg-zinc-200 dark:hover:!bg-zinc-950 hover:text-accent-foreground",
+        isSelected && "bg-accent text-accent-foreground"
+      )}
+      onClick={() => onSelect(option.value)}
+    >
+      <span className="truncate" title={option.label}>
+        {option.label}
+      </span>
+      {isSelected && <Check className="w-4 h-4 flex-shrink-0 ml-2" />}
+    </div>
+  );
+}
+
+
 export function VirtualizedSelect({
   options,
   value,
@@ -37,74 +67,50 @@ export function VirtualizedSelect({
 }: VirtualizedSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const [ListComp, setListComp] = useState<any | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Filter options based on search term
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 150);
+  }, []);
 
-  // Get selected option label
-  const selectedOption = options.find((option) => option.value === value);
-  const selectedLabel = selectedOption?.label || "";
+  useEffect(() => () => clearTimeout(debounceRef.current), []);
 
-  // Focus search input when dropdown opens
+  const filteredOptions = useMemo(() => {
+    if (!debouncedSearch) return options;
+    const lower = debouncedSearch.toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(lower));
+  }, [options, debouncedSearch]);
+
+  const selectedLabel = useMemo(() => {
+    return options.find((o) => o.value === value)?.label || "";
+  }, [options, value]);
+
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      // Small timeout to ensure the popover is rendered and input is focusable
-      const timeout = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timeout);
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
     }
   }, [isOpen]);
 
-  // Lazy-load react-window only when needed
-  useEffect(() => {
-    if (isOpen && filteredOptions.length > 10 && !ListComp) {
-      import("react-window")
-        .then((mod: any) => {
-          const L = mod?.FixedSizeList ?? mod?.default?.FixedSizeList ?? null;
-          setListComp(() => L);
-        })
-        .catch(() => setListComp(null));
-    }
-  }, [isOpen, filteredOptions.length, ListComp]);
+  const handleOptionSelect = useCallback(
+    (optionValue: string) => {
+      onValueChange(optionValue);
+      setIsOpen(false);
+      setSearchTerm("");
+      setDebouncedSearch("");
+    },
+    [onValueChange]
+  );
 
-  const handleOptionSelect = (optionValue: string) => {
-    onValueChange(optionValue);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
-
-  // Render individual option item
-  const OptionItem = ({
-    index,
-    style,
-  }: {
-    index: number;
-    style: React.CSSProperties;
-  }) => {
-    const option = filteredOptions[index]!;
-    const isSelected = option.value === value;
-
-    return (
-      <div
-        style={style}
-        className={cn(
-          "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:!bg-zinc-200 dark:hover:!bg-zinc-950 hover:text-accent-foreground",
-          isSelected && "bg-accent text-accent-foreground"
-        )}
-        onClick={() => handleOptionSelect(option.value)}
-      >
-        <span className="truncate" title={option.label}>
-          {option.label}
-        </span>
-        {isSelected && <Check className="w-4 h-4 flex-shrink-0 ml-2" />}
-      </div>
-    );
-  };
+  const rowProps = useMemo<RowCustomProps>(
+    () => ({ items: filteredOptions, selectedValue: value, onSelect: handleOptionSelect }),
+    [filteredOptions, value, handleOptionSelect]
+  );
 
   const listHeight = Math.min(maxHeight, filteredOptions.length * itemHeight);
 
@@ -120,70 +126,37 @@ export function VirtualizedSelect({
             className
           )}
         >
-          <span
-            className={cn("truncate", !selectedLabel && "text-muted-foreground")}
-          >
+          <span className={cn("truncate", !selectedLabel && "text-muted-foreground")}>
             {selectedLabel || placeholder}
           </span>
           <ChevronDown
-            className={cn(
-              "h-4 w-4 opacity-50 transition-transform",
-              isOpen && "rotate-180"
-            )}
+            className={cn("h-4 w-4 opacity-50 transition-transform", isOpen && "rotate-180")}
           />
         </button>
       </PopoverTrigger>
-      <PopoverContent 
+      <PopoverContent
         className="p-0 w-[var(--radix-popover-trigger-width)] z-[100] !bg-zinc-100 dark:!bg-black border border-border rounded-md shadow-md"
         align="start"
       >
-        {/* Search Input */}
         <div className="p-2 border-b">
           <input
             ref={inputRef}
             type="text"
             placeholder="Cari..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground !bg-zinc-100 dark:!bg-black hover:!bg-zinc-200 dark:hover:!bg-zinc-950 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
           />
         </div>
 
-        {/* Options List */}
         {filteredOptions.length > 0 ? (
-          <div className="max-h-[200px] overflow-y-auto overflow-x-hidden">
-            {filteredOptions.length > 10 && ListComp ? (
-              <ListComp
-                height={listHeight}
-                itemCount={filteredOptions.length}
-                itemSize={itemHeight}
-                width="100%"
-              >
-                {OptionItem}
-              </ListComp>
-            ) : (
-              <div className="py-1">
-                {filteredOptions.map((option) => (
-                  <div
-                    key={option.value}
-                    className={cn(
-                      "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:!bg-zinc-200 dark:hover:!bg-zinc-950 hover:text-accent-foreground",
-                      option.value === value && "bg-accent text-accent-foreground"
-                    )}
-                    onClick={() => handleOptionSelect(option.value)}
-                    style={{ height: itemHeight }}
-                  >
-                    <span className="truncate" title={option.label}>
-                      {option.label}
-                    </span>
-                    {option.value === value && (
-                      <Check className="w-4 h-4 flex-shrink-0 ml-2" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <List<RowCustomProps>
+            style={{ height: listHeight }}
+            rowCount={filteredOptions.length}
+            rowHeight={itemHeight}
+            rowComponent={OptionRow}
+            rowProps={rowProps}
+          />
         ) : (
           <div className="py-6 text-center text-sm text-muted-foreground">
             Tidak ada data ditemukan.
@@ -193,4 +166,3 @@ export function VirtualizedSelect({
     </Popover>
   );
 }
-

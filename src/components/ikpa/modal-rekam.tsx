@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { apiClient } from "@/lib/api/httpClient";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { FilePlus, Loader2, Save } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 import kppnData from "@/data/kdkppn.json";
@@ -95,6 +95,13 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
             user
         );
     }, [user]);
+
+    const satkerOptions = useMemo(() => {
+        return filteredSatkerList.map(s => ({
+            value: s.kdsatker,
+            label: `${s.kdsatker} - ${s.nmsatker}`
+        }));
+    }, [filteredSatkerList]);
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -222,14 +229,13 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
                         <div className="w-full space-y-2">
                             <Label htmlFor="kdsatker">Satuan Kerja</Label>
-                            <VirtualizedSelect
-                                options={filteredSatkerList.map(s => ({
-                                    value: s.kdsatker,
-                                    label: `${s.kdsatker} - ${s.nmsatker}`
-                                }))}
+                            <SearchableSelect
+                                options={satkerOptions}
                                 value={form.watch("kdsatker")}
                                 onValueChange={(value) => form.setValue("kdsatker", value)}
                                 placeholder="Pilih Satker"
+                                searchPlaceholder="Cari kode atau nama satker..."
+                                emptyMessage="Satker tidak ditemukan."
                             />
                         </div>
 
