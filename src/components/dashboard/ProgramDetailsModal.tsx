@@ -9,16 +9,10 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/data-table";
 
 interface SubOutputItem {
   no: number;
@@ -42,6 +36,7 @@ export function ProgramDetailsModal({
   subOutputs,
 }: ProgramDetailsModalProps) {
   console.log(`Modal for ${programName}: received ${subOutputs?.length || 0} sub-outputs`, subOutputs);
+  
   const aggregated = useMemo(() => {
     const map = new Map<string, { kdsoutput: string; nmsoutput: string; vol: number; realisasiFisik: number }>();
     for (const item of subOutputs || []) {
@@ -61,12 +56,87 @@ export function ProgramDetailsModal({
     }
     return Array.from(map.values());
   }, [subOutputs]);
+
+  const columns = useMemo<ColumnDef<typeof aggregated[number]>[]>(() => [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "kdsoutput",
+      header: () => <div className="text-center font-medium">Kode Sub-Output</div>,
+      cell: ({ row }) => <div className="text-center font-mono">{row.getValue("kdsoutput")}</div>,
+    },
+    {
+      accessorKey: "nmsoutput",
+      header: () => <div className="text-left font-medium">Nama Sub-Output</div>,
+      cell: ({ row }) => <div className="text-left">{row.getValue("nmsoutput")}</div>,
+      footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
+    },
+    {
+      accessorKey: "vol",
+      header: () => <div className="text-center font-medium">Volume Output</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-mono tabular-nums pr-2">
+          {Number(row.getValue("vol")).toLocaleString("id-ID", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </div>
+      ),
+      footer: ({ table }) => {
+        const total = table
+          .getFilteredRowModel()
+          .rows.reduce(
+            (sum, row) => sum + (Number(row.getValue("vol")) || 0),
+            0
+          );
+        return (
+          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black dark:text-white">
+            {total.toLocaleString("id-ID", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "realisasiFisik",
+      header: () => <div className="text-center font-medium">Realisasi Fisik</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-mono tabular-nums pr-2">
+          {Number(row.getValue("realisasiFisik")).toLocaleString("id-ID", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </div>
+      ),
+      footer: ({ table }) => {
+        const total = table
+          .getFilteredRowModel()
+          .rows.reduce(
+            (sum, row) => sum + (Number(row.getValue("realisasiFisik")) || 0),
+            0
+          );
+        return (
+          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black dark:text-white">
+            {total.toLocaleString("id-ID", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
+        );
+      },
+    },
+  ], []);
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
       >
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>{programName}</DialogTitle>
@@ -83,40 +153,12 @@ export function ProgramDetailsModal({
               </p>
             </div>
           ) : (
-            <div className="rounded-lg border bg-background overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16 text-center">No</TableHead>
-                    <TableHead className="w-40 text-center">Kode Sub-Output</TableHead>
-                    <TableHead className="text-center">Nama Sub-Output</TableHead>
-                    <TableHead className="text-center w-32">Volume Output</TableHead>
-                    <TableHead className="text-center w-32">Realisasi Fisik</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {aggregated.map((item, idx) => (
-                    <TableRow key={item.kdsoutput ?? `${item.nmsoutput}-${idx}`}>
-                      <TableCell className="font-medium text-center">{idx + 1}</TableCell>
-                      <TableCell className="text-center">{item.kdsoutput}</TableCell>
-                      <TableCell>{item.nmsoutput}</TableCell>
-                      <TableCell className="text-right">
-                        {item.vol.toLocaleString("id-ID", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {item.realisasiFisik.toLocaleString("id-ID", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <DataTable 
+              columns={columns} 
+              data={aggregated} 
+              initialPageSize={10} 
+              showFooter={true}
+            />
           )}
         </div>
 

@@ -16,8 +16,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -492,37 +501,53 @@ export default function UsersPage() {
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-4 py-4 px-4">
               <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="nama-lengkap">Nama Lengkap</FieldLabel>
-                  <Input
-                    id="nama-lengkap"
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="username">Username</FieldLabel>
-                  <Input
-                    id="username"
-                    value={form.username}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, username: e.target.value }))
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, email: e.target.value }))
-                    }
-                  />
-                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field>
+                    <FieldLabel htmlFor="nama-lengkap">Nama Lengkap</FieldLabel>
+                    <Input
+                      id="nama-lengkap"
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, name: e.target.value }))
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="username">Username</FieldLabel>
+                    <Input
+                      id="username"
+                      value={form.username}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, username: e.target.value }))
+                      }
+                    />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field>
+                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, email: e.target.value }))
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="limit-kode-ba">Limit Kode BA</FieldLabel>
+                    <Input
+                      id="limit-kode-ba"
+                      placeholder="Contoh: 015 atau 015,027,060,dst | Kosongkan untuk semua Kode BA"
+                      className="placeholder:text-xs"
+                      value={form.limitKodeBA}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, limitKodeBA: e.target.value }))
+                      }
+                    />
+                  </Field>
+                </div>
                 {!form.id && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field>
@@ -731,17 +756,7 @@ export default function UsersPage() {
                     </>
                   )}
                 </div>
-                <Field>
-                  <FieldLabel htmlFor="limit-kode-ba">Limit Kode BA</FieldLabel>
-                  <Input
-                    id="limit-kode-ba"
-                    placeholder="contoh: 015 atau 015,042"
-                    value={form.limitKodeBA}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, limitKodeBA: e.target.value }))
-                    }
-                  />
-                </Field>
+
                 <Field>
                   <FieldLabel htmlFor="status">Status</FieldLabel>
                   <Select
@@ -772,37 +787,39 @@ export default function UsersPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
+      <AlertDialog
         open={deleteConfirm.open}
         onOpenChange={(open) => setDeleteConfirm({ open })}
       >
-        <DialogContent showCloseButton={false} className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
               Konfirmasi Hapus
-            </DialogTitle>
-            <DialogDescription>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
               {deleteConfirm.isBulk
                 ? `Apakah Anda yakin ingin menghapus ${selected.size} pengguna yang dipilih? Tindakan ini tidak dapat dibatalkan.`
                 : `Apakah Anda yakin ingin menghapus pengguna "${deleteConfirm.userName}"? Tindakan ini tidak dapat dibatalkan.`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="secondary"
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
               onClick={() => setDeleteConfirm({ open: false })}
             >
               Batal
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={handleConfirmDelete}
+            >
               {deleteConfirm.isBulk
                 ? `Hapus ${selected.size} Pengguna`
                 : "Hapus Pengguna"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
