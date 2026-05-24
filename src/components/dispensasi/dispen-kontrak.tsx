@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import RekamKontrak from "./rekam-kontrak";
 import { DataTable } from "@/components/ui/data-table";
 import { PdfViewerModal } from "@/components/transfer-daerah/modals/pdf-viewer-modal";
+import { KontrakListDialog } from "./kontrak-list-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,12 +70,32 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
   const [pdfUrl, setPdfUrl] = useState("");
   const [pdfTitle, setPdfTitle] = useState("");
 
+  // States for Kontrak List Dialog
+  const [isKontrakListOpen, setIsKontrakListOpen] = useState(false);
+  const [kontrakListId, setKontrakListId] = useState("");
+  const [kontrakListNopermohonan, setKontrakListNopermohonan] = useState("");
+  const [kontrakListNmsatker, setKontrakListNmsatker] = useState("");
+  const [kontrakListKdsatker, setKontrakListKdsatker] = useState("");
+
   const handleOpenPreview = (id: string, nopermohonan: string) => {
     const intId = parseInt(id, 10);
     const fileUrl = `/api/v1/dispensasi/download-kontrak/${intId}`;
     setPdfUrl(fileUrl);
     setPdfTitle(`Dokumen Kontrak: ${nopermohonan}`);
     setIsPdfOpen(true);
+  };
+
+  const handleOpenKontrakList = (
+    id: string,
+    nopermohonan: string,
+    nmsatker: string,
+    kdsatker: string
+  ) => {
+    setKontrakListId(id);
+    setKontrakListNopermohonan(nopermohonan);
+    setKontrakListNmsatker(nmsatker);
+    setKontrakListKdsatker(kdsatker);
+    setIsKontrakListOpen(true);
   };
 
   // Load data on initial mount (only when user is available)
@@ -288,7 +309,25 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
     {
       accessorKey: "jumlah",
       header: () => <div className="text-center font-medium">Jumlah Kontrak</div>,
-      cell: ({ row }) => <div className="text-center">{row.original.jumlah ?? "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <button
+            type="button"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2 font-medium cursor-pointer"
+            onClick={() =>
+              handleOpenKontrakList(
+                String(row.original.id),
+                row.original.nopermohonan?.trim() || "",
+                row.original.nmsatker?.trim() || "",
+                row.original.kdsatker
+              )
+            }
+            title="Lihat daftar Kontrak"
+          >
+            {row.original.jumlah ?? "-"}
+          </button>
+        </div>
+      ),
     },
     {
       id: "file",
@@ -384,6 +423,15 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
         onOpenChange={setIsPdfOpen}
         url={pdfUrl}
         title={pdfTitle}
+      />
+
+      <KontrakListDialog
+        open={isKontrakListOpen}
+        onOpenChange={setIsKontrakListOpen}
+        id={kontrakListId}
+        nopermohonan={kontrakListNopermohonan}
+        nmsatker={kontrakListNmsatker}
+        kdsatker={kontrakListKdsatker}
       />
 
       {/* Delete Confirmation Dialog */}

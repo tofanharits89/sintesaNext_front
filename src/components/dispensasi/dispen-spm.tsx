@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import Rekam2 from "./rekam2";
 import { DataTable } from "@/components/ui/data-table";
 import { PdfViewerModal } from "@/components/transfer-daerah/modals/pdf-viewer-modal";
+import { SpmListDialog } from "./spm-list-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,12 +69,32 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
   const [pdfUrl, setPdfUrl] = useState("");
   const [pdfTitle, setPdfTitle] = useState("");
 
+  // States for SPM List Dialog
+  const [isSpmListOpen, setIsSpmListOpen] = useState(false);
+  const [spmListId, setSpmListId] = useState("");
+  const [spmListNopermohonan, setSpmListNopermohonan] = useState("");
+  const [spmListNmsatker, setSpmListNmsatker] = useState("");
+  const [spmListKdsatker, setSpmListKdsatker] = useState("");
+
   const handleOpenPreview = (id: string, nopermohonan: string) => {
     const intId = parseInt(id, 10);
     const fileUrl = `/api/v1/dispensasi/download-spm/${intId}`;
     setPdfUrl(fileUrl);
     setPdfTitle(`Dokumen SPM: ${nopermohonan}`);
     setIsPdfOpen(true);
+  };
+
+  const handleOpenSpmList = (
+    id: string,
+    nopermohonan: string,
+    nmsatker: string,
+    kdsatker: string
+  ) => {
+    setSpmListId(id);
+    setSpmListNopermohonan(nopermohonan);
+    setSpmListNmsatker(nmsatker);
+    setSpmListKdsatker(kdsatker);
+    setIsSpmListOpen(true);
   };
 
   // Load data on initial mount and reload when filter/page changes
@@ -278,7 +299,25 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
     {
       accessorKey: "jmlspm",
       header: () => <div className="text-center font-medium">Jumlah SPM</div>,
-      cell: ({ row }) => <div className="text-center">{row.original.jmlspm ?? "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <button
+            type="button"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2 font-medium cursor-pointer"
+            onClick={() =>
+              handleOpenSpmList(
+                String(row.original.id),
+                row.original.nopermohonan?.trim() || "",
+                row.original.nmsatker?.trim() || "",
+                row.original.kdsatker
+              )
+            }
+            title="Lihat daftar SPM"
+          >
+            {row.original.jmlspm ?? "-"}
+          </button>
+        </div>
+      ),
     },
     {
       id: "file",
@@ -375,6 +414,15 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
         onOpenChange={setIsPdfOpen}
         url={pdfUrl}
         title={pdfTitle}
+      />
+
+      <SpmListDialog
+        open={isSpmListOpen}
+        onOpenChange={setIsSpmListOpen}
+        id={spmListId}
+        nopermohonan={spmListNopermohonan}
+        nmsatker={spmListNmsatker}
+        kdsatker={spmListKdsatker}
       />
 
       {/* Delete Confirmation Dialog */}

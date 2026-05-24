@@ -22,7 +22,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { PlusSquare, Trash2, Save } from "lucide-react";
 import { format, parse } from "date-fns";
-import DispenKontrakDetail from "./dispen-kontrak-detail";
 import UploadKontrak from "./upload-kontrak";
 
 interface FormRow {
@@ -78,7 +77,6 @@ export default function RekamKontrak({
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
-  const [cek, setCek] = useState(false);
   const [activeTab, setActiveTab] = useState("dispensasi-overview");
   const [cekupload, setCekupload] = useState(false);
 
@@ -113,14 +111,8 @@ export default function RekamKontrak({
 
   const watchFormRows = watch("formRows");
 
-  const handleCek = () => {
-    setCek(true);
-    setCekupload(false);
-  };
-
   const handleCekUpload = () => {
     setCekupload(true);
-    setCek(false);
   };
 
   const addRow = () => {
@@ -137,12 +129,10 @@ export default function RekamKontrak({
   };
 
   const handleSubmitdata = async (values: FormValues) => {
-    setCek(false);
     setLoading(true);
     try {
       await apiClient.post("/dispensasi/simpan-lampiran-kontrak", values.formRows);
 
-      setCek(true);
       toast.success("Data Kontrak Berhasil Disimpan");
     } catch (error: any) {
       console.error("Submit Error:", error);
@@ -185,16 +175,14 @@ export default function RekamKontrak({
               value={activeTab}
               onValueChange={(value: string) => {
                 setActiveTab(value);
-                if (value === "dispensasi-edit") {
-                  handleCek();
-                } else if (value === "dispensasi-upload") {
+                if (value === "dispensasi-upload") {
                   handleCekUpload();
                 }
               }}
               className="w-full gap-3"
             >
               <div className="border-b border-border/50 pb-3 mb-0">
-                <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-3 gap-2">
+                <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-2 gap-2">
                   <TabsTrigger
                     value="dispensasi-overview"
                     className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
@@ -206,12 +194,6 @@ export default function RekamKontrak({
                     className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                   >
                     Upload Excel
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="dispensasi-edit"
-                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
-                  >
-                    Data Kontrak
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -352,11 +334,6 @@ export default function RekamKontrak({
                       </div>
                     </div>
                   </form>
-                </TabsContent>
-                <TabsContent value="dispensasi-edit" className="mt-0 space-y-4">
-                  <div className="bg-background rounded-lg p-4 shadow-sm">
-                    <DispenKontrakDetail cek={cek} id={id} />
-                  </div>
                 </TabsContent>
                 <TabsContent value="dispensasi-upload" className="mt-0 space-y-4">
                   <div className="bg-background rounded-lg p-4 shadow-sm">

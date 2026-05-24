@@ -20,12 +20,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import DatePicker from "react-datepicker";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "sonner";
 import moment from "moment";
 import { X, Save } from "lucide-react";
@@ -130,6 +129,7 @@ export default function Rekam({
   useEffect(() => {
     if (jenisspm === "04") {
       setDispen("07");
+      setValue("dispen", "07");
       setjenisdispensasi(true);
     } else {
       setDispen("");
@@ -141,9 +141,9 @@ export default function Rekam({
     tanggalPermohonan: null,
     nomorPermohonan: "",
     satker: "",
-    dispen: dispen,
+    dispen: "",
     alasan2: "",
-    jenis: jenisspm,
+    jenis: "",
     tanggalPersetujuan: null,
     nomorPersetujuan: "",
     cara_upload: "normal",
@@ -161,7 +161,7 @@ export default function Rekam({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
-    values: initialValues,
+    defaultValues: initialValues,
   });
 
   const handleSubmitdata = async (values: FormValues) => {
@@ -291,8 +291,6 @@ export default function Rekam({
     });
   };
 
-  const inputClass = "flex h-9 w-full rounded-md border border-input bg-zinc-100 dark:bg-black px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
-
   return (
     <Dialog open={show} onOpenChange={handleModalClose}>
       <DialogContent showCloseButton={false} className="max-w-4xl sm:max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col">
@@ -300,7 +298,7 @@ export default function Rekam({
           <DialogTitle>Rekam Data Dispensasi TA. {tahun}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4 overflow-y-auto flex-1 min-h-0">
+        <div className="py-4 overflow-y-auto flex-1 min-h-0 px-1">
           <form onSubmit={handleSubmit(handleSubmitdata)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-4">
@@ -378,26 +376,20 @@ export default function Rekam({
               <div className="md:col-span-4">
                 <div className="space-y-2">
                   <Label className="font-bold">Tanggal Permohonan</Label>
-                  <div className="relative">
-                    <Controller
-                      control={control}
-                      name="tanggalPermohonan"
-                      render={({ field }) => (
-                        <DatePicker
-                          name="tanggalPermohonan"
-                          selected={field.value ? moment(field.value).toDate() : null}
-                          className={inputClass}
-                          wrapperClassName="w-full"
-                          onChange={(date: any) => {
-                            field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
-                          }}
-                          dateFormat="dd/MM/yyyy"
-                          placeholderText="Tgl Permohonan"
-                          autoComplete="off"
-                        />
-                      )}
-                    />
-                  </div>
+                  <Controller
+                    control={control}
+                    name="tanggalPermohonan"
+                    render={({ field }) => (
+                      <DatePicker
+                        date={field.value ? moment(field.value).toDate() : undefined}
+                        onDateChange={(date) => {
+                          field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
+                        }}
+                        placeholder="Tgl Permohonan"
+                        className={errors.tanggalPermohonan ? "border-red-500" : ""}
+                      />
+                    )}
+                  />
                   {errors.tanggalPermohonan && (
                     <div className="text-red-500 text-sm mt-1">{errors.tanggalPermohonan.message}</div>
                   )}
@@ -450,26 +442,20 @@ export default function Rekam({
               <div className="md:col-span-4">
                 <div className="space-y-2">
                   <Label className="font-bold">Tanggal Persetujuan</Label>
-                  <div className="relative">
-                    <Controller
-                      control={control}
-                      name="tanggalPersetujuan"
-                      render={({ field }) => (
-                        <DatePicker
-                          name="tanggalPersetujuan"
-                          selected={field.value ? moment(field.value).toDate() : null}
-                          className={inputClass}
-                          wrapperClassName="w-full"
-                          onChange={(date: any) => {
-                            field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
-                          }}
-                          dateFormat="dd/MM/yyyy"
-                          placeholderText="Tgl Persetujuan"
-                          autoComplete="off"
-                        />
-                      )}
-                    />
-                  </div>
+                  <Controller
+                    control={control}
+                    name="tanggalPersetujuan"
+                    render={({ field }) => (
+                      <DatePicker
+                        date={field.value ? moment(field.value).toDate() : undefined}
+                        onDateChange={(date) => {
+                          field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
+                        }}
+                        placeholder="Tgl Persetujuan"
+                        className={errors.tanggalPersetujuan ? "border-red-500" : ""}
+                      />
+                    )}
+                  />
                   {errors.tanggalPersetujuan && (
                     <div className="text-red-500 text-sm mt-1">{errors.tanggalPersetujuan.message}</div>
                   )}

@@ -12,6 +12,7 @@ import RekamTup from "./rekam-tup";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { DataTable } from "@/components/ui/data-table";
 import { PdfViewerModal } from "@/components/transfer-daerah/modals/pdf-viewer-modal";
+import { TupListDialog } from "./tup-list-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,12 +70,32 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
   const [pdfUrl, setPdfUrl] = useState("");
   const [pdfTitle, setPdfTitle] = useState("");
 
+  // States for TUP List Dialog
+  const [isTupListOpen, setIsTupListOpen] = useState(false);
+  const [tupListId, setTupListId] = useState("");
+  const [tupListNopermohonan, setTupListNopermohonan] = useState("");
+  const [tupListNmsatker, setTupListNmsatker] = useState("");
+  const [tupListKdsatker, setTupListKdsatker] = useState("");
+
   const handleOpenPreview = (id: string, nopermohonan: string) => {
     const intId = parseInt(id, 10);
     const fileUrl = `/api/v1/dispensasi/download-tup/${intId}`;
     setPdfUrl(fileUrl);
     setPdfTitle(`Dokumen TUP: ${nopermohonan}`);
     setIsPdfOpen(true);
+  };
+
+  const handleOpenTupList = (
+    id: string,
+    nopermohonan: string,
+    nmsatker: string,
+    kdsatker: string
+  ) => {
+    setTupListId(id);
+    setTupListNopermohonan(nopermohonan);
+    setTupListNmsatker(nmsatker);
+    setTupListKdsatker(kdsatker);
+    setIsTupListOpen(true);
   };
 
   // Load data on initial mount (only when user is available)
@@ -288,7 +309,25 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
     {
       accessorKey: "jumlah",
       header: () => <div className="text-center font-medium">Jumlah TUP</div>,
-      cell: ({ row }) => <div className="text-center">{row.original.jumlah ?? "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <button
+            type="button"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2 font-medium cursor-pointer"
+            onClick={() =>
+              handleOpenTupList(
+                String(row.original.id),
+                row.original.nopermohonan?.trim() || "",
+                row.original.nmsatker?.trim() || "",
+                row.original.kdsatker
+              )
+            }
+            title="Lihat daftar TUP"
+          >
+            {row.original.jumlah ?? "-"}
+          </button>
+        </div>
+      ),
     },
     {
       id: "file",
@@ -384,6 +423,15 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
         onOpenChange={setIsPdfOpen}
         url={pdfUrl}
         title={pdfTitle}
+      />
+
+      <TupListDialog
+        open={isTupListOpen}
+        onOpenChange={setIsTupListOpen}
+        id={tupListId}
+        nopermohonan={tupListNopermohonan}
+        nmsatker={tupListNmsatker}
+        kdsatker={tupListKdsatker}
       />
 
       {/* Delete Confirmation Dialog */}

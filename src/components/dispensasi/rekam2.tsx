@@ -14,14 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,98 +50,6 @@ interface Rekam2Props {
 
 const handleHttpError = (status: any, msg: string) => console.error(msg);
 
-const DataSPM = ({ cek, id }: { cek: boolean; id: string }) => {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (cek && id) {
-      console.log("DataSPM useEffect triggered, cek:", cek, "id:", id);
-      fetchData();
-    }
-  }, [cek, id]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const query = `SELECT nospm, nilspm, status, tgspm, tgbast, nobast FROM laporan_2023.dispensasi_spm_lampiran WHERE id_dispensasi = '${id}' ORDER BY id DESC`;
-      console.log("DataSPM query:", query);
-      const encryptedQuery = btoa(query);
-
-      const result = await apiClient.get(
-        `/dispensasi/${encryptedQuery}?limit=999&page=0`
-      );
-
-      console.log("DataSPM response:", result);
-      setData(result.result || []);
-    } catch (error) {
-      console.error("Terjadi Permasalahan Koneksi atau Server Backend");
-      toast.error("Gagal memuat data SPM");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center p-8">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px] text-center">No.</TableHead>
-            <TableHead>Tgl SPM</TableHead>
-            <TableHead>No SPM</TableHead>
-            <TableHead className="text-right">Nilai SPM</TableHead>
-            <TableHead>Tgl BAST</TableHead>
-            <TableHead>No BAST</TableHead>
-            <TableHead className="text-center">Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                Belum ada data SPM
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                <TableCell>{item.tgspm}</TableCell>
-                <TableCell>{item.nospm}</TableCell>
-                <TableCell className="text-right">
-                  {new Intl.NumberFormat("id-ID").format(item.nilspm || 0)}
-                </TableCell>
-                <TableCell>{item.tgbast}</TableCell>
-                <TableCell>{item.nobast}</TableCell>
-                <TableCell className="text-center">
-                  {item.status === "Setuju" ? (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                      Disetujui
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                      Ditolak
-                    </span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  );
-};
-
 const validationSchema = z.object({
   id: z.string().optional(),
   tahun: z.string().optional(),
@@ -178,7 +78,6 @@ export default function Rekam2({
   tahun = String(new Date().getFullYear()),
 }: Rekam2Props) {
   const [loading, setLoading] = useState(false);
-  const [cek, setCek] = useState(false);
   const [cekupload, setCekupload] = useState(false);
   const [activeTab, setActiveTab] = useState("dispensasi-overview");
 
@@ -239,14 +138,12 @@ export default function Rekam2({
   };
 
   const handleSubmitdata = async (values: FormValues) => {
-    setCek(false);
     setLoading(true);
     try {
       const url = "/dispensasi/simpan-spm";
 
       await apiClient.post(url, values);
 
-      setCek(true);
       toast.success("Data SPM Berhasil Disimpan");
     } catch (error: any) {
       console.error("Submit Error:", error);
@@ -282,14 +179,8 @@ export default function Rekam2({
     onHide();
   };
 
-  const handleCek = () => {
-    setCek(true);
-    setCekupload(false);
-  };
-
   const handleCekUpload = () => {
     setCekupload(true);
-    setCek(false);
   };
 
   const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
@@ -309,16 +200,14 @@ export default function Rekam2({
               value={activeTab}
               onValueChange={(value: string) => {
                 setActiveTab(value);
-                if (value === "dispensasi-edit") {
-                  handleCek();
-                } else if (value === "dispensasi-upload") {
+                if (value === "dispensasi-upload") {
                   handleCekUpload();
                 }
               }}
               className="w-full gap-3"
             >
               <div className="border-b border-border/50 pb-3 mb-0">
-                <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-3 gap-2">
+                <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-2 gap-2">
                   <TabsTrigger
                     value="dispensasi-overview"
                     className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
@@ -330,12 +219,6 @@ export default function Rekam2({
                     className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                   >
                     Upload Excel
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="dispensasi-edit"
-                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
-                  >
-                    Data SPM
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -519,11 +402,6 @@ export default function Rekam2({
                       </div>
                     </div>
                   </form>
-                </TabsContent>
-                <TabsContent value="dispensasi-edit" className="mt-0 space-y-4">
-                  <div className="bg-background rounded-lg p-4 shadow-sm">
-                    <DataSPM cek={cek} id={id} />
-                  </div>
                 </TabsContent>
                 <TabsContent value="dispensasi-upload" className="mt-0 space-y-4">
                   <div className="bg-background rounded-lg p-4 shadow-sm">
