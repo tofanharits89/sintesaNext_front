@@ -27,6 +27,8 @@ class PerformanceMonitor {
   private stats: Map<string, PerformanceStats> = new Map();
   private observers: PerformanceObserver[] = [];
   private isMonitoring = false;
+  private static readonly MAX_METRICS_PER_NAME = 50;
+  private static readonly MAX_METRIC_NAMES = 100;
 
   constructor() {
     this.setupNativeObservers();
@@ -46,7 +48,20 @@ class PerformanceMonitor {
     if (!this.metrics.has(name)) {
       this.metrics.set(name, []);
     }
-    this.metrics.get(name)!.push(metric);
+    
+    // Evict old metrics to prevent unbounded growth
+    const metricList = this.metrics.get(name)!;
+    if (metricList.length >= PerformanceMonitor.MAX_METRICS_PER_NAME) {
+      metricList.splice(0, metricList.length - PerformanceMonitor.MAX_METRICS_PER_NAME + 1);
+    }
+    
+    // Limit total metric names
+    if (this.metrics.size > PerformanceMonitor.MAX_METRIC_NAMES) {
+      const firstKey = this.metrics.keys().next().value;
+      if (firstKey) this.metrics.delete(firstKey);
+    }
+    
+    metricList.push(metric);
 
     return () => this.end(name, startTime);
   }
@@ -213,12 +228,14 @@ class PerformanceMonitor {
   /**
    * Legacy methods for backward compatibility
    */
+  private _pageLoadListenerAdded = false;
   measurePageLoad: () => void = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !this._pageLoadListenerAdded) {
+      this._pageLoadListenerAdded = true;
       window.addEventListener('load', () => {
         const perfData = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
         console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart);
-      });
+      }, { once: true });
     }
   };
   

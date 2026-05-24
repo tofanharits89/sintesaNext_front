@@ -30,6 +30,7 @@ class AdvancedQueryCache {
   private queryClient: QueryClient
   private cacheWarmupQueue: CacheWarmupConfig[] = []
   private backgroundRefreshInterval: NodeJS.Timeout | null = null
+  private cacheSubscriptionUnsubscribe: (() => void) | null = null
   private cacheStats = {
     hits: 0,
     misses: 0,
@@ -57,8 +58,8 @@ class AdvancedQueryCache {
    * Setup cache monitoring and statistics
    */
   private setupCacheMonitoring(): void {
-    // Monitor cache events
-    this.queryClient.getQueryCache().subscribe({
+    // Monitor cache events and store unsubscribe function
+    this.cacheSubscriptionUnsubscribe = this.queryClient.getQueryCache().subscribe({
       onAdd: undefined, // Remove non-existent property
       onUpdate: (query: Query) => {
         console.log(`[Cache] Query updated: ${query.queryKey.join('/')}`)
@@ -66,7 +67,7 @@ class AdvancedQueryCache {
       onRemove: (query: Query) => {
         console.log(`[Cache] Query removed: ${query.queryKey.join('/')}`)
       }
-    } as any)
+    } as any) as unknown as (() => void) | null
   }
 
   /**
@@ -337,6 +338,11 @@ class AdvancedQueryCache {
   cleanup(): void {
     if (this.backgroundRefreshInterval) {
       clearInterval(this.backgroundRefreshInterval)
+      this.backgroundRefreshInterval = null
+    }
+    if (this.cacheSubscriptionUnsubscribe) {
+      this.cacheSubscriptionUnsubscribe()
+      this.cacheSubscriptionUnsubscribe = null
     }
   }
 }

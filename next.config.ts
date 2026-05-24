@@ -216,6 +216,13 @@ const nextConfig: NextConfig = {
       "recharts",
       "@tanstack/react-query",
       "socket.io-client",
+      "framer-motion",
+      "motion",
+      "@visx/shape",
+      "@visx/scale",
+      "@visx/grid",
+      "xlsx",
+      "xlsx-js-style",
     ],
   },
 };

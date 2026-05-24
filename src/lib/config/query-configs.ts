@@ -25,7 +25,7 @@ export const queryConfigs = {
   // Static/Reference data - rarely changes, cache aggressively
   static: {
     staleTime: 30 * 60 * 1000, // 30 minutes
-    gcTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 30 * 60 * 1000, // 30 minutes (reduced from 1 hour)
     retry: 3,
     retryDelay: (attemptIndex: number) =>
       Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -37,7 +37,7 @@ export const queryConfigs = {
   // User data - moderately dynamic, balance freshness and performance
   user: {
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (reduced from 15)
     retry: 1, // Reduced from 2
     retryDelay: 1000, // Fixed delay
     refetchOnWindowFocus: false, // Disable for better performance
@@ -48,7 +48,7 @@ export const queryConfigs = {
   // Dashboard/Analytics data - semi-real-time, moderate caching
   dashboard: {
     staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes (reduced from 10 to free memory sooner)
     retry: 1, // Reduced from 2
     retryDelay: 1000, // Fixed delay instead of exponential
     refetchOnWindowFocus: false, // Disable for better performance
@@ -82,7 +82,7 @@ export const queryConfigs = {
   // Financial data - high accuracy required, moderate caching
   financial: {
     staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (reduced from 15)
     retry: 3,
     retryDelay: (attemptIndex: number) =>
       Math.min(1000 * 2 ** attemptIndex, 8000),

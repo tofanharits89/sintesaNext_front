@@ -228,6 +228,11 @@ export const useBPSDataStore = create<BPSDataState & BPSDataActions>()(
       updateVariableSearchCache: (key, value) => {
         set((state) => {
           const newCache = new Map(state.variableSearchCache);
+          // Evict oldest entries if cache exceeds 50 entries
+          if (newCache.size >= 50) {
+            const firstKey = newCache.keys().next().value;
+            if (firstKey) newCache.delete(firstKey);
+          }
           newCache.set(key, value);
           return { variableSearchCache: newCache };
         }, false, "updateVariableSearchCache");

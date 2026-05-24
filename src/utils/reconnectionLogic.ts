@@ -57,6 +57,15 @@ export class ReconnectionManager {
   private disconnectToastId: string | number | null = null;
   private networkOfflineToastId: string | number | null = null;
 
+  // Store bound references so we can remove them later
+  private boundHandleNetworkOnline: () => void;
+  private boundHandleNetworkOffline: () => void;
+  private boundHandleVisibilityChange: () => void;
+  private boundHandleBeforeUnload: () => void;
+  private boundHandleStorageEvent: (event: StorageEvent) => void;
+  private boundHandleFocus: () => void;
+  private boundHandleBlur: () => void;
+
   // Event listeners
   private onConnectionStateChange?: (state: ConnectionState) => void;
   private onTokenRefreshNeeded?: () => void;
@@ -72,6 +81,24 @@ export class ReconnectionManager {
     // Provide no-op defaults to satisfy exactOptionalPropertyTypes
     this.onConnectionStateChange = options.onConnectionStateChange ?? (() => {});
     this.onTokenRefreshNeeded = options.onTokenRefreshNeeded ?? (() => {});
+
+    // Create bound references once so they can be removed
+    this.boundHandleNetworkOnline = this.handleNetworkOnline.bind(this);
+    this.boundHandleNetworkOffline = this.handleNetworkOffline.bind(this);
+    this.boundHandleVisibilityChange = this.handleVisibilityChange.bind(this);
+    this.boundHandleBeforeUnload = this.handleBeforeUnload.bind(this);
+    this.boundHandleStorageEvent = this.handleStorageEvent.bind(this);
+    this.boundHandleFocus = () => {
+      this.isActiveTab = true;
+      this.checkAndRefreshToken().catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          logger.error('Token refresh error:', error);
+        }
+      });
+    };
+    this.boundHandleBlur = () => {
+      this.isActiveTab = false;
+    };
 
     this.setupEventListeners();
     this.startNetworkMonitoring();
@@ -94,22 +121,22 @@ export class ReconnectionManager {
     if (typeof window === "undefined") return;
 
     // Network state changes
-    window.addEventListener("online", this.handleNetworkOnline.bind(this));
-    window.addEventListener("offline", this.handleNetworkOffline.bind(this));
+    window.addEventListener("online", this.boundHandleNetworkOnline);
+    window.addEventListener("offline", this.boundHandleNetworkOffline);
 
     // Page visibility changes
     if (typeof document !== "undefined") {
       document.addEventListener(
         "visibilitychange",
-        this.handleVisibilityChange.bind(this)
+        this.boundHandleVisibilityChange
       );
     }
 
     // Before page unload
-    window.addEventListener("beforeunload", this.handleBeforeUnload.bind(this));
+    window.addEventListener("beforeunload", this.boundHandleBeforeUnload);
 
     // Storage events for cross-tab coordination
-    window.addEventListener("storage", this.handleStorageEvent.bind(this));
+    window.addEventListener("storage", this.boundHandleStorageEvent);
   }
 
   /**
@@ -384,20 +411,8 @@ export class ReconnectionManager {
     if (typeof window === "undefined") return;
 
     // Handle tab focus/blur for token management
-    window.addEventListener("focus", () => {
-      this.isActiveTab = true;
-      // Check token when tab becomes active
-      this.checkAndRefreshToken().catch((error) => {
-        // Import logger locally to avoid circular dependencies
-        if (process.env.NODE_ENV === 'development') {
-          logger.error('Token refresh error:', error);
-        }
-      });
-    });
-
-    window.addEventListener("blur", () => {
-      this.isActiveTab = false;
-    });
+    window.addEventListener("focus", this.boundHandleFocus);
+    window.addEventListener("blur", this.boundHandleBlur);
   }
 
   /**
@@ -438,10 +453,26 @@ export class ReconnectionManager {
   cleanup() {
     if (this.networkCheckTimer) {
       clearInterval(this.networkCheckTimer);
+      this.networkCheckTimer = null;
     }
 
     if (this.tokenExpiryTimer) {
       clearTimeout(this.tokenExpiryTimer);
+      this.tokenExpiryTimer = null;
+    }
+
+    // Remove all event listeners
+    if (typeof window !== "undefined") {
+      window.removeEventListener("online", this.boundHandleNetworkOnline);
+      window.removeEventListener("offline", this.boundHandleNetworkOffline);
+      window.removeEventListener("beforeunload", this.boundHandleBeforeUnload);
+      window.removeEventListener("storage", this.boundHandleStorageEvent);
+      window.removeEventListener("focus", this.boundHandleFocus);
+      window.removeEventListener("blur", this.boundHandleBlur);
+    }
+
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", this.boundHandleVisibilityChange);
     }
   }
 }

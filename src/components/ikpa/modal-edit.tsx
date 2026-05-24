@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api/httpClient";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Loader2, Save, X, Edit, FilePlus } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 import kppnData from "@/data/kdkppn.json";
@@ -283,7 +284,20 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                         <FormItem>
                                             <FormLabel>Tanggal Nota Dinas</FormLabel>
                                             <FormControl>
-                                                <Input type="date" {...field} />
+                                                <DatePicker
+                                                    date={field.value ? new Date(field.value) : undefined}
+                                                    onDateChange={(date) => {
+                                                        if (date) {
+                                                            const yyyy = date.getFullYear();
+                                                            const mm = String(date.getMonth() + 1).padStart(2, "0");
+                                                            const dd = String(date.getDate()).padStart(2, "0");
+                                                            field.onChange(`${yyyy}-${mm}-${dd}`);
+                                                        } else {
+                                                            field.onChange("");
+                                                        }
+                                                    }}
+                                                    placeholder="Pilih tanggal ND"
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
