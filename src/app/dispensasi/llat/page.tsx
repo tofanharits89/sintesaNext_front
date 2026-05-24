@@ -1,45 +1,53 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { ResetButton } from "@/components/ui/reset-button";
 import DispenSPM from "@/components/dispensasi/dispen-spm";
 import DispenKontrak from "@/components/dispensasi/dispen-kontrak";
 import DispenTUP from "@/components/dispensasi/dispen-tup";
 import Monitoring from "@/components/dispensasi/monitoring-dispen";
-import FilterData from "@/components/dispensasi/filter";
 import Rekam from "@/components/dispensasi/rekam";
 import { useAuth } from "@/hooks/useAuth";
 import { Grid, FileText, Layers, LayoutDashboard, Filter } from "lucide-react";
+import Kddept from "@/data/kddept.json";
+import Kdkanwil from "@/data/kdkanwil.json";
+import Kdkppn from "@/data/kdkppn.json";
 
 const DispensasiPage: React.FC = () => {
   const { user } = useAuth();
   const role = user?.role;
+  const userKdKanwil = user?.kdkanwil;
+  const userKdKppn = user?.kdkppn;
 
   const [cek, setCek] = useState(0);
   const [id, setId] = useState("");
   const [where, setWhere] = useState("");
-  const [showModalFilter, setShowModalFilter] = useState(false);
   const [showModalRekam, setShowModalRekam] = useState(false);
-  const [filter, setFilter] = useState({
-    selectedKementerian: "00",
-    selectedKanwil: "00",
-    selectedKppn: "00",
-    tahun: "",
-  });
 
-  const handleCek = () => {
-    setCek((prev) => prev + 1);
-  };
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2021 }, (_, i) =>
+    (currentYear - i).toString()
+  );
 
-  const handleFilterResult = (filterData: any) => {
-    const { selectedKementerian, selectedKanwil, selectedKppn, tahun } =
-      filterData;
+  const [selectedTahun, setSelectedTahun] = useState(currentYear.toString());
+  const [selectedKementerian, setSelectedKementerian] = useState("00");
+  const [selectedKanwil, setSelectedKanwil] = useState("00");
+  const [selectedKppn, setSelectedKppn] = useState("00");
 
-    let FilterWhere = "";
-
+  // Build filter WHERE clause whenever filter values change
+  const buildWhereClause = useCallback(() => {
     const addFilterClause = (filterVal: string, columnName: string) => {
       if (filterVal !== "00" && filterVal !== "") {
         return `${columnName} = '${filterVal}'`;
@@ -47,26 +55,75 @@ const DispensasiPage: React.FC = () => {
       return "";
     };
 
-    setFilter(filterData);
-
     const whereClauses = [
       addFilterClause(selectedKementerian, "a.kddept"),
       addFilterClause(selectedKanwil, "a.kdkanwil"),
-      addFilterClause(tahun, "a.thang"),
+      addFilterClause(selectedTahun, "a.thang"),
       addFilterClause(selectedKppn, "a.kdkppn"),
     ].filter(Boolean);
 
     if (whereClauses.length > 0) {
-      FilterWhere = "  " + whereClauses.join(" AND ");
+      return "  " + whereClauses.join(" AND ");
     }
+    return "";
+  }, [selectedKementerian, selectedKanwil, selectedTahun, selectedKppn]);
 
-    setWhere(FilterWhere);
-    handleCek();
+  // Apply filter whenever selections change
+  useEffect(() => {
+    const newWhere = buildWhereClause();
+    setWhere(newWhere);
+    setCek((prev) => prev + 1);
+  }, [buildWhereClause]);
+
+  const handleReset = () => {
+    setSelectedTahun(currentYear.toString());
+    setSelectedKementerian("00");
+    setSelectedKanwil("00");
+    setSelectedKppn("00");
   };
 
   const handleRekam = () => {
     setShowModalRekam(true);
   };
+
+  // Build options for Kanwil (filtered by role)
+  const kanwilOptions = useMemo(() => {
+    const filtered = Kdkanwil.filter((kanwil) =>
+      role === "kanwil_djpb" ? kanwil.kdkanwil === userKdKanwil : true
+    );
+    return [
+      { value: "00", label: "Semua Kanwil" },
+      ...filtered.map((k) => ({
+        value: k.kdkanwil,
+        label: `${k.kdkanwil} - ${k.nmkanwil}`,
+      })),
+    ];
+  }, [role, userKdKanwil]);
+
+  // Build options for KPPN (filtered by role)
+  const kppnOptions = useMemo(() => {
+    const filtered = Kdkppn.filter((kppn) =>
+      role === "kppn" ? kppn.kdkppn === userKdKppn : true
+    );
+    return [
+      ...(role !== "kppn" ? [{ value: "00", label: "Semua KPPN" }] : []),
+      ...filtered.map((k) => ({
+        value: k.kdkppn,
+        label: `${k.kdkppn} - ${k.nmkppn}`,
+      })),
+    ];
+  }, [role, userKdKppn]);
+
+  // Build options for Kementerian
+  const kementerianOptions = useMemo(() => {
+    return [
+      { value: "00", label: "Semua Kementerian" },
+      ...Kddept.map((dept) => ({
+        value: dept.kddept,
+        label: `${dept.kddept} - ${dept.nmdept}`,
+      })),
+    ];
+  }, []);
 
   return (
     <>
@@ -80,13 +137,6 @@ const DispensasiPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowModalFilter(true)}
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filter Data
-            </Button>
             {role !== "lainnya" && (
               <Button onClick={handleRekam}>
                 Rekam Dispensasi
@@ -94,6 +144,79 @@ const DispensasiPage: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Filter Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <CardTitle>Filter Data</CardTitle>
+              </div>
+              <ResetButton onReset={handleReset} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              <div className="space-y-1.5 flex-1 min-w-[200px]">
+                <Label htmlFor="filter-tahun" className="text-sm font-medium">Tahun</Label>
+                <Select value={selectedTahun} onValueChange={setSelectedTahun}>
+                  <SelectTrigger id="filter-tahun" className="w-full">
+                    <SelectValue placeholder="Semua Tahun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="00">Semua Tahun</SelectItem>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5 flex-1 min-w-[200px]">
+                <Label htmlFor="filter-kementerian" className="text-sm font-medium">Kementerian</Label>
+                <SearchableSelect
+                  options={kementerianOptions}
+                  value={selectedKementerian}
+                  onValueChange={setSelectedKementerian}
+                  placeholder="Semua Kementerian"
+                  searchPlaceholder="Cari Kementerian..."
+                  emptyMessage="Kementerian tidak ditemukan."
+                />
+              </div>
+
+              {role !== "kppn" && (
+                <div className="space-y-1.5 flex-1 min-w-[200px]">
+                  <Label htmlFor="filter-kanwil" className="text-sm font-medium">Kanwil</Label>
+                  <SearchableSelect
+                    options={kanwilOptions}
+                    value={selectedKanwil}
+                    onValueChange={setSelectedKanwil}
+                    placeholder="Semua Kanwil"
+                    searchPlaceholder="Cari Kanwil..."
+                    emptyMessage="Kanwil tidak ditemukan."
+                    disabled={role === "kanwil_djpb"}
+                  />
+                </div>
+              )}
+
+              {role === "kppn" && (
+                <div className="space-y-1.5 flex-1 min-w-[200px]">
+                  <Label htmlFor="filter-kppn" className="text-sm font-medium">KPPN</Label>
+                  <SearchableSelect
+                    options={kppnOptions}
+                    value={selectedKppn}
+                    onValueChange={setSelectedKppn}
+                    placeholder="Semua KPPN"
+                    searchPlaceholder="Cari KPPN..."
+                    emptyMessage="KPPN tidak ditemukan."
+                    disabled={role === "kppn"}
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         <section>
           <Tabs defaultValue="dispensasi-spm" className="w-full gap-3">
@@ -120,38 +243,6 @@ const DispensasiPage: React.FC = () => {
                     </TabsTrigger>
                   )}
               </TabsList>
-            </div>
-
-            {/* Active Filters Display */}
-            <div className="flex flex-wrap items-center gap-2 empty:hidden">
-              {(filter.selectedKanwil !== "00" ||
-                filter.selectedKementerian !== "00" ||
-                filter.selectedKppn !== "00" ||
-                filter.tahun !== "") && (
-                  <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                    Filter Aktif
-                  </Badge>
-                )}
-              {filter.tahun !== "" && (
-                <Badge variant="secondary">
-                  Tahun {filter.tahun}
-                </Badge>
-              )}
-              {filter.selectedKementerian !== "00" && (
-                <Badge variant="secondary">
-                  Kementerian {filter.selectedKementerian}
-                </Badge>
-              )}
-              {filter.selectedKanwil !== "00" && (
-                <Badge variant="secondary">
-                  Kanwil {filter.selectedKanwil}
-                </Badge>
-              )}
-              {filter.selectedKppn !== "00" && (
-                <Badge variant="secondary">
-                  KPPN {filter.selectedKppn}
-                </Badge>
-              )}
             </div>
 
             <TabsContents>
@@ -191,13 +282,7 @@ const DispensasiPage: React.FC = () => {
         </section>
       </div>
 
-      <Rekam show={showModalRekam} onHide={() => setShowModalRekam(false)} onSuccess={handleCek} />
-
-      <FilterData
-        show={showModalFilter}
-        onHide={() => setShowModalFilter(false)}
-        onFilter={handleFilterResult}
-      />
+      <Rekam show={showModalRekam} onHide={() => setShowModalRekam(false)} onSuccess={() => setCek((prev) => prev + 1)} />
     </>
   );
 };
