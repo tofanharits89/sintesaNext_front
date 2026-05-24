@@ -35,7 +35,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { apiClient } from "@/lib/api/httpClient";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { FilePlus, Loader2, Save } from "lucide-react";
+import { FilePlus, Loader2, Save, X } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 import kppnData from "@/data/kdkppn.json";
 import { format } from "date-fns";
@@ -350,7 +350,8 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                 <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                            Tutup
+                            <X className="h-4 w-4 mr-2" />
+                            Batal
                         </Button>
                         <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting} className="bg-slate-800 hover:bg-slate-900">
                             {isSubmitting ? (

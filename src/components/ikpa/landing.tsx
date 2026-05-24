@@ -62,6 +62,8 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { ResetButton } from "@/components/ui/reset-button";
 import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
+import { BarChart as DashboardBarChart, Bar as DashboardBar, BarXAxis, Grid } from "@/components/charts";
+import { ChartTooltip } from "@/components/charts/tooltip";
 
 import {
     LineChart,
@@ -374,52 +376,126 @@ export function IkpaLanding() {
             />
 
             {/* Top Dashboard Grid */}
-            <div className="space-y-6 mb-8">
-                {/* Quick Stats Row */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCard
-                        label="Total Permohonan"
-                        icon={<FileText className="h-4 w-4 text-blue-500" />}
-                        value={summary.total.toLocaleString()}
-                    />
-                    <StatCard
-                        label="Disetujui"
-                        icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                        value={summary.approved.toLocaleString()}
-                    />
-                    <StatCard
-                        label="Ditolak"
-                        icon={<XCircle className="h-4 w-4 text-rose-500" />}
-                        value={summary.rejected.toLocaleString()}
-                    />
-                    <StatCard
-                        label="Pending"
-                        icon={<Clock className="h-4 w-4 text-amber-500" />}
-                        value={summary.pending.toLocaleString()}
-                    />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+                {/* Left: Quick Stats & Main Trend Chart */}
+                <div className="flex flex-col gap-6 lg:col-span-8 min-w-0">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatCard
+                            label="Total Permohonan"
+                            icon={<FileText className="h-4 w-4 text-blue-500" />}
+                            value={summary.total.toLocaleString()}
+                            valueClassName="font-mono text-right"
+                            className="pr-6"
+                        />
+                        <StatCard
+                            label="Disetujui"
+                            icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                            value={summary.approved.toLocaleString()}
+                            valueClassName="font-mono text-right"
+                            className="pr-6"
+                        />
+                        <StatCard
+                            label="Ditolak"
+                            icon={<XCircle className="h-4 w-4 text-rose-500" />}
+                            value={summary.rejected.toLocaleString()}
+                            valueClassName="font-mono text-right"
+                            className="pr-6"
+                        />
+                        <StatCard
+                            label="Pending"
+                            icon={<Clock className="h-4 w-4 text-amber-500" />}
+                            value={summary.pending.toLocaleString()}
+                            valueClassName="font-mono text-right"
+                            className="pr-6"
+                        />
+                    </div>
+                    
+                    <Card className="flex flex-col min-w-0 flex-1">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Trend Permohonan Bulanan</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0 min-h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <LineChart data={statsData?.monthlyTrend || []} margin={{ top: 24, right: 10, left: 10, bottom: 32 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} padding={{ left: 20, right: 20 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
+                                    <RechartsTooltip
+                                        contentStyle={{ backgroundColor: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                                    />
+                                    <Line type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={2.5} dot={{ fill: 'var(--primary)', r: 4 }} activeDot={{ r: 6 }}>
+                                        <LabelList dataKey="count" position="top" offset={10} style={{ fill: 'var(--foreground)', fontSize: 11, fontWeight: 600 }} />
+                                    </Line>
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                {/* Main Trend Chart */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Trend Permohonan Bulanan</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[250px] p-4">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                            <LineChart data={statsData?.monthlyTrend || []} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} padding={{ left: 20, right: 20 }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
-                                <RechartsTooltip
-                                    contentStyle={{ backgroundColor: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
-                                />
-                                <Line type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={3} dot={{ fill: 'var(--primary)', r: 4 }} activeDot={{ r: 6 }}>
-                                    <LabelList dataKey="count" position="top" offset={10} style={{ fill: 'var(--foreground)', fontSize: 11, fontWeight: 600 }} />
-                                </Line>
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+                {/* Right: Share Charts Stack */}
+                <div className="flex flex-col gap-6 lg:col-span-4 min-w-0 h-full">
+                    <Card className="flex-1 flex flex-col min-w-0">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Share Permohonan Per KPPN</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
+                            <div className="w-full min-w-0 relative h-full min-h-[120px]">
+                                <DashboardBarChart
+                                    data={statsData?.sharePerKppn.map(item => ({ name: `${item.nmkppn} (${item.kdkppn})`, value: parseInt(item.count) })) || []}
+                                    xDataKey="name"
+                                    margin={{ top: 16, right: 10, left: 10, bottom: 20 }}
+                                    aspectRatio="auto"
+                                    className="h-full w-full"
+                                    barGap={0.15}
+                                >
+                                    <Grid horizontal />
+                                    <DashboardBar dataKey="value" fill="var(--primary)" lineCap="round" showLabels={true} />
+                                    <BarXAxis showAllLabels maxLabels={50} />
+                                    <ChartTooltip
+                                        rows={(point) => [
+                                            {
+                                                color: "var(--primary)",
+                                                label: point.name,
+                                                value: point.value,
+                                            },
+                                        ]}
+                                    />
+                                </DashboardBarChart>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="flex-1 flex flex-col min-w-0">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Share Permohonan Per Indikator</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
+                            <div className="w-full min-w-0 relative h-full min-h-[120px]">
+                                <DashboardBarChart
+                                    data={statsData?.sharePerIndikator.map(item => ({ name: item.indikator, value: parseInt(item.count) })) || []}
+                                    xDataKey="name"
+                                    margin={{ top: 16, right: 10, left: 10, bottom: 20 }}
+                                    aspectRatio="auto"
+                                    className="h-full w-full"
+                                    barGap={0.15}
+                                >
+                                    <Grid horizontal />
+                                    <DashboardBar dataKey="value" fill="var(--primary)" lineCap="round" showLabels={true} />
+                                    <BarXAxis showAllLabels maxLabels={50} />
+                                    <ChartTooltip
+                                        rows={(point) => [
+                                            {
+                                                color: "var(--primary)",
+                                                label: point.name,
+                                                value: point.value,
+                                            },
+                                        ]}
+                                    />
+                                </DashboardBarChart>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             {/* Main Table - Full Width */}
@@ -450,7 +526,8 @@ export function IkpaLanding() {
                                 <TableHeader className="bg-background sticky top-0 z-10 shadow-sm text-center">
                                     <TableRow className="hover:bg-transparent border-b-0">
                                         <TableHead className="bg-background text-center w-12 h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">No</TableHead>
-                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-96">No. ND</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-64">No. ND</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-32">Tanggal ND</TableHead>
                                         <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Kode KPPN</TableHead>
                                         <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Nama KPPN</TableHead>
                                         <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Kode Satker</TableHead>
@@ -468,9 +545,13 @@ export function IkpaLanding() {
                                                     <Skeleton className="h-3.5 w-5 mx-auto" />
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex flex-col gap-1.5">
+                                                    <div className="flex justify-center">
                                                         <Skeleton className="h-3.5 w-24 mx-auto" />
-                                                        <Skeleton className="h-3 w-16 mx-auto" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex justify-center">
+                                                        <Skeleton className="h-3.5 w-20 mx-auto" />
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
@@ -508,10 +589,14 @@ export function IkpaLanding() {
                                                         {currentPage * 10 + index + 1}
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        <div className="flex flex-col items-center">
-                                                            <span className="font-normal text-zinc-900 dark:text-zinc-100">{item.no_nd}</span>
-                                                            <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                                                        </div>
+                                                        <span className="font-normal text-zinc-900 dark:text-zinc-100">{item.no_nd}</span>
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-sm font-normal text-foreground whitespace-nowrap">
+                                                        {(() => {
+                                                            const d = new Date(item.tg_nd);
+                                                            if (isNaN(d.getTime())) return "-";
+                                                            return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getFullYear()}`;
+                                                        })()}
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         <Badge variant="outline" className="font-mono text-xs font-normal bg-zinc-50 dark:bg-zinc-900 uppercase">
@@ -567,7 +652,7 @@ export function IkpaLanding() {
                                                 </TableRow>
                                             ))
                                         ) : (
-                                            <TableRow><TableCell colSpan={9} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={10} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
                                         )
                                     )}
                                 </TableBody>
@@ -576,7 +661,7 @@ export function IkpaLanding() {
                     </div>
                     <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4 px-2">
                         {/* Left: Rows per page */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center space-x-2 order-2 md:order-1">
                             <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 Rows per page
                             </span>
@@ -601,85 +686,83 @@ export function IkpaLanding() {
                         </div>
 
                         {/* Center: Pagination Buttons */}
-                        <div className="flex justify-center">
-                            <Pagination className="mx-0 w-auto">
-                                <PaginationContent>
-                                    <PaginationItem>
-                                        <PaginationPrevious
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                setCurrentPage(p => Math.max(0, p - 1));
-                                            }}
-                                            className={cn(
-                                                "cursor-pointer select-none",
-                                                currentPage === 0 && "pointer-events-none opacity-50",
-                                            )}
-                                        />
-                                    </PaginationItem>
+                        <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
+                            <Pagination className="mx-auto justify-center">
+                                <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                                    <PaginationPrevious
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setCurrentPage(p => Math.max(0, p - 1));
+                                        }}
+                                        className={cn(
+                                            "cursor-pointer select-none",
+                                            currentPage === 0 && "pointer-events-none opacity-50",
+                                        )}
+                                    />
 
-                                    {(() => {
-                                        const total = totalPages || 1;
-                                        const active = currentPage + 1;
-                                        const items = [];
+                                    <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto no-scrollbar">
+                                        {(() => {
+                                            const total = totalPages || 1;
+                                            const active = currentPage + 1;
+                                            const items = [];
 
-                                        if (total <= 7) {
-                                            for (let i = 1; i <= total; i++) {
+                                            if (total <= 7) {
+                                                for (let i = 1; i <= total; i++) {
+                                                    items.push(
+                                                        <PaginationItem key={i}>
+                                                            <PaginationLink
+                                                                isActive={active === i}
+                                                                onClick={() => setCurrentPage(i - 1)}
+                                                                className="cursor-pointer select-none"
+                                                            >
+                                                                {i}
+                                                            </PaginationLink>
+                                                        </PaginationItem>
+                                                    );
+                                                }
+                                            } else {
                                                 items.push(
-                                                    <PaginationItem key={i}>
-                                                        <PaginationLink
-                                                            isActive={active === i}
-                                                            onClick={() => setCurrentPage(i - 1)}
-                                                            className="cursor-pointer select-none"
-                                                        >
-                                                            {i}
-                                                        </PaginationLink>
+                                                    <PaginationItem key={1}>
+                                                        <PaginationLink isActive={active === 1} onClick={() => setCurrentPage(0)} className="cursor-pointer select-none">1</PaginationLink>
+                                                    </PaginationItem>
+                                                );
+                                                if (active > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+                                                const start = Math.max(2, active - 1);
+                                                const end = Math.min(total - 1, active + 1);
+                                                for (let i = start; i <= end; i++) {
+                                                    items.push(
+                                                        <PaginationItem key={i}>
+                                                            <PaginationLink isActive={active === i} onClick={() => setCurrentPage(i - 1)} className="cursor-pointer select-none">{i}</PaginationLink>
+                                                        </PaginationItem>
+                                                    );
+                                                }
+                                                if (active < total - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+                                                items.push(
+                                                    <PaginationItem key={total}>
+                                                        <PaginationLink isActive={active === total} onClick={() => setCurrentPage(total - 1)} className="cursor-pointer select-none">{total}</PaginationLink>
                                                     </PaginationItem>
                                                 );
                                             }
-                                        } else {
-                                            items.push(
-                                                <PaginationItem key={1}>
-                                                    <PaginationLink isActive={active === 1} onClick={() => setCurrentPage(0)} className="cursor-pointer select-none">1</PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                            if (active > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
-                                            const start = Math.max(2, active - 1);
-                                            const end = Math.min(total - 1, active + 1);
-                                            for (let i = start; i <= end; i++) {
-                                                items.push(
-                                                    <PaginationItem key={i}>
-                                                        <PaginationLink isActive={active === i} onClick={() => setCurrentPage(i - 1)} className="cursor-pointer select-none">{i}</PaginationLink>
-                                                    </PaginationItem>
-                                                );
-                                            }
-                                            if (active < total - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
-                                            items.push(
-                                                <PaginationItem key={total}>
-                                                    <PaginationLink isActive={active === total} onClick={() => setCurrentPage(total - 1)} className="cursor-pointer select-none">{total}</PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        }
-                                        return items;
-                                    })()}
+                                            return items;
+                                        })()}
+                                    </PaginationContent>
 
-                                    <PaginationItem>
-                                        <PaginationNext
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                setCurrentPage(p => Math.min(totalPages - 1, p + 1));
-                                            }}
-                                            className={cn(
-                                                "cursor-pointer select-none",
-                                                currentPage >= totalPages - 1 && "pointer-events-none opacity-50",
-                                            )}
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
+                                    <PaginationNext
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setCurrentPage(p => Math.min(totalPages - 1, p + 1));
+                                        }}
+                                        className={cn(
+                                            "cursor-pointer select-none",
+                                            currentPage >= totalPages - 1 && "pointer-events-none opacity-50",
+                                        )}
+                                    />
+                                </div>
                             </Pagination>
                         </div>
 
                         {/* Right: Showing entries text */}
-                        <div className="text-xs text-muted-foreground whitespace-nowrap md:text-right">
+                        <div className="text-xs text-muted-foreground whitespace-nowrap order-3 md:text-right">
                             Showing{" "}
                             {(() => {
                                 const start = totalRows === 0 ? 0 : currentPage * pageSize + 1;
@@ -692,64 +775,16 @@ export function IkpaLanding() {
                 </CardContent>
             </Card>
 
-            {/* Bottom Analytics Row - All 4 cards side by side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {/* Bottom Analytics Row - Detail cards side by side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <SmallDetailCard title="Rincian Disetujui" icon={CheckCircle2} color="emerald" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Disetujui').slice(0, 5)} />
                 <SmallDetailCard title="Rincian Ditolak" icon={XCircle} color="rose" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Ditolak').slice(0, 5)} />
-                <ShareChartCard
-                    title="Share Permohonan Per KPPN"
-                    data={statsData?.sharePerKppn.map(item => ({
-                        name: `${item.nmkppn} (${item.kdkppn})`,
-                        value: parseInt(item.count)
-                    })) || []}
-                />
-                <ShareChartCard
-                    title="Share Permohonan Per Indikator"
-                    data={statsData?.sharePerIndikator.map(item => ({ name: item.indikator, value: parseInt(item.count) })) || []}
-                    horizontal={true}
-                />
             </div>
         </div>
     );
 }
 
-function ShareChartCard({ title, data, horizontal = false }: { title: string; data: any[]; horizontal?: boolean }) {
-    return (
-        <Card>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm">{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-                <div className="h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart layout={horizontal ? "vertical" : "horizontal"} data={data} margin={{ left: horizontal ? 20 : 0 }}>
-                            <XAxis type={horizontal ? "number" : "category"} dataKey={horizontal ? "value" : "name"} hide />
-                            <YAxis type={horizontal ? "category" : "number"} dataKey={horizontal ? "name" : "value"} hide />
-                            <RechartsTooltip cursor={{ fill: 'var(--muted)', opacity: 0.3 }} contentStyle={{ borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--card)' }} />
-                            <Bar dataKey="value" radius={horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]} barSize={20}>
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={`var(--chart-${(index % 5) + 1})`} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-                <div className="mt-4 rounded-md border">
-                    <ScrollArea className="h-[120px]">
-                        <div className="p-3 space-y-1.5">
-                            {data.map((item, i) => (
-                                <div key={i} className="flex items-center justify-between text-[11px] border-b border-muted pb-1 last:border-0">
-                                    <span className="truncate max-w-[180px] text-muted-foreground">{item.name}</span>
-                                    <span className="font-bold">{item.value}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </ScrollArea>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
+
 
 function SmallDetailCard({ title, icon: Icon, color, data }: { title: string; icon: any; color: string; data: IkpaRequest[] }) {
     return (

@@ -41,7 +41,7 @@ const DispensasiPage: React.FC = () => {
     (currentYear - i).toString()
   );
 
-  const [selectedTahun, setSelectedTahun] = useState(currentYear.toString());
+  const [selectedTahun, setSelectedTahun] = useState("00");
   const [selectedKementerian, setSelectedKementerian] = useState("00");
   const [selectedKanwil, setSelectedKanwil] = useState("00");
   const [selectedKppn, setSelectedKppn] = useState("00");
@@ -76,7 +76,7 @@ const DispensasiPage: React.FC = () => {
   }, [buildWhereClause]);
 
   const handleReset = () => {
-    setSelectedTahun(currentYear.toString());
+    setSelectedTahun("00");
     setSelectedKementerian("00");
     setSelectedKanwil("00");
     setSelectedKppn("00");
