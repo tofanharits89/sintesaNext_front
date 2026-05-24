@@ -31,6 +31,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useUploadLaporanKppnSatkerOptions } from "@/hooks/use-upload-laporan-ref-options";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 const formSchema = z.object({
   tahun: z.string().min(1, "Tahun harus dipilih"),
@@ -155,7 +156,8 @@ export function LaporanKppnModal({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex-1 overflow-y-auto p-6 space-y-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Row 1: Tahun + KPPN sebagai Satker */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Tahun */}
               <FormField
                 control={form.control}
@@ -195,45 +197,32 @@ export function LaporanKppnModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>KPPN sebagai Satker</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder="Pilih KPPN sebagai Satker"
-                            className="truncate"
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {kppnSatkerOptions.map((item) => (
-                          <SelectItem key={item.value} value={item.value} title={item.label}>
-                            <span className="truncate">{item.label}</span>
-                          </SelectItem>
-                        ))}
-                        {isKppnSatkerLoading && (
-                          <SelectItem value="__loading_kppn_satker" disabled>
-                            Memuat data KPPN sebagai satker...
-                          </SelectItem>
-                        )}
-                        {!isKppnSatkerLoading && kppnSatkerOptions.length === 0 && !kppnSatkerError && (
-                          <SelectItem value="__empty_kppn_satker" disabled>
-                            Data satker KPPN tidak tersedia
-                          </SelectItem>
-                        )}
-                        {kppnSatkerError && (
-                          <SelectItem value="__error_kppn_satker" disabled>
-                            Gagal memuat data satker KPPN
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        options={kppnSatkerOptions}
+                        value={field.value || ""}
+                        onValueChange={field.onChange}
+                        placeholder={
+                          isKppnSatkerLoading
+                            ? "Memuat data..."
+                            : "Pilih KPPN sebagai Satker"
+                        }
+                        emptyMessage={
+                          kppnSatkerError
+                            ? "Gagal memuat data satker KPPN"
+                            : "KPPN tidak ditemukan"
+                        }
+                        disabled={isKppnSatkerLoading}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Row 2: Jenis Laporan + Periode + Sub-Periode */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
               {/* Jenis Laporan */}
               <FormField

@@ -455,8 +455,8 @@ export function IkpaLanding() {
                                         rows={(point) => [
                                             {
                                                 color: "var(--primary)",
-                                                label: point.name,
-                                                value: point.value,
+                                                label: String(point.name ?? ""),
+                                                value: Number(point.value ?? 0),
                                             },
                                         ]}
                                     />
@@ -486,8 +486,8 @@ export function IkpaLanding() {
                                         rows={(point) => [
                                             {
                                                 color: "var(--primary)",
-                                                label: point.name,
-                                                value: point.value,
+                                                label: String(point.name ?? ""),
+                                                value: Number(point.value ?? 0),
                                             },
                                         ]}
                                     />

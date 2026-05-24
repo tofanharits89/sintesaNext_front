@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,42 +25,23 @@ import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 export function LaporanKeuanganKppnTab() {
   const queryClient = useQueryClient();
-  const { rows, isLoading, error, refetch } = useUploadLaporanKeuanganKppn();
   const [selectedPeriode, setSelectedPeriode] = useState("all");
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] =
     useState<UploadLaporanKeuanganKppnRow | null>(null);
 
-  const normalizeText = (text: string) =>
-    text
-      .toLowerCase()
-      .replace(/\s+/g, " ")
-      .replace(/\s*-\s*/g, " ")
-      .trim();
+  // Reset page when filter changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [selectedPeriode]);
 
-  const getPeriodeBase = (periode: string) => {
-    if (!periode) return "";
-    // Use separator " - " as logical divider so "TW-3" stays intact.
-    const parts = periode.split(/\s-\s/);
-    return (parts[0] || periode).trim();
-  };
-
-  const filteredData = useMemo(() => {
-    if (!selectedPeriode || selectedPeriode === "all") return rows;
-    const filter = normalizeText(selectedPeriode);
-    return rows.filter((item) => {
-      const rawPeriode = item.periode || "";
-      const periodeBase = normalizeText(getPeriodeBase(rawPeriode));
-      if (filter === "triwulan iii") {
-        // Triwulan III tab option should map to real TW-3 period only.
-        return ["tw-3", "tw 3", "triwulan iii", "triwulan 3"].includes(
-          periodeBase
-        );
-      }
-      // Exact match for base period label to avoid accidental cross-match.
-      return periodeBase === filter;
+  const { rows, total, isLoading, error, refetch } =
+    useUploadLaporanKeuanganKppn({
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+      periode: selectedPeriode,
     });
-  }, [rows, selectedPeriode]);
 
   const formatTanggalUpload = (value: string) => {
     if (!value) return "-";
@@ -95,7 +76,7 @@ export function LaporanKeuanganKppnTab() {
   };
 
   const handleDelete = (id: string) => {
-    const item = filteredData.find((item) => item.id === id);
+    const item = rows.find((item) => item.id === id);
     if (item) {
       setSelectedItem(item);
       setIsDeleteModalOpen(true);
@@ -141,7 +122,9 @@ export function LaporanKeuanganKppnTab() {
       accessorKey: "no",
       header: () => <div className="text-center font-medium">No</div>,
       cell: ({ row }: any) => (
-        <div className="text-center">{row.index + 1}</div>
+        <div className="text-center">
+          {pagination.pageIndex * pagination.pageSize + row.index + 1}
+        </div>
       ),
     },
     {
@@ -264,11 +247,15 @@ export function LaporanKeuanganKppnTab() {
           </div>
         ) : null}
         {isLoading ? (
-          <TableSkeleton rows={10} />
+          <TableSkeleton rows={pagination.pageSize} />
         ) : (
           <DataTable
             columns={columns}
-            data={filteredData}
+            data={rows}
+            manualPagination
+            rowCount={total}
+            controlledPagination={pagination}
+            onPaginationChange={setPagination}
             emptyMessage="Tidak ada data laporan yang sesuai dengan filter"
           />
         )}

@@ -99,7 +99,8 @@ export function LaporanKanwilModal({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex-1 overflow-y-auto p-6 space-y-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Row 1: Tahun + Kanwil */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Tahun */}
               <FormField
                 control={form.control}
@@ -178,7 +179,10 @@ export function LaporanKanwilModal({
                   </FormItem>
                 )}
               />
+            </div>
 
+            {/* Row 2: Jenis Laporan + Periode Laporan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Jenis Laporan - Fixed to Laporan Monev */}
               <FormField
                 control={form.control}
