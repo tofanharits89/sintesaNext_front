@@ -1,6 +1,11 @@
 "use client";
 import React from "react";
-import Modal from "react-bootstrap/Modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface DetailProps {
   showModal: boolean;
@@ -17,14 +22,14 @@ export default function Detail({
   selectedDetail,
 }: DetailProps) {
   return (
-    <Modal show={showModal} onHide={handleCloseModal} size="lg">
-      <Modal.Header closeButton>
-        <Modal.Title>Detail</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
+    <Dialog open={showModal} onOpenChange={(open) => !open && handleCloseModal()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Detail</DialogTitle>
+        </DialogHeader>
         <div>Selected detail: {selectedDetail}</div>
         {/* Add more detailed rendering here */}
-      </Modal.Body>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 }
