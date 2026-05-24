@@ -56,7 +56,8 @@ export const useKppnData = (
       const page = ringkasanPagination.pageIndex + 1;
       const limit = ringkasanPagination.pageSize;
 
-      const url = `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user.kdkppn}&page=${page}&limit=${limit}&_t=${ts}`;
+      const kdkppnParam = user.kdkppn || "all";
+      const url = `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${kdkppnParam}&page=${page}&limit=${limit}&_t=${ts}`;
 
       const result = await apiClient.get(url);
       
@@ -116,7 +117,7 @@ export const useKppnData = (
       const limit = transaksiPagination.pageSize;
       const ts = new Date().getTime();
 
-      const url = `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user.kdkppn}&page=${page}&limit=${limit}&_t=${ts}`;
+      const url = `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user.kdkppn || "all"}&page=${page}&limit=${limit}&_t=${ts}`;
 
       const result = await apiClient.get(url);
       

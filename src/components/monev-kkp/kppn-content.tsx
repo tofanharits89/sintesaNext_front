@@ -193,7 +193,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           
           // Fetch all data for export
           const apiUrl = apiPath(
-            `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user?.kdkppn}&page=1&limit=100000`,
+            `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user?.kdkppn || "all"}&page=1&limit=100000`,
           );
           
           const response = await fetch(apiUrl, { credentials: "include" });

@@ -201,7 +201,7 @@ export default function MonevKkpKppnPage() {
       toast.info("Sedang menyiapkan data Excel, harap tunggu...");
       const triwulanNum = selectedPeriode.replace("Q", "");
       const ts = new Date().getTime();
-      const url = `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulanNum}&kdkppn=${user?.kdkppn}&page=1&limit=100000&_t=${ts}`;
+      const url = `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulanNum}&kdkppn=${user?.kdkppn || "all"}&page=1&limit=100000&_t=${ts}`;
       
       const result = await apiClient.get(url, {
         headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
