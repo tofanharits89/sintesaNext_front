@@ -16,10 +16,15 @@ async function proxyPdf(url: string, origin: string, incomingHost: string, reque
     );
   }
 
-  // Only allow fetching from trusted domain, localhost, same host, or relative paths
   let parsedUrl: URL;
   try {
-    if (url.startsWith("/")) {
+    if (url.startsWith("/api/v1/")) {
+      const backendUrl = process.env.BACKEND_URL || "http://localhost:7777/api/v1";
+      parsedUrl = new URL(url.replace("/api/v1", backendUrl));
+    } else if (url.startsWith("/")) {
+      if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+        origin = origin.replace("https://", "http://");
+      }
       parsedUrl = new URL(url, origin);
     } else {
       parsedUrl = new URL(url);
