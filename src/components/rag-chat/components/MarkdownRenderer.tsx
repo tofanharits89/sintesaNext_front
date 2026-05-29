@@ -3,8 +3,12 @@
 import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { Code as CodeIcon } from "lucide-react";
 import { Code, CodeBlock, CodeHeader } from "@/components/animate-ui/components/animate/code";
+import { normalizeMath } from "../utils/normalizeMath";
+import "katex/dist/katex.min.css";
 
 interface MarkdownRendererProps {
     content: string;
@@ -98,14 +102,37 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
                 {children}
             </div>
         ),
+        // Wrap KaTeX display math in a scrollable container so wide equations
+        // don't bleed outside the chat bubble.
+        // Styling is handled by .rag-chat-math-display in globals.css.
+        div: ({ node, className, children, ...props }: any) => {
+            if (className?.includes("math-display")) {
+                return (
+                    <div className="rag-chat-math-display">
+                        <div className={className}>{children}</div>
+                    </div>
+                );
+            }
+            if (className?.includes("math-inline")) {
+                return (
+                    <span className={className} {...props}>{children}</span>
+                );
+            }
+            return <div className={className} {...props}>{children}</div>;
+        },
     }), []);
+
+    // Normalize non-standard LLM math output (bracket delimiters, unescaped %)
+    // before passing it to remark-math / KaTeX.
+    const normalizedContent = useMemo(() => normalizeMath(content), [content]);
 
     return (
         <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
             components={components}
         >
-            {content}
+            {normalizedContent}
         </ReactMarkdown>
     );
 }
