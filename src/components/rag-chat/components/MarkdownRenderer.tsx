@@ -37,6 +37,26 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         strong: ({ node, ...props }: any) => (
             <strong className="font-semibold" {...props} />
         ),
+        table: ({ node, ...props }: any) => (
+            <div className="overflow-x-auto my-3 rounded-md border border-border">
+                <table className="w-full text-[10px] text-left border-collapse tabular-nums" {...props} />
+            </div>
+        ),
+        thead: ({ node, ...props }: any) => (
+            <thead className="bg-primary/5 text-foreground font-semibold border-b border-border" {...props} />
+        ),
+        tbody: ({ node, ...props }: any) => (
+            <tbody className="divide-y divide-border/50" {...props} />
+        ),
+        tr: ({ node, ...props }: any) => (
+            <tr className="hover:bg-primary/5 transition-colors" {...props} />
+        ),
+        th: ({ node, ...props }: any) => (
+            <th className="px-3 py-2 border-r border-border last:border-0 align-middle" {...props} />
+        ),
+        td: ({ node, ...props }: any) => (
+            <td className="px-3 py-2 border-r border-border/50 last:border-0 align-top text-foreground/90 font-mono" {...props} />
+        ),
         // Code block renderer using animate-ui
         code: ({ node, className, children, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || "");
