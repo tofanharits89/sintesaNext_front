@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { 
@@ -14,26 +14,6 @@ import {
   exportToExcel,
   handleDownloadPDF as handleDownloadPDFAction
 } from "./dnf-utils";
-
-const SwalConfig = Swal.mixin({
-  customClass: {
-    container: "dnf-swal-container",
-    popup: "swal-wide",
-    title: "swal-title",
-    htmlContainer: "swal-content",
-    confirmButton: "btn btn-primary",
-    cancelButton: "btn btn-secondary",
-  },
-  buttonsStyling: false,
-  allowOutsideClick: false,
-  allowEscapeKey: false,
-  didOpen: () => {
-    document.body.classList.add("dnf-swal");
-  },
-  didClose: () => {
-    document.body.classList.remove("dnf-swal");
-  },
-});
 
 export const useDNF = () => {
   const { user } = useAuth();
@@ -306,7 +286,7 @@ export const useDNF = () => {
       setTpgShowResults(true);
     } catch (error: any) {
       console.error(error);
-      SwalConfig.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Gagal mengambil data" });
+      toast.error(error.response?.data?.message || "Gagal mengambil data TPG");
     } finally { setTpgLoading(false); }
   };
 
@@ -332,7 +312,7 @@ export const useDNF = () => {
       setBosBopShowResults(true);
     } catch (error: any) {
       console.error(error);
-      SwalConfig.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Gagal mengambil data" });
+      toast.error(error.response?.data?.message || "Gagal mengambil data BOS/BOP");
     } finally { setBosBopLoading(false); }
   };
 

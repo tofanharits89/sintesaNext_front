@@ -62,6 +62,8 @@ export const generateSQLQuery = (
   if (startMonth && endMonth)
     whereConditions += ` AND EXTRACT(MONTH FROM a.tgl_sp2d) BETWEEN ${startMonth} AND ${endMonth}`;
 
+  const kabkotaTable = `dbref.t_kabkota_${selectedYear}`;
+
   return `
 SELECT 
     a.thang,
@@ -86,8 +88,8 @@ SELECT
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgl_sp2d) = 12 THEN a.rupiah ELSE 0 END) AS Desember,
     SUM(a.rupiah) AS total_nilai
 FROM tkd.dd_header a
-LEFT JOIN dbref.t_kabkota_apbd b 
-    ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '')
+LEFT JOIN ${kabkotaTable} b 
+    ON a.kdlokasi = b.kdlokasi || b.kdkabkota
 LEFT JOIN dbref.t_kppn_2025 c 
     ON a.kdkppn = c.kdkppn
 LEFT JOIN dbref.t_kanwil_2025 d 
