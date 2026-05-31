@@ -42,8 +42,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             <strong className="font-semibold" {...props} />
         ),
         table: ({ node, ...props }: any) => (
-            <div className="overflow-x-auto my-3 rounded-md border border-border">
-                <table className="w-full text-[10px] text-left border-collapse tabular-nums" {...props} />
+            <div className="w-full overflow-x-auto my-3 rounded-md border border-border">
+                <table className="w-full min-w-max text-[10px] text-left border-collapse tabular-nums" {...props} />
             </div>
         ),
         thead: ({ node, ...props }: any) => (

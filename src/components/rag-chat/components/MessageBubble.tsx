@@ -23,7 +23,7 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
             animate={{ opacity: 1, transform: "translateY(0px)" }}
             transition={{ duration: 0.2 }}
             style={{ willChange: "transform, opacity" }}
-            className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+            className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"}`}
         >
             <div
                 className={`rag-chat-message max-w-[80%] min-w-0 overflow-hidden rounded-2xl px-3 py-2 ${isUser

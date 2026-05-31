@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --webpack",
     "dev:turbo": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbopack",
-    "dev:no-turbo": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
+    "dev:no-turbo": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --webpack",
     "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build",
     "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true next build",
     "start": "next start",
