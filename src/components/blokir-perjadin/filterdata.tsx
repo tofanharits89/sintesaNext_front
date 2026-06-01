@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import Kddept from "../../data/kddept.json";
 import {
@@ -106,7 +107,7 @@ const FilterData: React.FC<FilterDataProps> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={onHide}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
           <Button variant="secondary" onClick={resetFilter}>
             Reset Filter

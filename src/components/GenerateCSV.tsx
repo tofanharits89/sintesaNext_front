@@ -158,9 +158,13 @@ const GenerateCSV: React.FC<GenerateCSVProps> = ({
           "jmltup",
         ];
 
-        // Format column sebagai number jika ada di list
+        // Format column sebagai number jika ada di list atau dynamic columns (deviasi)
         if (
-          columnsToFormatAsNumber.includes(key.toLowerCase()) &&
+          (columnsToFormatAsNumber.includes(key.toLowerCase()) ||
+            key.toLowerCase().startsWith("rencana_") ||
+            key.toLowerCase().startsWith("realisasi_") ||
+            key.toLowerCase() === "total_rencana" ||
+            key.toLowerCase() === "total_realisasi") &&
           typeof value === "string"
         ) {
           value = numeral(value.toString()).format("0");

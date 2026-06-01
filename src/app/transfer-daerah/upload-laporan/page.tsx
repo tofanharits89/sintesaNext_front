@@ -11,6 +11,7 @@ import { LaporanKanwilModal } from "@/components/transfer-daerah/modals/laporan-
 import { LaporanKeuanganKppnTab } from "@/components/transfer-daerah/laporan-keuangan-kppn-tab";
 import { LaporanMonevKppnTab } from "@/components/transfer-daerah/laporan-monev-kppn-tab";
 import { LaporanMonevKanwilTab } from "@/components/transfer-daerah/laporan-monev-kanwil-tab";
+import { UploadLaporanPageSkeleton } from "@/components/transfer-daerah/upload-laporan-page-skeleton";
 
 export default function UploadLaporanPage() {
   const { user, isLoading } = useAuth();
@@ -30,15 +31,9 @@ export default function UploadLaporanPage() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (isLoading || !user || user.role === "kantor_pusat") {
+    return <UploadLaporanPageSkeleton />;
   }
-
-  if (!user || user.role === "kantor_pusat") return null;
 
   return (
     <div className="space-y-6">

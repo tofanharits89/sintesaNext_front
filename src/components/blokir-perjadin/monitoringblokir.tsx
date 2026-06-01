@@ -328,9 +328,11 @@ export default function MonitoringBlokir({
                   <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
                     <TableRow>
                       <TableHead className="w-12 min-w-[48px] font-semibold text-center bg-background">No.</TableHead>
+                      <TableHead className="font-semibold text-center bg-background">Kode K/L</TableHead>
                       <TableHead className="font-semibold text-center bg-background">
                         Kementerian/Lembaga
                       </TableHead>
+                      <TableHead className="font-semibold text-center bg-background">Kode Unit Eselon I</TableHead>
                       <TableHead className="font-semibold text-center bg-background">Unit Eselon I</TableHead>
                       <TableHead className="font-semibold text-center bg-background">
                         Target Blokir
@@ -350,7 +352,7 @@ export default function MonitoringBlokir({
                     {data.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={7}
+                          colSpan={9}
                           className="h-32 text-center text-muted-foreground"
                         >
                           Tidak ada data ditemukan.
@@ -366,23 +368,17 @@ export default function MonitoringBlokir({
                             <TableCell className="text-center font-medium text-muted-foreground">
                               {index + 1 + page * limit}
                             </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium text-sm">
-                                  {row.nmdept}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  Code: {row.kddept}
-                                </span>
-                              </div>
+                            <TableCell className="text-center font-mono font-medium text-sm">
+                              {row.kddept}
                             </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col">
-                                <span className="text-sm">{row.nmunit}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Code: {row.kdunit}
-                                </span>
-                              </div>
+                            <TableCell className="font-medium text-sm">
+                              {row.nmdept}
+                            </TableCell>
+                            <TableCell className="text-center font-mono text-sm">
+                              {row.kdunit}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {row.nmunit}
                             </TableCell>
                             <TableCell className="text-right font-mono text-sm">
                               {numeral(row.target_blokir).format("0,0")}
@@ -412,7 +408,7 @@ export default function MonitoringBlokir({
                         ))}
                         {/* Summary Row */}
                         <TableRow className="bg-muted/70 hover:bg-muted/80 font-bold border-t-2">
-                          <TableCell colSpan={3} className="text-right text-sm">
+                          <TableCell colSpan={5} className="text-right text-sm">
                             TOTAL
                           </TableCell>
                           <TableCell className="text-right font-mono text-sm">

@@ -34,9 +34,10 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { apiClient } from "@/lib/api/httpClient";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
-import { FilePlus, Loader2, Save } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { FilePlus, Loader2, Save, X } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
+import kppnData from "@/data/kdkppn.json";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
@@ -95,6 +96,13 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
         );
     }, [user]);
 
+    const satkerOptions = useMemo(() => {
+        return filteredSatkerList.map(s => ({
+            value: s.kdsatker,
+            label: `${s.kdsatker} - ${s.nmsatker}`
+        }));
+    }, [filteredSatkerList]);
+
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -134,16 +142,18 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
         // Find satker details
         const satker = (satkerData as any[]).find(s => s.kdsatker === values.kdsatker);
+        // Find KPPN details
+        const kppn = (kppnData as any[]).find(k => k.kdkppn === satker?.kdkppn);
         // Find indicator code
         const indicator = INDIKATOR_OPTIONS.find(i => i.value === values.nm_indikator);
 
         const payload = {
             ...values,
             date_input: new Date().toISOString().split('T')[0],
-            kdkanwil: satker?.kdkanwil || "",
-            nmkanwil: satker?.nmkanwil || "",
+            kdkanwil: satker?.kdkanwil || kppn?.kdkanwil || "",
+            nmkanwil: kppn?.nmkanwil || "",
             kdkppn: satker?.kdkppn || "",
-            nmkppn: satker?.nmkppn || "",
+            nmkppn: kppn?.nmkppn || "",
             nmsatker: satker?.nmsatker || "",
             kd_indikator: indicator?.code || "",
             approval: "Pending",
@@ -201,7 +211,6 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                     date={form.watch("tg_nd")}
                                     onDateChange={(date) => form.setValue("tg_nd", date || new Date())}
                                     placeholder="Pilih tanggal ND"
-                                    className="w-full"
                                 />
                             </div>
 
@@ -219,14 +228,13 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
                         <div className="w-full space-y-2">
                             <Label htmlFor="kdsatker">Satuan Kerja</Label>
-                            <VirtualizedSelect
-                                options={filteredSatkerList.map(s => ({
-                                    value: s.kdsatker,
-                                    label: `${s.kdsatker} - ${s.nmsatker}`
-                                }))}
+                            <SearchableSelect
+                                options={satkerOptions}
                                 value={form.watch("kdsatker")}
                                 onValueChange={(value) => form.setValue("kdsatker", value)}
                                 placeholder="Pilih Satker"
+                                searchPlaceholder="Cari kode atau nama satker..."
+                                emptyMessage="Satker tidak ditemukan."
                             />
                         </div>
 
@@ -342,7 +350,8 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                 <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                            Tutup
+                            <X className="h-4 w-4 mr-2" />
+                            Batal
                         </Button>
                         <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting} className="bg-slate-800 hover:bg-slate-900">
                             {isSubmitting ? (

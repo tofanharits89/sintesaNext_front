@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { apiClient } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 
 interface UploadSpmProps {
@@ -32,7 +33,7 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
   async function fetchFormData() {
     try {
       const query =
-        `SELECT id,thang,kddept,kdunit,kdkanwil,kdlokasi,kdsatker,tgpermohonan,nopermohonan,kd_dispensasi,rpata FROM  laporan_2023.dispensasi_spm WHERE id='${id}' GROUP BY id`
+        `SELECT id,thang,kddept,kdunit,kdkanwil,kdlokasi,kdsatker,tgpermohonan,nopermohonan,kd_dispensasi,rpata FROM  laporan_2023.dispensasi_spm WHERE id='${id}'`
       ;
       const encryptedQuery = btoa(query);
       const url = apiPath(`/dispensasi/${encryptedQuery}?limit=1&page=0`);
@@ -165,29 +166,18 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
     setProcessSuccess(null);
 
     try {
-      const url = apiPath("/dispensasi/upload-spm");
-
       const body = { formData, data };
 
-      const resp = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        throw new Error(errJson?.error || `Server error: ${resp.status}`);
-      }
+      await apiClient.post("/dispensasi/upload-spm", body);
 
       setProcessSuccess("Data berhasil di Upload.");
       toast.success("Data berhasil di Upload.");
       setData([]);
       setFileName("Pilih File Excell");
     } catch (err: any) {
-      setProcessError(err?.message || "Gagal upload data");
-      toast.error(err?.message || "Gagal upload data");
+      const errMsg = err?.response?.data?.error || err?.message || "Gagal upload data";
+      setProcessError(errMsg);
+      toast.error(errMsg);
     } finally {
       setProcessing(false);
     }

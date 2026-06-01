@@ -92,8 +92,8 @@ export function DateTimePicker({
               )}
               disabled={disabled}
             >
+              <ChevronDownIcon className="mr-2 h-4 w-4 opacity-50" />
               {selectedDate ? format(selectedDate, "dd MMM yyyy", { locale: id }) : placeholder}
-              <ChevronDownIcon className="ml-2 h-4 w-4 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto overflow-hidden p-0" align="start">

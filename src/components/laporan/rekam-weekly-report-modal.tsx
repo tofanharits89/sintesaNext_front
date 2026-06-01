@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { X,  Save,  Loader2 } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -413,7 +413,7 @@ export function RekamWeeklyReportModal({
             onClick={handleClose}
             disabled={mutation.isPending}
           >
-            Batal
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
@@ -426,7 +426,7 @@ export function RekamWeeklyReportModal({
                 Menyimpan...
               </>
             ) : (
-              "Simpan"
+              <><Save className="h-4 w-4 mr-2" /> Simpan</>
             )}
           </Button>
         </DialogFooter>

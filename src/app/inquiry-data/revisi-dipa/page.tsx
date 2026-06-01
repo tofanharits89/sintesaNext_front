@@ -19,7 +19,7 @@ import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useAuth } from "@/hooks/useAuth";
 import { FilterValue, SavedQuery } from "@/types/saved-queries";
-import { Database, Keyboard, RefreshCw, Settings } from "lucide-react";
+import { X,  Database, Keyboard, RefreshCw, Settings } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -490,7 +490,7 @@ export default function RevisiDipaPage() {
               className="w-24"
               onClick={() => setIsQueryManagementOpen(false)}
             >
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         </DialogContent>

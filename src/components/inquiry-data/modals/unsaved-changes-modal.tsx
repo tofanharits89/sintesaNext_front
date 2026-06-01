@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Save, Trash2 } from "lucide-react";
+import { X,  AlertTriangle, Save, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export interface UnsavedChangesAction {
@@ -138,7 +138,7 @@ export function UnsavedChangesModal({
             disabled={isLoading}
             className="flex-1 sm:flex-none"
           >
-            Batal
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             variant="destructive"

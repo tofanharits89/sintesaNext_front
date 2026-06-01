@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import * as xlsx from "xlsx";
 import { DDHeaderData, SelectOption } from "./types";
 import { 
-  SwalConfig, 
   generateSQLQuery, 
   convertTableDataToCSV, 
   handleDownloadPDF as handleDownloadPDFAction
@@ -110,9 +110,11 @@ export const useDDHeader = () => {
     }
   };
 
-  const fetchLokasiData = async () => {
+  const fetchLokasiData = async (year?: string) => {
     try {
-      const query = "SELECT a.kdlokasi, MIN(b.nmkabkota) AS nmkabkota FROM tkd.dd_header a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '') GROUP BY a.kdlokasi ORDER BY a.kdlokasi ASC";
+      const resolvedYear = year || selectedYear || String(new Date().getFullYear());
+      const kabkotaTable = `dbref.t_kabkota_${resolvedYear}`;
+      const query = `SELECT a.kdlokasi, MIN(b.nmkabkota) AS nmkabkota FROM tkd.dd_header a LEFT JOIN ${kabkotaTable} b ON a.kdlokasi = b.kdlokasi || b.kdkabkota GROUP BY a.kdlokasi ORDER BY a.kdlokasi ASC`;
       const encodedQuery = encodeURIComponent(query);
       const response = await http.get(`${API_BASE}${encodedQuery}`);
       const lokasi = response.data.result || [];
@@ -124,7 +126,7 @@ export const useDDHeader = () => {
 
   const handleTayang = async () => {
     if (!selectedYear) {
-      SwalConfig.fire({ icon: "warning", title: "Peringatan", text: "Silakan pilih tahun terlebih dahulu" });
+      toast.warning("Silakan pilih tahun terlebih dahulu");
       return;
     }
     setLoadingResults(true);
@@ -138,7 +140,7 @@ export const useDDHeader = () => {
       setShowResults(true);
     } catch (error: any) {
       console.error("Error fetching data:", error);
-      SwalConfig.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Gagal mengambil data" });
+      toast.error(error.response?.data?.message || "Gagal mengambil data");
     } finally {
       setLoadingResults(false);
     }
@@ -216,8 +218,13 @@ export const useDDHeader = () => {
     fetchYearData();
     fetchKanwilData();
     fetchkppnData();
-    fetchLokasiData();
   }, []);
+
+  useEffect(() => {
+    if (selectedYear) {
+      fetchLokasiData(selectedYear);
+    }
+  }, [selectedYear]);
 
   useEffect(() => {
     fetchkppnData(selectedkanwil);

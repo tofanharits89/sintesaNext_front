@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, Badge, OverlayTrigger, Tooltip, Button } from "react-bootstrap";
 import numeral from "numeral";
 import { motion } from "motion/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import type { PenerimaKabItem } from "./jumlahpenerimaKab";
 
 const ITEMS_PER_PAGE = 10;
@@ -29,92 +35,70 @@ const KabKota = ({ data }: { data: PenerimaKabItem[] }) => {
   };
 
   return (
-    <div className="mt-4 mb-0">
-      {currentData.map((item, idx) => (
-        <motion.div
-          key={idx}
-          style={{ marginBottom: "4px" }}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.05, duration: 0.3 }}
-        >
-          <Card
-            className="shadow-sm bg-light border border-light card-hover hover-shadow mt-3"
-            style={{
-              cursor: "pointer",
-              transition: "all 0.2s ease-in-out",
-              width: "100%",
-              marginBottom: "0px",
-            }}
+    <TooltipProvider>
+      <div className="mt-4 mb-0">
+        {currentData.map((item, idx) => (
+          <motion.div
+            key={idx}
+            className="mb-1"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05, duration: 0.3 }}
           >
-            <Card.Body className="d-flex justify-content-between align-items-center flex-wrap gap-1 py-1 px-2">
-              <div className="d-flex align-items-center">
-                <OverlayTrigger
-                  placement="bottom"
-                  overlay={
-                    <Tooltip id={`tooltip-kabkota`}>{item.kabkota}</Tooltip>
-                  }
-                >
-                  <Card.Title className="mb-0 p-0 text-end">
-                    <h6 style={{ fontSize: "0.85em", margin: 0, padding: 0 }}>
-                      {item.kabkota.length > 15
-                        ? item.kabkota.slice(0, 15) + "..."
-                        : item.kabkota}
-                    </h6>
-                  </Card.Title>
-                </OverlayTrigger>
-              </div>
-              <div className="d-flex align-items-center gap-2">
-                <Button variant="light" size="sm" className="mb-0 p-1">
-                  <h6
-                    style={{
-                      fontSize: "1em",
-                      margin: 0,
-                      padding: 0,
-                      fontWeight: "bold",
-                    }}
-                  >
+            <div className="mt-3 w-full cursor-pointer rounded-md border border-border bg-muted/50 shadow-sm transition-all duration-200 hover:shadow-md">
+              <div className="flex items-center justify-between gap-1 px-2 py-1 flex-wrap">
+                <div className="flex items-center">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <h6 className="m-0 p-0 text-[0.85em]">
+                        {item.kabkota.length > 15
+                          ? item.kabkota.slice(0, 15) + "..."
+                          : item.kabkota}
+                      </h6>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {item.kabkota}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[1em] font-bold">
                     {numeral(item.penerimakab).format("0,0")}{" "}
-                    <Badge
-                      bg="danger"
-                      text="light"
-                      className="fw-bold mx-2"
-                      style={{ fontSize: "0.8em" }}
-                    >
+                    <span className="mx-2 inline-block rounded bg-destructive px-1.5 py-0.5 text-[0.8em] font-bold text-destructive-foreground">
                       {numeral(item.persenpenerimakab).format("0,0")} %
-                    </Badge>
-                  </h6>
-                </Button>
+                    </span>
+                  </span>
+                </div>
               </div>
-            </Card.Body>
-          </Card>
-        </motion.div>
-      ))}
+            </div>
+          </motion.div>
+        ))}
 
-      {totalPages > 1 && (
-        <div className="d-flex justify-content-between align-items-center mt-4 mb-0">
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={handlePrev}
-            disabled={currentPage === 1}
-          >
-            <i className="bi bi-chevron-left" />
-          </Button>
-          <span className="text-muted small">
-            Halaman {currentPage} dari {totalPages}
-          </span>
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={handleNext}
-            disabled={currentPage === totalPages}
-          >
-            <i className="bi bi-chevron-right" />
-          </Button>
-        </div>
-      )}
-    </div>
+        {totalPages > 1 && (
+          <div className="mt-4 mb-0 flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrev}
+              disabled={currentPage === 1}
+            >
+              ‹
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Halaman {currentPage} dari {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+            >
+              ›
+            </Button>
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 

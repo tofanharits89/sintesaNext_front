@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import * as React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -127,7 +128,7 @@ export function SupplierEntityDetailModal({ open, onOpenChange, type, items }: S
           </div>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
             {totalItems > 0 ? (
               <>

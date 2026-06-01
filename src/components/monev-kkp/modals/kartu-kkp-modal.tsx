@@ -10,7 +10,7 @@ import {
 } from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
+import { X,  Loader2 } from "lucide-react";
 import { apiPath } from "@/lib/config/base-path";
 
 interface KartuKkpModalProps {
@@ -230,7 +230,7 @@ export function KartuKkpModal({
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button onClick={() => onOpenChange(false)}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

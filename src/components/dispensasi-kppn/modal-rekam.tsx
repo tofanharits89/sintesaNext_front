@@ -20,10 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Formik, ErrorMessage, FormikProps, FormikHelpers } from "formik";
-import * as Yup from "yup";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import moment from "moment";
@@ -47,7 +48,7 @@ interface FormValues {
   tanggalPersetujuan: string | null;
   nomorPersetujuan: string;
   jeniskontrak: string;
-  alasanLainnya: string;
+  alasanLainnya?: string | undefined;
   tahun: string;
 }
 
@@ -56,42 +57,49 @@ interface Props {
   onHide: () => void;
 }
 
+const validationSchema = z.object({
+  tanggalPermohonan: z.any().refine(val => val !== null && val !== undefined && val !== "", "Tanggal Permohonan harus diisi"),
+  tanggalPersetujuan: z.any().refine(val => val !== null && val !== undefined && val !== "", "Tanggal Persetujuan harus diisi"),
+  nomorPermohonan: z.string().min(1, "Nomor Permohonan harus diisi"),
+  satker: z.string().min(1, "Satker harus diisi"),
+  alasan: z.string().min(1, "Alasan harus dipilih"),
+  nomorPersetujuan: z.string().min(1, "Nomor Persetujuan harus diisi"),
+  kppn: z.string().min(1, "KPPN harus dipilih"),
+  tahun: z.string().min(1, "Tahun harus dipilih"),
+  jeniskontrak: z.string().min(1, "Jenis Kontrak harus dipilih"),
+  alasanLainnya: z.string().optional().or(z.literal(""))
+}).superRefine((data, ctx) => {
+  if (data.tanggalPermohonan && data.tanggalPersetujuan) {
+    const tglPermohonan = new Date(data.tanggalPermohonan);
+    const tglPersetujuan = new Date(data.tanggalPersetujuan);
+    if (tglPermohonan > tglPersetujuan) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tanggalPermohonan"],
+        message: "Tanggal Permohonan tidak boleh lebih besar dari Tanggal Persetujuan"
+      });
+    }
+  }
+
+  if (data.alasan === "07" && (!data.alasanLainnya || data.alasanLainnya.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["alasanLainnya"],
+      message: "Keterangan harus diisi"
+    });
+  }
+});
+
 const Rekam: React.FC<Props> = ({ show, onHide }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedSatker, setSelectedSatker] = useState<Satker | null>(null);
   const [searchResults, setSearchResults] = useState<Satker[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [data, setData] = useState<Satker[]>([]);
   const [jeniskontrak, setJenisKontrak] = useState("");
   const [tahun, setTahun] = useState("");
   const [kppn, setCekKppn] = useState("");
   const [dispen, setDispen] = useState("");
-
-  const validationSchema = Yup.object().shape({
-    tanggalPermohonan: Yup.date()
-      .nullable()
-      .required("Tanggal Permohonan harus diisi")
-      .max(
-        Yup.ref("tanggalPersetujuan"),
-        "Tanggal Permohonan tidak boleh lebih besar dari Tanggal Persetujuan"
-      ),
-    tanggalPersetujuan: Yup.date()
-      .nullable()
-      .required("Tanggal Persetujuan harus diisi"),
-    nomorPermohonan: Yup.string().required("Nomor Permohonan harus diisi"),
-    satker: Yup.string().required("Satker harus diisi"),
-    alasan: Yup.string().required("Alasan harus dipilih"),
-    nomorPersetujuan: Yup.string().required("Nomor Persetujuan harus diisi"),
-    kppn: Yup.string().required("KPPN harus dipilih"),
-    tahun: Yup.string().required("Tahun harus dipilih"),
-    jeniskontrak: Yup.string().required("Jenis Kontrak harus dipilih"),
-    alasanLainnya: Yup.string().when("alasan", {
-      is: (alasan: string) => alasan === "07",
-      then: () => Yup.string().required("Keterangan harus diisi"),
-    }),
-  });
 
   const initialValues: FormValues = {
     tanggalPermohonan: null,
@@ -106,41 +114,35 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
     tahun: tahun,
   };
 
-  const handleCekKppn = (kppn: string) => {
-    setCekKppn(kppn);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(validationSchema),
+    values: initialValues,
+  });
+
+  const handleCekKppn = (kppnVal: string) => {
+    setCekKppn(kppnVal);
   };
 
-  const handleSubmitdata = async (
-    values: FormValues,
-    { setSubmitting }: FormikHelpers<FormValues>
-  ) => {
+  const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        apiPath("/dispensasi/simpan-kontrak"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await apiClient.post("/dispensasi/simpan-kontrak", values);
 
       toast.success("Data Berhasil Disimpan");
       setSearchResults([]);
       setLoading(false);
       handleModalClose();
-    } catch (error) {
-      toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Terjadi Permasalahan Koneksi atau Server Backend");
     } finally {
       setLoading(false);
-      setSubmitting(false);
     }
   };
 
@@ -163,36 +165,6 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
     }
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setIsSearching(true);
-
-    const results = data.filter((item) => {
-      const kdsatkerLowerCase = item.kdsatker.toLowerCase();
-      const nmsatkerLowerCase = item.nmsatker.toLowerCase();
-      if (user?.role === "kppn") {
-        if (item.kdkppn === user.kdkppn) {
-          return (
-            kdsatkerLowerCase.includes(value.toLowerCase()) ||
-            nmsatkerLowerCase.includes(value.toLowerCase())
-          );
-        }
-      } else {
-        return (
-          kdsatkerLowerCase.includes(value.toLowerCase()) ||
-          nmsatkerLowerCase.includes(value.toLowerCase())
-        );
-      }
-
-      return false;
-    });
-
-    const limitedResults = results.slice(0, 100);
-
-    setSearchResults(limitedResults);
-    setIsSearching(false);
-  };
-
   useEffect(() => {
     getData();
   }, [kppn]);
@@ -206,12 +178,23 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
   const handleModalClose = () => {
     setSelectedSatker(null);
     setSearchResults([]);
-    setSearchTerm("");
     setCekKppn("");
     setDispen("");
     onHide();
     setJenisKontrak("");
     setTahun("");
+    reset({
+      tanggalPermohonan: null,
+      nomorPermohonan: "",
+      satker: "",
+      kppn: "",
+      alasan: "",
+      tanggalPersetujuan: null,
+      nomorPersetujuan: "",
+      jeniskontrak: "",
+      alasanLainnya: "",
+      tahun: "",
+    });
   };
 
   const inputClass = "flex h-9 w-full rounded-md border border-input bg-zinc-100 dark:bg-black px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
@@ -224,33 +207,23 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6">
-          <Formik
-            validationSchema={validationSchema}
-            enableReinitialize={true}
-            onSubmit={handleSubmitdata}
-            initialValues={initialValues}
-          >
-            {({
-              handleSubmit,
-              handleChange,
-              setFieldValue,
-              values,
-              touched,
-              errors,
-            }: FormikProps<FormValues>) => (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Tahun Anggaran</Label>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">Tahun Anggaran</Label>
+                  <Controller
+                    control={control}
+                    name="tahun"
+                    render={({ field }) => (
                       <Select
-                        value={values.tahun}
-                        onValueChange={(value) => {
-                          setFieldValue("tahun", value);
-                          setTahun(value);
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          setTahun(val);
                         }}
                       >
-                        <SelectTrigger className={`w-full ${touched.tahun && errors.tahun ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.tahun ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="--- Pilih Tahun ---" />
                         </SelectTrigger>
                         <SelectContent>
@@ -259,21 +232,29 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                           <SelectItem value="2026">TA 2026</SelectItem>
                         </SelectContent>
                       </Select>
-                      <ErrorMessage name="tahun" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
-                  </div>
+                    )}
+                  />
+                  {errors.tahun && (
+                    <div className="text-red-500 text-sm mt-1">{errors.tahun.message}</div>
+                  )}
+                </div>
+              </div>
 
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Jenis Dispensasi</Label>
+              <div className="md:col-span-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">Jenis Dispensasi</Label>
+                  <Controller
+                    control={control}
+                    name="jeniskontrak"
+                    render={({ field }) => (
                       <Select
-                        value={values.jeniskontrak}
-                        onValueChange={(value) => {
-                          setFieldValue("jeniskontrak", value);
-                          setJenisKontrak(value);
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          setJenisKontrak(val);
                         }}
                       >
-                        <SelectTrigger className={`w-full ${touched.jeniskontrak && errors.jeniskontrak ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.jeniskontrak ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="--- Pilih Jenis ---" />
                         </SelectTrigger>
                         <SelectContent>
@@ -281,144 +262,174 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                           <SelectItem value="02">Adendum Kontrak</SelectItem>
                         </SelectContent>
                       </Select>
-                      <ErrorMessage name="jeniskontrak" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
-                  </div>
+                    )}
+                  />
+                  {errors.jeniskontrak && (
+                    <div className="text-red-500 text-sm mt-1">{errors.jeniskontrak.message}</div>
+                  )}
+                </div>
+              </div>
 
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">KPPN</Label>
+              <div className="md:col-span-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">KPPN</Label>
+                  <Controller
+                    control={control}
+                    name="kppn"
+                    render={({ field }) => (
                       <CekKppn
-                        value={values.kppn}
-                        className={`${inputClass} ${touched.kppn && errors.kppn ? "border-red-500" : ""}`}
+                        value={field.value}
+                        className={`${inputClass} ${errors.kppn ? "border-red-500" : ""}`}
                         onChange={(e: string) => {
-                          handleChange({
-                            target: { name: "kppn", value: e },
-                          });
+                          field.onChange(e);
                           handleCekKppn(e);
                         }}
                       />
-                      <ErrorMessage name="kppn" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
-                  </div>
+                    )}
+                  />
+                  {errors.kppn && (
+                    <div className="text-red-500 text-sm mt-1">{errors.kppn.message}</div>
+                  )}
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Tanggal Permohonan</Label>
-                      <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">Tanggal Permohonan</Label>
+                  <div className="relative">
+                    <Controller
+                      control={control}
+                      name="tanggalPermohonan"
+                      render={({ field }) => (
                         <DatePicker
                           date={
-                            values.tanggalPermohonan
-                              ? moment(values.tanggalPermohonan).toDate()
+                            field.value
+                              ? moment(field.value).toDate()
                               : undefined
                           }
                           onDateChange={(date: Date | undefined) => {
-                            setFieldValue(
-                              "tanggalPermohonan",
-                              date ? moment(date).format("YYYY-MM-DD") : null,
-                              true
-                            );
+                            field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
                           }}
                           placeholder="Tgl Permohonan"
                           className={inputClass}
                         />
-                      </div>
-                      <ErrorMessage name="tanggalPermohonan" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
+                      )}
+                    />
                   </div>
-
-                  <div className="md:col-span-8">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Nomor Permohonan</Label>
-                      <Input
-                        name="nomorPermohonan"
-                        type="text"
-                        value={values.nomorPermohonan}
-                        onChange={handleChange}
-                        placeholder="Nomor Permohonan"
-                        className={touched.nomorPermohonan && errors.nomorPermohonan ? "border-red-500" : ""}
-                      />
-                      <ErrorMessage name="nomorPermohonan" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
-                  </div>
+                  {errors.tanggalPermohonan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.tanggalPermohonan.message}</div>
+                  )}
                 </div>
+              </div>
 
+              <div className="md:col-span-8">
                 <div className="space-y-2">
-                  <Label className="font-bold">Satker</Label>
-                  <VirtualizedSelect
+                  <Label className="font-bold">Nomor Permohonan</Label>
+                  <Input
+                    {...register("nomorPermohonan")}
+                    type="text"
+                    placeholder="Nomor Permohonan"
+                    className={errors.nomorPermohonan ? "border-red-500" : ""}
+                  />
+                  {errors.nomorPermohonan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.nomorPermohonan.message}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-bold">Satker</Label>
+              <Controller
+                control={control}
+                name="satker"
+                render={({ field }) => (
+                  <SearchableSelect
                     options={searchResults.map((item) => ({
                       value: item.kdsatker,
                       label: `${item.kdsatker} - ${item.nmsatker}`,
                     }))}
-                    value={selectedSatker ? selectedSatker.kdsatker : ""}
-                    onValueChange={(value) => {
-                      const selected = searchResults.find((item) => item.kdsatker === value);
-                      setFieldValue("satker", value);
+                    value={field.value}
+                    onValueChange={(val) => {
+                      const selected = searchResults.find((item) => item.kdsatker === val);
+                      field.onChange(val);
                       setSelectedSatker(selected || null);
                     }}
                     placeholder="Ketik Kode atau Nama Satker..."
-                    className={touched.satker && errors.satker ? "border-red-500" : ""}
+                    className={errors.satker ? "border-red-500" : ""}
                   />
-                  <ErrorMessage name="satker" component="div" className="text-red-500 text-sm mt-1" />
-                </div>
+                )}
+              />
+              {errors.satker && (
+                <div className="text-red-500 text-sm mt-1">{errors.satker.message}</div>
+              )}
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Tanggal Persetujuan</Label>
-                      <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">Tanggal Persetujuan</Label>
+                  <div className="relative">
+                    <Controller
+                      control={control}
+                      name="tanggalPersetujuan"
+                      render={({ field }) => (
                         <DatePicker
                           date={
-                            values.tanggalPersetujuan
-                              ? moment(values.tanggalPersetujuan).toDate()
+                            field.value
+                              ? moment(field.value).toDate()
                               : undefined
                           }
                           onDateChange={(date: Date | undefined) => {
-                            setFieldValue(
-                              "tanggalPersetujuan",
-                              date ? moment(date).format("YYYY-MM-DD") : null,
-                              true
-                            );
+                            field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
                           }}
                           placeholder="Tgl Persetujuan"
                           className={inputClass}
                         />
-                      </div>
-                      <ErrorMessage name="tanggalPersetujuan" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
+                      )}
+                    />
                   </div>
-
-                  <div className="md:col-span-8">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Nomor Persetujuan</Label>
-                      <Input
-                        name="nomorPersetujuan"
-                        type="text"
-                        value={values.nomorPersetujuan}
-                        onChange={handleChange}
-                        placeholder="Nomor Persetujuan Dispensasi"
-                        className={touched.nomorPersetujuan && errors.nomorPersetujuan ? "border-red-500" : ""}
-                      />
-                      <ErrorMessage name="nomorPersetujuan" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
-                  </div>
+                  {errors.tanggalPersetujuan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.tanggalPersetujuan.message}</div>
+                  )}
                 </div>
+              </div>
 
+              <div className="md:col-span-8">
                 <div className="space-y-2">
-                  <Label className="font-bold">Alasan Dispensasi</Label>
+                  <Label className="font-bold">Nomor Persetujuan</Label>
+                  <Input
+                    {...register("nomorPersetujuan")}
+                    type="text"
+                    placeholder="Nomor Persetujuan Dispensasi"
+                    className={errors.nomorPersetujuan ? "border-red-500" : ""}
+                  />
+                  {errors.nomorPersetujuan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.nomorPersetujuan.message}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-bold">Alasan Dispensasi</Label>
+              <Controller
+                control={control}
+                name="alasan"
+                render={({ field }) => (
                   <Select
-                    value={values.alasan}
-                    onValueChange={(value) => {
-                      setFieldValue("alasan", value);
-                      setDispen(value);
-                      if (value !== "07") {
-                        setFieldValue("alasanLainnya", "");
+                    value={field.value}
+                    onValueChange={(val) => {
+                      field.onChange(val);
+                      setDispen(val);
+                      if (val !== "07") {
+                        setValue("alasanLainnya", "");
                       }
                     }}
                   >
-                    <SelectTrigger className={`w-full ${touched.alasan && errors.alasan ? "border-red-500" : ""}`}>
+                    <SelectTrigger className={`w-full ${errors.alasan ? "border-red-500" : ""}`}>
                       <SelectValue placeholder="--- Pilih Alasan Dispensasi ---" />
                     </SelectTrigger>
                     <SelectContent>
@@ -431,28 +442,30 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                       <SelectItem value="07">07 - Lainnya</SelectItem>
                     </SelectContent>
                   </Select>
-                  <ErrorMessage name="alasan" component="div" className="text-red-500 text-sm mt-1" />
-                </div>
-
-                {dispen === "07" && (
-                  <div className="animate-in fade-in zoom-in duration-300">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Uraian Alasan (Lainnya)</Label>
-                      <Textarea
-                        name="alasanLainnya"
-                        value={values.alasanLainnya}
-                        onChange={(e) => setFieldValue("alasanLainnya", e.target.value)}
-                        placeholder="Uraian Alasan"
-                        rows={4}
-                        className={`w-full ${touched.alasanLainnya && errors.alasanLainnya ? "border-red-500" : ""}`}
-                      />
-                      <ErrorMessage name="alasanLainnya" component="div" className="text-red-500 text-sm mt-1" />
-                    </div>
-                  </div>
                 )}
-              </form>
+              />
+              {errors.alasan && (
+                <div className="text-red-500 text-sm mt-1">{errors.alasan.message}</div>
+              )}
+            </div>
+
+            {dispen === "07" && (
+              <div className="animate-in fade-in zoom-in duration-300">
+                <div className="space-y-2">
+                  <Label className="font-bold">Uraian Alasan (Lainnya)</Label>
+                  <Textarea
+                    {...register("alasanLainnya")}
+                    placeholder="Uraian Alasan"
+                    rows={4}
+                    className={`w-full ${errors.alasanLainnya ? "border-red-500" : ""}`}
+                  />
+                  {errors.alasanLainnya && (
+                    <div className="text-red-500 text-sm mt-1">{errors.alasanLainnya.message}</div>
+                  )}
+                </div>
+              </div>
             )}
-          </Formik>
+          </form>
         </div>
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
@@ -462,7 +475,7 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
             </Button>
             {loading ? (
               <Button disabled>
-                <Spinner className="mr-2 h-4 w-4" /> Simpan
+                <Spinner className="mr-2 h-4 w-4" /> <Save className="h-4 w-4 mr-2" /> Simpan
               </Button>
             ) : (
               <Button

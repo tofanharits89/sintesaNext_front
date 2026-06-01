@@ -6,10 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { X,  FileText } from "lucide-react";
 import { useDauRekapBulanan } from "@/hooks/use-dau-rekap-bulanan";
 import { useDauRekapBulananPerAkun } from "@/hooks/use-dau-rekap-bulanan-per-akun";
 import { useDauPenundaanCabutByPemda } from "@/hooks/use-dau-penundaan-cabut-by-pemda";
@@ -277,7 +277,7 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
 
           <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -352,7 +352,7 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -88,7 +88,7 @@ const nextConfig: NextConfig = {
               "connect-src 'self' ws: wss: http://localhost:* http://10.0.8.42:* https://* https://*:*",
               "media-src 'self'",
               "object-src 'none'",
-              "frame-src 'self' https://app.powerbi.com",
+              "frame-src 'self' blob: https://app.powerbi.com",
               "worker-src 'self' blob:",
               "frame-ancestors 'none'",
               "form-action 'self'",
@@ -205,7 +205,7 @@ const nextConfig: NextConfig = {
   },
 
   // Output configuration for Docker deployment
-  output: "standalone",
+  // output: "standalone",
 
   // Experimental features for better performance
   experimental: {
@@ -216,6 +216,13 @@ const nextConfig: NextConfig = {
       "recharts",
       "@tanstack/react-query",
       "socket.io-client",
+      "framer-motion",
+      "motion",
+      "@visx/shape",
+      "@visx/scale",
+      "@visx/grid",
+      "xlsx",
+      "xlsx-js-style",
     ],
   },
 };

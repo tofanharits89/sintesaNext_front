@@ -1,4 +1,5 @@
 "use client";
+import { Save } from "lucide-react";
 import React from "react";
 
 interface SaveUserDataProps {
@@ -16,7 +17,7 @@ export default function SaveUserData({ userData, menu }: SaveUserDataProps) {
       <button
         onClick={() => console.log(`save userData=${userData} menu=${menu}`)}
       >
-        Save User Data
+        <Save className="h-4 w-4 mr-1.5" /> Simpan Data Pengguna
       </button>
     </div>
   );

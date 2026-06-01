@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
+import { X, 
   Loader2,
   RefreshCw,
   Search,
@@ -593,11 +593,10 @@ export function APBDTayangModal({
             )}
           </div>
           <Button
-            variant="destructive"
             onClick={handleCloseModal}
             className="w-full sm:w-24"
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

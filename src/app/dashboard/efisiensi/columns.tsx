@@ -38,7 +38,14 @@ export const columns: ColumnDef<EfisiensiRow>[] = [
   {
     accessorKey: "nmdept",
     header: () => <div className="text-center font-medium">Nama Kementerian/Lembaga</div>,
-    cell: ({ row }) => <div className="text-left">{row.getValue("nmdept")}</div>,
+    cell: ({ row }) => (
+      <div 
+        className="text-left truncate max-w-[250px] xl:max-w-[400px]" 
+        title={row.getValue("nmdept")}
+      >
+        {row.getValue("nmdept")}
+      </div>
+    ),
   },
   {
     accessorKey: "total_pagu",

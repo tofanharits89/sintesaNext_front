@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
 import { useAuth } from "@/hooks/useAuth";
 import { DakFisikData, SelectOption } from "./types";
-import { generateSQLQuery, SwalConfig } from "./utils";
+import { generateSQLQuery } from "./utils";
 
 export const useDakFisik = () => {
   const { user } = useAuth();
@@ -172,11 +173,7 @@ export const useDakFisik = () => {
 
   const handleTayang = async () => {
     if (!selectedYear) {
-      SwalConfig.fire({
-        icon: "warning",
-        title: "Peringatan",
-        text: "Silakan pilih tahun terlebih dahulu",
-      });
+      toast.warning("Silakan pilih tahun terlebih dahulu");
       return;
     }
 
@@ -203,11 +200,7 @@ export const useDakFisik = () => {
       setShowResults(true);
     } catch (error: any) {
       console.error("Error fetching data:", error);
-      SwalConfig.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || "Gagal mengambil data",
-      });
+      toast.error(error.response?.data?.message || "Gagal mengambil data");
     } finally {
       setLoadingResults(false);
     }

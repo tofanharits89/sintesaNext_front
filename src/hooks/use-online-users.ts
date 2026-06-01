@@ -31,6 +31,46 @@ export interface UseOnlineUsersReturn {
   reconnectSocket: () => void;
 }
 
+/**
+ * Deduplicates online users by user.id and merges active connection fields.
+ */
+export function deduplicateOnlineUsers(users: OnlineUser[]): OnlineUser[] {
+  const map = new Map<string, OnlineUser>();
+  for (const user of users) {
+    if (!user?.user?.id) continue;
+    const userId = String(user.user.id);
+    const existing = map.get(userId);
+    if (!existing) {
+      map.set(userId, { ...user });
+    } else {
+      // Merge:
+      // 1. Earliest login timestamp
+      if (user.loginAt && existing.loginAt) {
+        if (new Date(user.loginAt).getTime() < new Date(existing.loginAt).getTime()) {
+          existing.loginAt = user.loginAt;
+        }
+      }
+      // 2. Earliest connection timestamp
+      if (user.connectedAt && existing.connectedAt) {
+        if (new Date(user.connectedAt).getTime() < new Date(existing.connectedAt).getTime()) {
+          existing.connectedAt = user.connectedAt;
+        }
+      }
+      // 3. Latest lastActivity timestamp
+      if (user.lastActivity && existing.lastActivity) {
+        if (user.lastActivity > existing.lastActivity) {
+          existing.lastActivity = user.lastActivity;
+        }
+      }
+      // 4. Fill location if existing is empty
+      if (!existing.location && user.location) {
+        existing.location = user.location;
+      }
+    }
+  }
+  return Array.from(map.values());
+}
+
 export function useOnlineUsers(): UseOnlineUsersReturn {
   const { isAuthenticated } = useAuth();
   const { socket, isConnected, connectionState, emit, on, off, reconnect } =
@@ -71,7 +111,7 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
             ...user,
             connectedAt: user.connectedAt || new Date().toISOString(),
           }));
-          setOnlineUsers(usersWithTimestamp);
+          setOnlineUsers(deduplicateOnlineUsers(usersWithTimestamp));
           return;
         }
 
@@ -95,7 +135,7 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
           ...user,
           connectedAt: user.connectedAt || new Date().toISOString(),
         }));
-        setOnlineUsers(usersWithTimestamp);
+        setOnlineUsers(deduplicateOnlineUsers(usersWithTimestamp));
       } catch {}
     },
     []
@@ -107,9 +147,9 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
       const u = payload?.user || payload;
       if (!u || !u.id) return;
       setOnlineUsers((prev) => {
-        // Deduplicate by socketId to support multiple sessions for the same user
-        if (prev.some((p) => p?.socketId === payload?.socketId)) return prev;
-        
+        const userId = String(u.id);
+        const existingIdx = prev.findIndex((p) => p?.user?.id === userId);
+
         const item: OnlineUser = {
           socketId: payload?.socketId || `sock-${u.id}-${Date.now()}`,
           user: {
@@ -125,8 +165,37 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
           connectedAt: payload?.connectedAt || new Date().toISOString(),
           loginAt: payload?.loginAt || new Date().toISOString(),
           location: payload?.location || null,
+          lastActivity: payload?.lastActivity || Date.now(),
         };
-        return [item, ...prev];
+
+        if (existingIdx !== -1) {
+          const updated = [...prev];
+          const existing: OnlineUser = { ...updated[existingIdx]! };
+
+          if (item.loginAt && existing.loginAt) {
+            if (new Date(item.loginAt).getTime() < new Date(existing.loginAt).getTime()) {
+              existing.loginAt = item.loginAt;
+            }
+          }
+          if (item.connectedAt && existing.connectedAt) {
+            if (new Date(item.connectedAt).getTime() < new Date(existing.connectedAt).getTime()) {
+              existing.connectedAt = item.connectedAt;
+            }
+          }
+          if (item.lastActivity && existing.lastActivity) {
+            if (item.lastActivity > existing.lastActivity) {
+              existing.lastActivity = item.lastActivity;
+            }
+          }
+          if (!existing.location && item.location) {
+            existing.location = item.location;
+          }
+
+          updated[existingIdx] = existing;
+          return updated;
+        } else {
+          return [item, ...prev];
+        }
       });
     } catch {}
   }, []);

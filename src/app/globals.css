@@ -2434,3 +2434,27 @@
     font-size: 0.875rem !important;
   }
 }
+
+/* ── RAG chat: KaTeX math sizing & overflow ─────────────────────────────────
+   .rag-chat-math-display  = our scrollable wrapper (set in MarkdownRenderer)
+   .katex-display          = KaTeX's own block element (has overflow:hidden by default)
+   .katex                  = root KaTeX span — font-size controls everything
+   --------------------------------------------------------------------------- */
+.rag-chat-math-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  margin: 0.4rem 0;
+  padding-bottom: 2px; /* prevent descender clipping on scroll */
+}
+
+/* Let KaTeX's display block scroll instead of clip */
+.rag-chat-math-display .katex-display {
+  overflow: visible !important;
+  margin: 0;
+}
+
+/* Scale down all KaTeX math (display + inline) inside the chat widget */
+.rag-chat-message .katex {
+  font-size: 0.82em !important;
+}

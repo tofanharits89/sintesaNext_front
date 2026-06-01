@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import React from "react";
 import { SQLModalProps } from "./types";
 
@@ -51,7 +52,7 @@ export const SQLModal: React.FC<SQLModalProps> = ({
             className="btn btn-secondary btn-sm"
             onClick={onClose}
           >
-            Close
+            <X className="h-4 w-4 mr-1.5" /> Tutup
           </button>
         </div>
       </div>

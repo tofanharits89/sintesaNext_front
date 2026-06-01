@@ -22,10 +22,16 @@ import {
   FieldDescription,
 } from "@/components/ui/field";
 import { toast } from "sonner";
-import { Save, Lock, Eye, EyeOff } from "lucide-react";
+import { Save, Lock, Eye, EyeOff, Info } from "lucide-react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 export default function ProfilePage() {
   const {
@@ -74,21 +80,91 @@ export default function ProfilePage() {
     setKdkppn(current.kdkppn ?? "");
     setNmkanwil(current.nmkanwil ?? "");
     setNmkppn(current.nmkppn ?? "");
+    setAvatarUrl(current.avatar ?? undefined);
   }, [current]);
 
   function onPickFile() {
     fileInputRef.current?.click();
   }
 
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.type.startsWith("image/")) {
       toast.error("Harap pilih file gambar");
       return;
     }
-    const url = URL.createObjectURL(f);
-    setAvatarUrl(url);
+
+    const formData = new FormData();
+    formData.append("avatar", f);
+
+    const uploadToastId = toast.loading("Mengunggah foto profil...");
+
+    try {
+      await prefetchCsrf();
+      const trace = `prof_av_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      const response = await apiClient.post<any>(
+        "/users/profile/avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "X-Debug-Source": "profile.page.uploadAvatar",
+            "X-Debug-Trace": trace,
+          },
+        },
+      );
+
+      if (response && response.success !== false) {
+        toast.success("Foto profil berhasil diunggah", { id: uploadToastId });
+        setAvatarUrl(response.data?.avatar || response.avatar);
+        refetch();
+      } else {
+        toast.error(response?.message || "Gagal mengunggah foto profil", {
+          id: uploadToastId,
+        });
+      }
+    } catch (err: any) {
+      const errMsg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Terjadi kesalahan saat mengunggah foto";
+      toast.error(errMsg, { id: uploadToastId });
+    }
+  }
+
+  async function onDeleteAvatar() {
+    const deleteToastId = toast.loading("Menghapus foto profil...");
+    try {
+      await prefetchCsrf();
+      const trace = `prof_av_del_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      const response = await apiClient.delete<any>("/users/profile/avatar", {
+        headers: {
+          "X-Debug-Source": "profile.page.deleteAvatar",
+          "X-Debug-Trace": trace,
+        },
+      });
+
+      if (response && response.success !== false) {
+        toast.success("Foto profil berhasil dihapus", { id: deleteToastId });
+        setAvatarUrl(undefined);
+        refetch();
+      } else {
+        toast.error(response?.message || "Gagal menghapus foto profil", {
+          id: deleteToastId,
+        });
+      }
+    } catch (err: any) {
+      const errMsg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Terjadi kesalahan saat menghapus foto";
+      toast.error(errMsg, { id: deleteToastId });
+    }
   }
 
   function onReset() {
@@ -107,7 +183,7 @@ export default function ProfilePage() {
     setConfirmPassword("");
     setShowNewPassword(false);
     setShowConfirmPassword(false);
-    setAvatarUrl(undefined);
+    setAvatarUrl(current?.avatar ?? undefined);
     toast.info("Perubahan dibatalkan");
     refetch();
   }
@@ -172,7 +248,7 @@ export default function ProfilePage() {
       refetch();
     } catch (e: Error | unknown) {
       toast.error(
-        e instanceof Error ? e.message : "Terjadi kesalahan jaringan"
+        e instanceof Error ? e.message : "Terjadi kesalahan jaringan",
       );
     }
   }
@@ -200,14 +276,18 @@ export default function ProfilePage() {
       await prefetchCsrf();
       const trace = `prof_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       console.log(`[Profile Page] changePassword trace=${trace}`);
-      const data = await apiClient.put<any>("/users/profile/me", {
-        password: newPassword,
-      }, {
-        headers: {
-          "X-Debug-Source": "profile.page.changePassword",
-          "X-Debug-Trace": trace,
+      const data = await apiClient.put<any>(
+        "/users/profile/me",
+        {
+          password: newPassword,
         },
-      });
+        {
+          headers: {
+            "X-Debug-Source": "profile.page.changePassword",
+            "X-Debug-Trace": trace,
+          },
+        },
+      );
       if (!data || data?.success === false) {
         const message =
           data?.message || (data as any)?.error || "Gagal mengubah password";
@@ -270,7 +350,7 @@ export default function ProfilePage() {
         });
       } else {
         toast.error(
-          e instanceof Error ? e.message : "Terjadi kesalahan jaringan"
+          e instanceof Error ? e.message : "Terjadi kesalahan jaringan",
         );
       }
     } finally {
@@ -297,7 +377,11 @@ export default function ProfilePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">Profil Akun</h1>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={onReset} className="flex-1 sm:flex-none">
+          <Button
+            variant="secondary"
+            onClick={onReset}
+            className="flex-1 sm:flex-none"
+          >
             Reset
           </Button>
           <Button onClick={onSave} className="flex-1 sm:flex-none">
@@ -309,9 +393,26 @@ export default function ProfilePage() {
 
       <div className="grid gap-6 md:grid-cols-[280px_1fr]">
         {/* Avatar card */}
-        <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
+        <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow relative flex flex-col justify-center h-full min-h-[240px]">
+          {/* Info Tooltip on the top right */}
+          <div className="absolute top-3 right-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-muted-foreground hover:text-foreground cursor-help p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                  <Info className="h-4 w-4" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" align="end" className="max-w-[280px]">
+                <div className="space-y-1">
+                  <div>Format gambar : PNG, JPG, JPEG, WEBP, GIF.</div>
+                  <div>Ukuran gambar maksimal 3MB.</div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
           <div className="flex flex-col items-center gap-4">
-            <Avatar className="size-24">
+            <Avatar className="size-42">
               {avatarUrl ? (
                 <AvatarImage src={avatarUrl} alt={name || "Avatar"} />
               ) : (
@@ -322,12 +423,25 @@ export default function ProfilePage() {
             </Avatar>
             <div className="flex gap-2">
               <Button variant="outline" onClick={onPickFile}>
-                Unggah Foto
+                {avatarUrl ? "Ganti Foto" : "Unggah Foto"}
               </Button>
               {avatarUrl && (
-                <Button variant="ghost" onClick={() => setAvatarUrl(undefined)}>
-                  Hapus
-                </Button>
+                <ConfirmationModal
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      Hapus
+                    </Button>
+                  }
+                  title="Hapus Foto Profil"
+                  description="Apakah Anda yakin ingin menghapus foto profil Anda? Tindakan ini tidak dapat dibatalkan."
+                  confirmText="Hapus"
+                  cancelText="Batal"
+                  variant="destructive"
+                  onConfirm={onDeleteAvatar}
+                />
               )}
             </div>
             <input
@@ -337,125 +451,201 @@ export default function ProfilePage() {
               hidden
               onChange={onFileChange}
             />
-            <p className="text-xs text-muted-foreground">
-              Format gambar (JPG, PNG). Maks 5MB.
-            </p>
           </div>
         </div>
 
         {/* Profile form */}
         <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
           <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="name">Nama Lengkap</FieldLabel>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="username">Username</FieldLabel>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="role">Role</FieldLabel>
-              <Select
-                value={role}
-                onValueChange={(v) => {
-                  if (canEditRoleAndLocation()) {
-                    setRole(v as User["role"]);
-                    // Reset Kanwil and KPPN when role changes
-                    setKdkanwil("");
-                    setKdkppn("");
-                    setNmkanwil("");
-                    setNmkppn("");
-                  }
-                }}
-                disabled={!canEditRoleAndLocation()}
-              >
-                <SelectTrigger
-                  id="role"
-                  className="h-11"
-                  disabled={!canEditRoleAndLocation()}
-                >
-                  <SelectValue placeholder="Pilih role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super_admin">Super Admin (X)</SelectItem>
-                  <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
-                  <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
-                  <SelectItem value="ditpa">DIT PA (1)</SelectItem>
-                  <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
-                  <SelectItem value="kppn">KPPN (3)</SelectItem>
-                  <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
-                </SelectContent>
-              </Select>
-              {!canEditRoleAndLocation() && (
-                <FieldDescription>
-                  Role hanya dapat diubah oleh Administrator
-                </FieldDescription>
-              )}
-            </Field>
-
-            {/* Conditional Kanwil DJPb Selection */}
-            {role === "kanwil_djpb" && (
+            {/* Row 1: Nama Lengkap & Username */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Field>
-                <FieldLabel htmlFor="kanwil">Kanwil DJPb</FieldLabel>
-                {canEditRoleAndLocation() ? (
-                  <Select
-                    value={kdkanwil}
-                    onValueChange={(v) => {
-                      const selectedKanwil = kdkanwilData.find(
-                        (k) => k.kdkanwil === v
-                      );
-                      setKdkanwil(v);
-                      setNmkanwil(selectedKanwil?.nmkanwil || "");
-                    }}
-                  >
-                    <SelectTrigger id="kanwil" className="h-11">
-                      <SelectValue placeholder="Pilih Kanwil DJPb" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {kdkanwilData.map((kanwil) => (
-                        <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
-                          {kanwil.nmkanwil}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    id="kanwil"
-                    value={nmkanwil || "Tidak ada data"}
-                    disabled
-                    className="bg-muted"
-                  />
-                )}
+                <FieldLabel htmlFor="name">Nama Lengkap</FieldLabel>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="username">Username</FieldLabel>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            {/* Row 2: Email & Limit Kode BA */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="limitKodeBA">Limit Kode BA</FieldLabel>
+                <Input
+                  id="limitKodeBA"
+                  placeholder="contoh: 015 atau 015,042"
+                  value={limitKodeBA}
+                  onChange={(e) =>
+                    canEditRoleAndLocation() && setLimitKodeBA(e.target.value)
+                  }
+                  disabled={!canEditRoleAndLocation()}
+                />
                 {!canEditRoleAndLocation() && (
                   <FieldDescription>
-                    Kanwil hanya dapat diubah oleh Administrator
+                    Limit Kode BA hanya dapat diubah oleh Administrator
                   </FieldDescription>
                 )}
               </Field>
-            )}
+            </div>
 
-            {/* Conditional KPPN Selection */}
-            {role === "kppn" && (
-              <>
+            {/* Row 3: Role & Conditional Locations (Kanwil / KPPN) */}
+            {role === "kanwil_djpb" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Field>
+                  <FieldLabel htmlFor="role">Role</FieldLabel>
+                  <Select
+                    value={role}
+                    onValueChange={(v) => {
+                      if (canEditRoleAndLocation()) {
+                        setRole(v as User["role"]);
+                        // Reset Kanwil and KPPN when role changes
+                        setKdkanwil("");
+                        setKdkppn("");
+                        setNmkanwil("");
+                        setNmkppn("");
+                      }
+                    }}
+                    disabled={!canEditRoleAndLocation()}
+                  >
+                    <SelectTrigger
+                      id="role"
+                      className="h-11"
+                      disabled={!canEditRoleAndLocation()}
+                    >
+                      <SelectValue placeholder="Pilih role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="super_admin">
+                        Super Admin (X)
+                      </SelectItem>
+                      <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
+                      <SelectItem value="kantor_pusat">
+                        Kantor Pusat (1)
+                      </SelectItem>
+                      <SelectItem value="ditpa">DIT PA (1)</SelectItem>
+                      <SelectItem value="kanwil_djpb">
+                        Kanwil DJPb (2)
+                      </SelectItem>
+                      <SelectItem value="kppn">KPPN (3)</SelectItem>
+                      <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!canEditRoleAndLocation() && (
+                    <FieldDescription>
+                      Role hanya dapat diubah oleh Administrator
+                    </FieldDescription>
+                  )}
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="kanwil">Kanwil DJPb</FieldLabel>
+                  {canEditRoleAndLocation() ? (
+                    <Select
+                      value={kdkanwil}
+                      onValueChange={(v) => {
+                        const selectedKanwil = kdkanwilData.find(
+                          (k) => k.kdkanwil === v,
+                        );
+                        setKdkanwil(v);
+                        setNmkanwil(selectedKanwil?.nmkanwil || "");
+                      }}
+                    >
+                      <SelectTrigger id="kanwil" className="h-11">
+                        <SelectValue placeholder="Pilih Kanwil DJPb" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {kdkanwilData.map((kanwil) => (
+                          <SelectItem
+                            key={kanwil.kdkanwil}
+                            value={kanwil.kdkanwil}
+                          >
+                            {kanwil.nmkanwil}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id="kanwil"
+                      value={nmkanwil || "Tidak ada data"}
+                      disabled
+                      className="bg-muted"
+                    />
+                  )}
+                  {!canEditRoleAndLocation() && (
+                    <FieldDescription>
+                      Kanwil hanya dapat diubah oleh Administrator
+                    </FieldDescription>
+                  )}
+                </Field>
+              </div>
+            ) : role === "kppn" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Field>
+                  <FieldLabel htmlFor="role">Role</FieldLabel>
+                  <Select
+                    value={role}
+                    onValueChange={(v) => {
+                      if (canEditRoleAndLocation()) {
+                        setRole(v as User["role"]);
+                        // Reset Kanwil and KPPN when role changes
+                        setKdkanwil("");
+                        setKdkppn("");
+                        setNmkanwil("");
+                        setNmkppn("");
+                      }
+                    }}
+                    disabled={!canEditRoleAndLocation()}
+                  >
+                    <SelectTrigger
+                      id="role"
+                      className="h-11"
+                      disabled={!canEditRoleAndLocation()}
+                    >
+                      <SelectValue placeholder="Pilih role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="super_admin">
+                        Super Admin (X)
+                      </SelectItem>
+                      <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
+                      <SelectItem value="kantor_pusat">
+                        Kantor Pusat (1)
+                      </SelectItem>
+                      <SelectItem value="ditpa">DIT PA (1)</SelectItem>
+                      <SelectItem value="kanwil_djpb">
+                        Kanwil DJPb (2)
+                      </SelectItem>
+                      <SelectItem value="kppn">KPPN (3)</SelectItem>
+                      <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!canEditRoleAndLocation() && (
+                    <FieldDescription>
+                      Role hanya dapat diubah oleh Administrator
+                    </FieldDescription>
+                  )}
+                </Field>
+
                 <Field>
                   <FieldLabel htmlFor="kanwil-kppn">Kanwil</FieldLabel>
                   {canEditRoleAndLocation() ? (
@@ -463,7 +653,7 @@ export default function ProfilePage() {
                       value={kdkanwil}
                       onValueChange={(v) => {
                         const selectedKanwil = kdkanwilData.find(
-                          (k) => k.kdkanwil === v
+                          (k) => k.kdkanwil === v,
                         );
                         setKdkanwil(v);
                         setNmkanwil(selectedKanwil?.nmkanwil || "");
@@ -476,7 +666,10 @@ export default function ProfilePage() {
                       </SelectTrigger>
                       <SelectContent>
                         {kdkanwilData.map((kanwil) => (
-                          <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                          <SelectItem
+                            key={kanwil.kdkanwil}
+                            value={kanwil.kdkanwil}
+                          >
                             {kanwil.nmkanwil}
                           </SelectItem>
                         ))}
@@ -505,7 +698,7 @@ export default function ProfilePage() {
                         value={kdkppn}
                         onValueChange={(v) => {
                           const selectedKppn = filteredKppn.find(
-                            (k) => k.kdkppn === v
+                            (k) => k.kdkppn === v,
                           );
                           setKdkppn(v);
                           setNmkppn(selectedKppn?.nmkppn || "");
@@ -537,26 +730,57 @@ export default function ProfilePage() {
                     </FieldDescription>
                   )}
                 </Field>
-              </>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Field>
+                  <FieldLabel htmlFor="role">Role</FieldLabel>
+                  <Select
+                    value={role}
+                    onValueChange={(v) => {
+                      if (canEditRoleAndLocation()) {
+                        setRole(v as User["role"]);
+                        // Reset Kanwil and KPPN when role changes
+                        setKdkanwil("");
+                        setKdkppn("");
+                        setNmkanwil("");
+                        setNmkppn("");
+                      }
+                    }}
+                    disabled={!canEditRoleAndLocation()}
+                  >
+                    <SelectTrigger
+                      id="role"
+                      className="h-11"
+                      disabled={!canEditRoleAndLocation()}
+                    >
+                      <SelectValue placeholder="Pilih role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="super_admin">
+                        Super Admin (X)
+                      </SelectItem>
+                      <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
+                      <SelectItem value="kantor_pusat">
+                        Kantor Pusat (1)
+                      </SelectItem>
+                      <SelectItem value="ditpa">DIT PA (1)</SelectItem>
+                      <SelectItem value="kanwil_djpb">
+                        Kanwil DJPb (2)
+                      </SelectItem>
+                      <SelectItem value="kppn">KPPN (3)</SelectItem>
+                      <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!canEditRoleAndLocation() && (
+                    <FieldDescription>
+                      Role hanya dapat diubah oleh Administrator
+                    </FieldDescription>
+                  )}
+                </Field>
+                <div className="hidden md:block" />
+              </div>
             )}
-
-            <Field>
-              <FieldLabel htmlFor="limitKodeBA">Limit Kode BA</FieldLabel>
-              <Input
-                id="limitKodeBA"
-                placeholder="contoh: 015 atau 015,042"
-                value={limitKodeBA}
-                onChange={(e) =>
-                  canEditRoleAndLocation() && setLimitKodeBA(e.target.value)
-                }
-                disabled={!canEditRoleAndLocation()}
-              />
-              {!canEditRoleAndLocation() && (
-                <FieldDescription>
-                  Limit Kode BA hanya dapat diubah oleh Administrator
-                </FieldDescription>
-              )}
-            </Field>
           </FieldGroup>
         </div>
       </div>
@@ -590,7 +814,9 @@ export default function ProfilePage() {
                 className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
                 onClick={() => setShowNewPassword((current) => !current)}
                 aria-label={
-                  showNewPassword ? "Sembunyikan password baru" : "Lihat password baru"
+                  showNewPassword
+                    ? "Sembunyikan password baru"
+                    : "Lihat password baru"
                 }
               >
                 {showNewPassword ? (
@@ -602,7 +828,9 @@ export default function ProfilePage() {
             </div>
           </Field>
           <Field>
-            <FieldLabel htmlFor="confirmPassword">Konfirmasi Password Baru</FieldLabel>
+            <FieldLabel htmlFor="confirmPassword">
+              Konfirmasi Password Baru
+            </FieldLabel>
             <div className="relative">
               <Input
                 id="confirmPassword"
@@ -654,7 +882,7 @@ function ProfileSkeleton() {
         {/* Avatar card skeleton matching Avatar card */}
         <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
           <div className="flex flex-col items-center gap-4">
-            <Skeleton className="size-24 rounded-full" />
+            <Skeleton className="size-32 rounded-full" />
             <div className="flex gap-2">
               <Skeleton className="h-9 w-28" />
             </div>

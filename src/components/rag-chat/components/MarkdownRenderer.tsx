@@ -3,8 +3,12 @@
 import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { Code as CodeIcon } from "lucide-react";
 import { Code, CodeBlock, CodeHeader } from "@/components/animate-ui/components/animate/code";
+import { normalizeMath } from "../utils/normalizeMath";
+import "katex/dist/katex.min.css";
 
 interface MarkdownRendererProps {
     content: string;
@@ -36,6 +40,26 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         ),
         strong: ({ node, ...props }: any) => (
             <strong className="font-semibold" {...props} />
+        ),
+        table: ({ node, ...props }: any) => (
+            <div className="overflow-x-auto my-3 rounded-md border border-border">
+                <table className="w-full text-[10px] text-left border-collapse tabular-nums" {...props} />
+            </div>
+        ),
+        thead: ({ node, ...props }: any) => (
+            <thead className="bg-primary/5 text-foreground font-semibold border-b border-border" {...props} />
+        ),
+        tbody: ({ node, ...props }: any) => (
+            <tbody className="divide-y divide-border/50" {...props} />
+        ),
+        tr: ({ node, ...props }: any) => (
+            <tr className="hover:bg-primary/5 transition-colors" {...props} />
+        ),
+        th: ({ node, ...props }: any) => (
+            <th className="px-3 py-2 border-r border-border last:border-0 align-middle" {...props} />
+        ),
+        td: ({ node, ...props }: any) => (
+            <td className="px-3 py-2 border-r border-border/50 last:border-0 align-top text-foreground/90 font-mono" {...props} />
         ),
         // Code block renderer using animate-ui
         code: ({ node, className, children, ...props }: any) => {
@@ -78,14 +102,37 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
                 {children}
             </div>
         ),
+        // Wrap KaTeX display math in a scrollable container so wide equations
+        // don't bleed outside the chat bubble.
+        // Styling is handled by .rag-chat-math-display in globals.css.
+        div: ({ node, className, children, ...props }: any) => {
+            if (className?.includes("math-display")) {
+                return (
+                    <div className="rag-chat-math-display">
+                        <div className={className}>{children}</div>
+                    </div>
+                );
+            }
+            if (className?.includes("math-inline")) {
+                return (
+                    <span className={className} {...props}>{children}</span>
+                );
+            }
+            return <div className={className} {...props}>{children}</div>;
+        },
     }), []);
+
+    // Normalize non-standard LLM math output (bracket delimiters, unescaped %)
+    // before passing it to remark-math / KaTeX.
+    const normalizedContent = useMemo(() => normalizeMath(content), [content]);
 
     return (
         <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
             components={components}
         >
-            {content}
+            {normalizedContent}
         </ReactMarkdown>
     );
 }

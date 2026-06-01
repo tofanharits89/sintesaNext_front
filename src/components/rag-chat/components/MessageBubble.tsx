@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ChatMessage as ChatMessageType } from "../types";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
@@ -26,7 +26,7 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
             className={`flex ${isUser ? "justify-end" : "justify-start"}`}
         >
             <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 ${isUser
+                className={`rag-chat-message max-w-[80%] min-w-0 overflow-hidden rounded-2xl px-3 py-2 ${isUser
                     ? "bg-primary text-primary-foreground rounded-br-sm text-xs md:text-[13px]"
                     : isWarning
                         ? "bg-transparent text-muted-foreground italic text-[10px]"

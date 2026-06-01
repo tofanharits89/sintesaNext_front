@@ -1,5 +1,6 @@
 "use client";
 
+import { Save,  X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -616,8 +617,8 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data, onSaveSucces
         </div>
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
-          <Button variant="outline" onClick={handleClose} disabled={saving}>Tutup</Button>
-          <Button onClick={handleSubmit} disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</Button>
+          <Button variant="outline" onClick={handleClose} disabled={saving}><X className="h-4 w-4 mr-2" /> Batal</Button>
+          <Button onClick={handleSubmit} disabled={saving}>{saving ? "Menyimpan..." : <><Save className="h-4 w-4 mr-2" /> Simpan</>}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

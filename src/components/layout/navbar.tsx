@@ -597,7 +597,7 @@ export function Navbar() {
                   disabled={authLoading}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt={currentUser?.name || "profil"} />
+                    <AvatarImage src={currentUser?.avatar || ""} alt={currentUser?.name || "profil"} />
                     <AvatarFallback className="text-xs font-medium">
                       {authLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

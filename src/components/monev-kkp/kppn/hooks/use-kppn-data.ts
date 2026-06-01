@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 import { useAuth } from "@/hooks/useAuth";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 import { KkpData } from "../../kppn-content";
@@ -55,13 +56,12 @@ export const useKppnData = (
       const page = ringkasanPagination.pageIndex + 1;
       const limit = ringkasanPagination.pageSize;
 
-      const apiUrl = apiPath(
-        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user.kdkppn}&page=${page}&limit=${limit}&_t=${ts}`
-      );
+      const kdkppnParam = user.kdkppn || "all";
+      const url = `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${kdkppnParam}&page=${page}&limit=${limit}&_t=${ts}`;
 
-      const response = await fetch(apiUrl, { credentials: "include" });
-      if (!response.ok) throw new Error("Gagal mengambil data ringkasan");
-      const result = await response.json();
+      const result = await apiClient.get(url);
+      
+      if (!result) throw new Error("Gagal mengambil data ringkasan");
 
       const mappedData: KkpData[] = (result.data || []).map((item: any, index: number) => ({
         id: `${item.kdsatker}-${index}`,
@@ -117,13 +117,11 @@ export const useKppnData = (
       const limit = transaksiPagination.pageSize;
       const ts = new Date().getTime();
 
-      const apiUrl = apiPath(
-        `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user.kdkppn}&page=${page}&limit=${limit}&_t=${ts}`
-      );
+      const url = `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user.kdkppn || "all"}&page=${page}&limit=${limit}&_t=${ts}`;
 
-      const response = await fetch(apiUrl, { credentials: "include" });
-      if (!response.ok) throw new Error("Gagal mengambil data transaksi");
-      const result = await response.json();
+      const result = await apiClient.get(url);
+      
+      if (!result) throw new Error("Gagal mengambil data transaksi");
 
       setTransaksiData(result.data || []);
       setTotalTransaksi(result.total || 0);

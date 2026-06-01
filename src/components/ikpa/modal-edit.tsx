@@ -32,9 +32,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api/httpClient";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Loader2, Save, X, Edit, FilePlus } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
+import kppnData from "@/data/kdkppn.json";
 import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 import { AxiosError } from "axios";
@@ -138,6 +140,23 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
         },
     });
 
+    const watchedKdSatker = form.watch("kdsatker");
+
+    const satkerOptions = useMemo(() => {
+        let subset = [...filteredSatkerList];
+        if (watchedKdSatker) {
+            const exists = subset.find(s => s.kdsatker === watchedKdSatker);
+            if (!exists) {
+                const missing = (satkerData as any[]).find(s => s.kdsatker === watchedKdSatker);
+                if (missing) subset = [missing, ...subset];
+            }
+        }
+        return subset.map(s => ({
+            value: s.kdsatker,
+            label: `${s.kdsatker} - ${s.nmsatker}`
+        }));
+    }, [filteredSatkerList, watchedKdSatker]);
+
     // Update form values when data changes
     useEffect(() => {
         if (data && isOpen) {
@@ -186,15 +205,17 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
 
         // Find satker details
         const satker = (satkerData as any[]).find(s => s.kdsatker === values.kdsatker);
+        // Find KPPN details
+        const kppn = (kppnData as any[]).find(k => k.kdkppn === satker?.kdkppn);
         // Find indicator code
         const indicator = resolveIndikatorOption(values.nm_indikator);
 
         const payload = {
             ...values,
-            kdkanwil: satker?.kdkanwil || "",
-            nmkanwil: satker?.nmkanwil || "",
+            kdkanwil: satker?.kdkanwil || kppn?.kdkanwil || "",
+            nmkanwil: kppn?.nmkanwil || "",
             kdkppn: satker?.kdkppn || "",
-            nmkppn: satker?.nmkppn || "",
+            nmkppn: kppn?.nmkppn || "",
             nmsatker: satker?.nmsatker || "",
             kd_indikator: indicator?.code || "",
             id_approval: values.approval === "Disetujui" ? "1" : values.approval === "Ditolak" ? "2" : "0"
@@ -244,6 +265,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
+                                                    <SelectItem value="2026">2026</SelectItem>
                                                     <SelectItem value="2025">2025</SelectItem>
                                                     <SelectItem value="2024">2024</SelectItem>
                                                     <SelectItem value="2023">2023</SelectItem>
@@ -262,7 +284,20 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                         <FormItem>
                                             <FormLabel>Tanggal Nota Dinas</FormLabel>
                                             <FormControl>
-                                                <Input type="date" {...field} />
+                                                <DatePicker
+                                                    date={field.value ? new Date(field.value) : undefined}
+                                                    onDateChange={(date) => {
+                                                        if (date) {
+                                                            const yyyy = date.getFullYear();
+                                                            const mm = String(date.getMonth() + 1).padStart(2, "0");
+                                                            const dd = String(date.getDate()).padStart(2, "0");
+                                                            field.onChange(`${yyyy}-${mm}-${dd}`);
+                                                        } else {
+                                                            field.onChange("");
+                                                        }
+                                                    }}
+                                                    placeholder="Pilih tanggal ND"
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -292,25 +327,13 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                         <FormItem className="md:col-span-2">
                                             <FormLabel>Satuan Kerja</FormLabel>
                                             <FormControl>
-                                                <VirtualizedSelect
-                                                    options={(() => {
-                                                        const val = field.value;
-                                                        let subset = [...filteredSatkerList];
-                                                        if (val) {
-                                                            const exists = subset.find(s => s.kdsatker === val);
-                                                            if (!exists) {
-                                                                const missing = (satkerData as any[]).find(s => s.kdsatker === val);
-                                                                if (missing) subset = [missing, ...subset];
-                                                            }
-                                                        }
-                                                        return subset.map(s => ({
-                                                            value: s.kdsatker,
-                                                            label: `${s.kdsatker} - ${s.nmsatker}`
-                                                        }));
-                                                    })()}
+                                                <SearchableSelect
+                                                    options={satkerOptions}
                                                     value={field.value}
                                                     onValueChange={field.onChange}
                                                     placeholder="Pilih Satker"
+                                                    searchPlaceholder="Cari kode atau nama satker..."
+                                                    emptyMessage="Satker tidak ditemukan."
                                                 />
                                             </FormControl>
                                             <FormMessage />

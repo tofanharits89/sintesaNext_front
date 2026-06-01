@@ -151,24 +151,28 @@ export default function DashboardEfisiensiPage() {
           icon={<DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
           value={formatCurrency(totals.totalPagu)}
           loading={isLoading}
+          valueClassName="text-right font-mono"
         />
         <StatCard
           label="Total Blokir DIPA"
           icon={<Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
           value={formatCurrency(totals.totalBlokir)}
           loading={isLoading}
+          valueClassName="text-right font-mono"
         />
         <StatCard
           label="Rata-rata Potensi Efisiensi"
           icon={<TrendingUp className="h-4 w-4 text-sky-600 dark:text-sky-400" />}
           value={formatPercentage(weightedAvgPotensiEfisiensi)}
           loading={isLoading}
+          valueClassName="text-right font-mono"
         />
         <StatCard
           label="Total Nilai Efisiensi"
           icon={<Target className="h-4 w-4 text-rose-600 dark:text-rose-400" />}
           value={formatCurrency(totals.totalNilaiEfisiensi)}
           loading={isLoading}
+          valueClassName="text-right font-mono"
         />
       </div>
 

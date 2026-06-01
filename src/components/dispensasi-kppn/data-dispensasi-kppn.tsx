@@ -23,6 +23,7 @@ import {
 import RekamKontrak from "./modal-rekam-kontrak";
 import GenerateCSV from "@/components/GenerateCSV";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 import { DataTable } from "@/components/ui/data-table";
 
 interface DispensasiData {
@@ -257,18 +258,7 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
   const confirmDelete = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        apiPath(`/dispensasi/dispkontrak/${deleteTargetId}`),
-        {
-          method: "DELETE",
-          credentials: "include",
-          headers: {},
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await apiClient.delete(`/dispensasi/dispkontrak/${deleteTargetId}`);
 
       toast.success("Data telah dihapus.");
       getData();

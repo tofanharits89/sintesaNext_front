@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Download, Trash2 } from "lucide-react";
@@ -14,34 +18,51 @@ import { DeleteLaporanModal } from "@/components/transfer-daerah/modals/delete-l
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 import {
-  UploadLaporanMonevKanwilRow, useUploadLaporanMonevKanwil,
+  UploadLaporanMonevKanwilRow,
+  useUploadLaporanMonevKanwil,
 } from "@/hooks/use-upload-laporan-monev-kanwil";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 export function LaporanMonevKanwilTab() {
   const queryClient = useQueryClient();
-  const { rows, isLoading, error, refetch } = useUploadLaporanMonevKanwil();
   const [selectedPeriode, setSelectedPeriode] = useState("all");
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<UploadLaporanMonevKanwilRow | null>(null);
+  const [selectedItem, setSelectedItem] =
+    useState<UploadLaporanMonevKanwilRow | null>(null);
 
-  const filteredData = useMemo(() => {
-    if (!selectedPeriode || selectedPeriode === "all") return rows;
-    return rows.filter((item) => item.periodeCode === selectedPeriode);
-  }, [rows, selectedPeriode]);
+  // Reset page when filter changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [selectedPeriode]);
+
+  const { rows, total, isLoading, error, refetch } =
+    useUploadLaporanMonevKanwil({
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+      periode: selectedPeriode,
+    });
 
   const formatTanggalUpload = (value: string) => {
     if (!value) return "-";
     const dt = new Date(value);
     if (Number.isNaN(dt.getTime())) return value;
     return dt.toLocaleString("id-ID", {
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
     });
   };
 
   const handleDownload = (item: UploadLaporanMonevKanwilRow) => {
-    if (!item.fileUrl) { alert("File tidak tersedia."); return; }
+    if (!item.fileUrl) {
+      alert("File tidak tersedia.");
+      return;
+    }
     const link = document.createElement("a");
     link.href = item.fileUrl;
     link.target = "_blank";
@@ -53,17 +74,26 @@ export function LaporanMonevKanwilTab() {
   };
 
   const handleDelete = (id: string) => {
-    const item = filteredData.find((x) => x.id === id);
-    if (item) { setSelectedItem(item); setIsDeleteModalOpen(true); }
+    const item = rows.find((x) => x.id === id);
+    if (item) {
+      setSelectedItem(item);
+      setIsDeleteModalOpen(true);
+    }
   };
 
   const handleConfirmDelete = async () => {
     if (!selectedItem) return;
     try {
-      const headersWithCsrf: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
+      const headersWithCsrf: HeadersInit = addCsrfToHeaders({
+        "Content-Type": "application/json",
+      });
       const resp = await fetch(
-        apiPath(`/transfer-daerah/upload-laporan/kanwil/monev/${encodeURIComponent(selectedItem.id)}`),
-        { method: "DELETE", headers: headersWithCsrf, credentials: "include" },
+        apiPath(
+          `/transfer-daerah/upload-laporan/kanwil/monev/${encodeURIComponent(
+            selectedItem.id
+          )}`
+        ),
+        { method: "DELETE", headers: headersWithCsrf, credentials: "include" }
       );
       if (!resp.ok) {
         const payload = await resp.json().catch(() => ({}));
@@ -71,7 +101,10 @@ export function LaporanMonevKanwilTab() {
       }
       setSelectedItem(null);
       setIsDeleteModalOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["upload-laporan-monev-kanwil"], refetchType: "active" });
+      await queryClient.invalidateQueries({
+        queryKey: ["upload-laporan-monev-kanwil"],
+        refetchType: "active",
+      });
       await refetch();
     } catch (e: any) {
       alert(`Gagal menghapus data: ${String(e?.message || e)}`);
@@ -82,26 +115,36 @@ export function LaporanMonevKanwilTab() {
     {
       accessorKey: "no",
       header: () => <div className="text-center font-medium">No</div>,
-      cell: ({ row }: any) => <div className="text-center">{row.index + 1}</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center">
+          {pagination.pageIndex * pagination.pageSize + row.index + 1}
+        </div>
+      ),
     },
     {
       accessorKey: "tahun",
       header: () => <div className="text-center font-medium">Tahun</div>,
       cell: ({ row }: any) => (
-        <div className="text-center"><Badge variant="outline">{row.getValue("tahun")}</Badge></div>
+        <div className="text-center">
+          <Badge variant="outline">{row.getValue("tahun")}</Badge>
+        </div>
       ),
     },
     {
       accessorKey: "kanwil",
       header: () => <div className="text-center font-medium">Kanwil</div>,
-      cell: ({ row }: any) => <div className="text-center">{row.getValue("kanwil")}</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center">{row.getValue("kanwil")}</div>
+      ),
     },
     {
       accessorKey: "jenis",
       header: () => <div className="text-center font-medium">Jenis</div>,
       cell: ({ row }: any) => (
         <div className="flex justify-center">
-          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">{row.getValue("jenis")}</Badge>
+          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
+            {row.getValue("jenis")}
+          </Badge>
         </div>
       ),
     },
@@ -109,23 +152,32 @@ export function LaporanMonevKanwilTab() {
       accessorKey: "periode",
       header: () => <div className="text-center font-medium">Periode</div>,
       cell: ({ row }: any) => (
-        <div className="flex justify-center"><Badge variant="secondary">{row.getValue("periode")}</Badge></div>
+        <div className="flex justify-center">
+          <Badge variant="secondary">{row.getValue("periode")}</Badge>
+        </div>
       ),
     },
     {
       accessorKey: "uraian",
       header: () => <div className="text-center font-medium">Uraian</div>,
       cell: ({ row }: any) => (
-        <div className="text-center max-w-[520px] mx-auto whitespace-normal break-words" title={row.getValue("uraian")}>
+        <div
+          className="text-center max-w-[520px] mx-auto whitespace-normal break-words"
+          title={row.getValue("uraian")}
+        >
           {row.getValue("uraian")}
         </div>
       ),
     },
     {
       accessorKey: "tanggalUpload",
-      header: () => <div className="text-center font-medium">Tanggal dan Jam Upload</div>,
+      header: () => (
+        <div className="text-center font-medium">Tanggal dan Jam Upload</div>
+      ),
       cell: ({ row }: any) => (
-        <div className="text-center text-sm">{formatTanggalUpload(row.getValue("tanggalUpload"))}</div>
+        <div className="text-center text-sm">
+          {formatTanggalUpload(row.getValue("tanggalUpload"))}
+        </div>
       ),
     },
     {
@@ -133,10 +185,21 @@ export function LaporanMonevKanwilTab() {
       header: () => <div className="text-center font-medium">Aksi</div>,
       cell: ({ row }: any) => (
         <div className="flex items-center justify-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleDownload(row.original)} className="h-8 w-8 p-0" title={row.original.fileName || "Download file"}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleDownload(row.original)}
+            className="h-8 w-8 p-0"
+            title={row.original.fileName || "Download file"}
+          >
             <Download className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)} className="h-8 w-8 p-0">
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => handleDelete(row.original.id)}
+            className="h-8 w-8 p-0"
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -150,9 +213,13 @@ export function LaporanMonevKanwilTab() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-center">Laporan Monev Kanwil</CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Filter Periode:</span>
+            <span className="text-sm text-muted-foreground">
+              Filter Periode:
+            </span>
             <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Semua Periode" /></SelectTrigger>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Semua Periode" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Periode</SelectItem>
                 <SelectItem value="0201">Semester I</SelectItem>
@@ -169,9 +236,17 @@ export function LaporanMonevKanwilTab() {
           </div>
         ) : null}
         {isLoading ? (
-          <TableSkeleton rows={10} />
+          <TableSkeleton rows={pagination.pageSize} />
         ) : (
-          <DataTable columns={columns} data={filteredData} emptyMessage="Tidak ada data laporan yang sesuai dengan filter" />
+          <DataTable
+            columns={columns}
+            data={rows}
+            manualPagination
+            rowCount={total}
+            controlledPagination={pagination}
+            onPaginationChange={setPagination}
+            emptyMessage="Tidak ada data laporan yang sesuai dengan filter"
+          />
         )}
       </CardContent>
       <DeleteLaporanModal

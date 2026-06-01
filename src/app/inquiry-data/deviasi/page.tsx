@@ -33,7 +33,7 @@ import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useAuth } from "@/hooks/useAuth";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
-import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
+import { X,  Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 
 export default function DeviasiPage() {
@@ -220,6 +220,20 @@ export default function DeviasiPage() {
     [unsavedChangesWarning]
   );
 
+  // Create stable queryLoader object for DynamicFiltersCard
+  const stableQueryLoader = useMemo(
+    () => ({
+      hasUnsavedChanges: queryLoader.hasUnsavedChanges,
+      loadQuery: handleLoadQuery,
+      validateQueryCompatibility: queryLoader.validateQueryCompatibility,
+    }),
+    [
+      queryLoader.hasUnsavedChanges,
+      handleLoadQuery,
+      queryLoader.validateQueryCompatibility,
+    ]
+  );
+
   // Remove a specific filter
   const removeFilter = (filterKey: string) => {
     setActiveFilters((prev) => prev.filter((key) => key !== filterKey));
@@ -337,6 +351,7 @@ export default function DeviasiPage() {
             filterValues={normalizedFilterValues}
             onFilterChange={handleFilterChange}
             scope="deviasi"
+            queryLoader={stableQueryLoader}
           />
         </Suspense>
       </div>
@@ -410,7 +425,7 @@ export default function DeviasiPage() {
               className="w-24"
               onClick={() => setIsQueryManagementOpen(false)}
             >
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         </DialogContent>

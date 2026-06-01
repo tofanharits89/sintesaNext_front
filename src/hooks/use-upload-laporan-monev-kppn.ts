@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/config/base-path";
+import { useAuth } from "@/hooks/useAuth";
 
 interface RawUploadLaporanMonevKppnRow {
   id: number | string;
@@ -32,7 +33,18 @@ export interface UploadLaporanMonevKppnRow {
   fileName: string;
 }
 
-const fetcher = async (url: string) => {
+interface UseUploadLaporanMonevKppnParams {
+  page: number;
+  limit: number;
+  periode?: string;
+}
+
+interface FetchResult {
+  data: RawUploadLaporanMonevKppnRow[];
+  total: number;
+}
+
+const fetcher = async (url: string): Promise<FetchResult> => {
   const resp = await fetch(url, {
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -52,22 +64,54 @@ const fetcher = async (url: string) => {
     throw new Error(message);
   }
 
-  if (!text.trim()) return [];
+  if (!text.trim()) return { data: [], total: 0 };
+
   const parsed = JSON.parse(text);
-  return parsed?.data ?? [];
+  return {
+    data: parsed?.data ?? [],
+    total: typeof parsed?.total === "number" ? parsed.total : 0,
+  };
 };
 
-export function useUploadLaporanMonevKppn() {
-  const { data, isLoading, error, refetch } = useQuery<
-    RawUploadLaporanMonevKppnRow[]
-  >({
-    queryKey: ["upload-laporan-monev-kppn"],
-    queryFn: () => fetcher(apiPath("/transfer-daerah/upload-laporan/kppn/monev")),
-    refetchOnWindowFocus: false,
+export function useUploadLaporanMonevKppn({
+  page,
+  limit,
+  periode,
+}: UseUploadLaporanMonevKppnParams) {
+  const { user } = useAuth();
+
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (periode && periode !== "all") {
+    params.set("periode", periode);
+  }
+
+  const url = apiPath(
+    `/transfer-daerah/upload-laporan/kppn/monev?${params.toString()}`
+  );
+
+  const { data, isLoading, error, refetch } = useQuery<FetchResult>({
+    queryKey: [
+      "upload-laporan-monev-kppn",
+      user?.role,
+      user?.kdkppn,
+      page,
+      limit,
+      periode,
+    ],
+    queryFn: () => fetcher(url),
+    refetchOnWindowFocus: "always",
+    refetchOnMount: "always",
     staleTime: 0,
+    gcTime: 0,
+    enabled: !!user,
   });
 
-  const uniqueRawRows = (data || []).filter((row, index, arr) => {
+  const rawRows = data?.data || [];
+  const total = data?.total ?? 0;
+
+  const uniqueRawRows = rawRows.filter((row, index, arr) => {
     const id = String(row.id ?? "");
     return arr.findIndex((x) => String(x.id ?? "") === id) === index;
   });
@@ -101,5 +145,5 @@ export function useUploadLaporanMonevKppn() {
     };
   });
 
-  return { rows, isLoading, error, refetch } as const;
+  return { rows, total, isLoading, error, refetch } as const;
 }

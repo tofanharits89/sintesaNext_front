@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Save } from "lucide-react";
+import { X,  Save } from "lucide-react";
 import { toast } from "sonner";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useNetworkStatus } from "@/hooks/use-network-status";
@@ -530,12 +530,12 @@ export function SimpanModal({
 
         <DialogFooter className="gap-2">
           <Button
-            variant="destructive"
+            variant="outline"
             className="w-24"
             onClick={handleClose}
             disabled={isOperationInProgress}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             onClick={() => handleSaveQuery()}

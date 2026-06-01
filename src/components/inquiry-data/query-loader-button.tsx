@@ -240,6 +240,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
+          noAnimate
           disabled={disabled || isLoading}
           className={`min-w-[180px] justify-between bg-white dark:bg-card hover:bg-zinc-200 ${className}`}
         >

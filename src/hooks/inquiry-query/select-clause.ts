@@ -583,18 +583,20 @@ export function buildSelectClause(
   } else if (reportParams.tipeLaporan === "deviasi_pnbp") {
     // Deviasi PNBP: PAGU + RENCANA & REALISASI per bulan
     // Table: monev{tahun}.pnbp_rencana_{tahun}
+    // Columns: pagu, rencjan - rencdes, realjan - realdes
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
     for (let month = 1; month <= cutOffNum; month++) {
-      const monthName = MONTH_NAMES[month - 1];
+      const monthSuffix = MONTH_NAMES[month - 1]!.toLowerCase();
+      const monthName = MONTH_NAMES[month - 1]!;
       selectColumns.push(
-        `ROUND(SUM(main.renc${month}) / ${divisor}, 0) AS RENCANA_${monthName}`,
+        `ROUND(SUM(main.renc${monthSuffix}) / ${divisor}, 0) AS RENCANA_${monthName}`,
       );
       selectColumns.push(
-        `ROUND(SUM(main.real${month}) / ${divisor}, 0) AS REALISASI_${monthName}`,
+        `ROUND(SUM(main.real${monthSuffix}) / ${divisor}, 0) AS REALISASI_${monthName}`,
       );
     }
-    const rencTotalPnbp = Array.from({ length: cutOffNum }, (_, i) => `main.renc${i + 1}`).join(" + ");
-    const realTotalPnbp = Array.from({ length: cutOffNum }, (_, i) => `main.real${i + 1}`).join(" + ");
+    const rencTotalPnbp = Array.from({ length: cutOffNum }, (_, i) => `main.renc${MONTH_NAMES[i]!.toLowerCase()}`).join(" + ");
+    const realTotalPnbp = Array.from({ length: cutOffNum }, (_, i) => `main.real${MONTH_NAMES[i]!.toLowerCase()}`).join(" + ");
     selectColumns.push(`ROUND(SUM(${rencTotalPnbp}) / ${divisor}, 0) AS TOTAL_RENCANA`);
     selectColumns.push(`ROUND(SUM(${realTotalPnbp}) / ${divisor}, 0) AS TOTAL_REALISASI`);
   } else {

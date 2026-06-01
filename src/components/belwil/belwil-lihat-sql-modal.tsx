@@ -18,7 +18,7 @@ import {
   TabsTrigger,
   TabsContents,
 } from "@/components/animate-ui/components/animate/tabs";
-import {
+import { X, 
   Code,
   Copy,
   Download,
@@ -306,11 +306,10 @@ export function BelwilLihatSqlModal({
 
         <DialogFooter className="flex-shrink-0 pt-4 border-t border-border/50">
           <Button
-            variant="destructive"
             className="w-full sm:w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -591,11 +590,10 @@ export function BelwilTematikLihatSqlModal({
 
         <DialogFooter className="flex-shrink-0 pt-4 border-t border-border/50">
           <Button
-            variant="destructive"
             className="w-full sm:w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -879,11 +877,10 @@ export function BelwilSubsidiLihatSqlModal({
 
         <DialogFooter className="flex-shrink-0 pt-4 border-t border-border/50">
           <Button
-            variant="destructive"
             className="w-full sm:w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1087,11 +1084,10 @@ export function BelwilBansosLihatSqlModal({
             </Button>
           </div>
           <Button
-            variant="destructive"
             className="w-full sm:w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

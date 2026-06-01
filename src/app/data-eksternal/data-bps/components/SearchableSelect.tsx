@@ -120,8 +120,8 @@ export function SearchableSelect({
             className="w-full justify-between border border-input bg-background text-sm hover:!bg-accent hover:!text-accent-foreground h-10 min-w-0 rounded-md px-3 py-2 text-left ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"
             disabled={disabled || isLoading}
           >
+            <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <span className=" truncate">{displayValue}</span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">

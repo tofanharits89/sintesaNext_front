@@ -294,7 +294,7 @@ export default function BelanjaNegaraWeekly({
                   return (
                     <TableRow key={idx} className={cn("hover:bg-muted/50 border-b border-border", `bn-tr-${level}`)}>
                       <TableCell className={cn(
-                        "p-3 text-left border-r border-border whitespace-normal min-w-[16rem]",
+                        "py-1.5 px-2 text-left border-r border-border whitespace-normal min-w-[16rem]",
                         level === "l1" && "font-bold text-[13px] bg-muted/30",
                         level === "l2" && "font-semibold pl-6",
                         level === "l3" && "font-normal pl-9 text-muted-foreground"
@@ -303,32 +303,32 @@ export default function BelanjaNegaraWeekly({
                       </TableCell>
 
                       {/* 2025 */}
-                      <TableCell className="p-3 text-right font-mono border-r border-border">{fmtTriliun(row["Pagu 2025"])}</TableCell>
-                      <TableCell className="p-3 text-right font-mono border-r border-border">{fmtTriliun(row.real_sd_prev_year)}</TableCell>
-                      <TableCell className="p-3 text-center border-r border-border">
-                        <Badge variant="secondary" className="font-bold px-3 font-mono">
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border">{fmtTriliun(row["Pagu 2025"])}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border">{fmtTriliun(row.real_sd_prev_year)}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-center border-r border-border">
+                        <Badge variant="secondary" className="font-bold px-2 py-0 min-h-0 h-5 font-mono items-center inline-flex">
                           {fmtPct(row["% Capaian 2025"])}
                         </Badge>
                       </TableCell>
 
                       {/* 2026 */}
-                      <TableCell className="p-3 text-right font-mono border-r border-border">{fmtTriliun(row["APBN 2026"])}</TableCell>
-                      <TableCell className="p-3 text-right font-mono border-r border-border">{fmtTriliun(row["DIPA 2026"])}</TableCell>
-                      <TableCell className="p-3 text-right font-mono border-r border-border">{fmtTriliun(row.real_sd_prev)}</TableCell>
-                      <TableCell className="p-3 text-right font-mono border-r border-border">{fmtTriliun(row.real_weekly)}</TableCell>
-                      <TableCell className="p-3 text-right font-mono border-r border-border bg-muted/20">{fmtTriliun(row.real_sd_curr)}</TableCell>
-                      <TableCell className="p-3 text-center border-r border-border">
-                        <Badge variant="secondary" className="font-bold px-3 font-mono">{fmtPct(row["% thd APBN"])}</Badge>
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border">{fmtTriliun(row["APBN 2026"])}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border">{fmtTriliun(row["DIPA 2026"])}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border">{fmtTriliun(row.real_sd_prev)}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border">{fmtTriliun(row.real_weekly)}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border bg-muted/20">{fmtTriliun(row.real_sd_curr)}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-center border-r border-border">
+                        <Badge variant="secondary" className="font-bold px-2 py-0 min-h-0 h-5 font-mono items-center inline-flex">{fmtPct(row["% thd APBN"])}</Badge>
                       </TableCell>
-                      <TableCell className="p-3 text-center border-r border-border">
-                        <Badge variant="secondary" className="font-bold px-3 font-mono">{fmtPct(row["% thd DIPA"])}</Badge>
+                      <TableCell className="py-1.5 px-2 text-center border-r border-border">
+                        <Badge variant="secondary" className="font-bold px-2 py-0 min-h-0 h-5 font-mono items-center inline-flex">{fmtPct(row["% thd DIPA"])}</Badge>
                       </TableCell>
-                      <TableCell className="p-3 text-right font-mono border-r border-border">{fmtTriliun(row["Sisa Pagu APBN"])}</TableCell>
-                      <TableCell className="p-3 text-center border-border">
+                      <TableCell className="py-1.5 px-2 text-right font-mono border-r border-border">{fmtTriliun(row["Sisa Pagu APBN"])}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-center border-border">
                         <Badge
                           variant="outline"
                           className={cn(
-                            "font-bold px-3 font-mono",
+                            "font-bold px-2 py-0 min-h-0 h-5 font-mono items-center inline-flex",
                             growth && growth > 0 ? "text-green-600 border-green-200 bg-green-50/50" :
                               growth && growth < 0 ? "text-red-600 border-red-200 bg-red-50/50" :
                                 "text-muted-foreground"

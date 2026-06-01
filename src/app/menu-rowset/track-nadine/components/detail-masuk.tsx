@@ -393,7 +393,7 @@ export default function Detail({
 
           <DialogFooter>
             <Button variant="secondary" onClick={handleCloseKonseptor}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         </DialogContent>

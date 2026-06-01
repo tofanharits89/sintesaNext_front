@@ -39,9 +39,9 @@ export function DatePicker({
   disabled = false,
   className,
   showTime = false,
-  captionLayout = "label",
-  startMonth,
-  endMonth,
+  captionLayout = "dropdown",
+  startMonth = new Date(2000, 0),
+  endMonth = new Date(new Date().getFullYear() + 10, 11),
   locale = id,
   disabledDates,
 }: DatePickerProps) {
@@ -96,7 +96,7 @@ export function DatePicker({
           variant={"outline"}
           noAnimate={true}
           className={cn(
-            "w-full justify-start text-left font-normal bg-zinc-100 dark:bg-black",
+            "w-full justify-start text-left font-normal bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors border-none",
             !selectedDate && "text-muted-foreground",
             className
           )}
@@ -121,8 +121,8 @@ export function DatePicker({
           onSelect={handleDateSelect}
           autoFocus
           captionLayout={captionLayout}
-          {...(startMonth && { startMonth })}
-          {...(endMonth && { endMonth })}
+          startMonth={startMonth}
+          endMonth={endMonth}
           locale={locale}
           disabled={disabledDates}
         />

@@ -1,5 +1,6 @@
 "use client";
 
+import { Save,  X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,7 +99,8 @@ export function LaporanKanwilModal({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex-1 overflow-y-auto p-6 space-y-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Row 1: Tahun + Kanwil */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Tahun */}
               <FormField
                 control={form.control}
@@ -177,7 +179,10 @@ export function LaporanKanwilModal({
                   </FormItem>
                 )}
               />
+            </div>
 
+            {/* Row 2: Jenis Laporan + Periode Laporan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Jenis Laporan - Fixed to Laporan Monev */}
               <FormField
                 control={form.control}
@@ -287,14 +292,14 @@ export function LaporanKanwilModal({
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={handleTutup}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
             form="laporan-kanwil-form"
             className="bg-slate-800 hover:bg-slate-900 text-white"
           >
-            Simpan
+            <Save className="h-4 w-4 mr-2" /> Simpan
           </Button>
         </DialogFooter>
       </DialogContent>

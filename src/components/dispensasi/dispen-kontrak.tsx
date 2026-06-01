@@ -7,10 +7,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
-import { PlusSquare, Trash2, Download, AlertTriangle } from "lucide-react";
+import { PlusSquare, Trash2, Download, AlertTriangle, Eye } from "lucide-react";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import RekamKontrak from "./rekam-kontrak";
 import { DataTable } from "@/components/ui/data-table";
+import { PdfViewerModal } from "@/components/transfer-daerah/modals/pdf-viewer-modal";
+import { KontrakListDialog } from "./kontrak-list-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,6 +65,39 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
   const [deleteTargetId, setDeleteTargetId] = useState("");
   const [deleteTargetCount, setDeleteTargetCount] = useState(0);
 
+  // States for PDF Viewer Modal
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [pdfTitle, setPdfTitle] = useState("");
+
+  // States for Kontrak List Dialog
+  const [isKontrakListOpen, setIsKontrakListOpen] = useState(false);
+  const [kontrakListId, setKontrakListId] = useState("");
+  const [kontrakListNopermohonan, setKontrakListNopermohonan] = useState("");
+  const [kontrakListNmsatker, setKontrakListNmsatker] = useState("");
+  const [kontrakListKdsatker, setKontrakListKdsatker] = useState("");
+
+  const handleOpenPreview = (id: string, nopermohonan: string) => {
+    const intId = parseInt(id, 10);
+    const fileUrl = `/api/v1/dispensasi/download-kontrak/${intId}`;
+    setPdfUrl(fileUrl);
+    setPdfTitle(`Dokumen Kontrak: ${nopermohonan}`);
+    setIsPdfOpen(true);
+  };
+
+  const handleOpenKontrakList = (
+    id: string,
+    nopermohonan: string,
+    nmsatker: string,
+    kdsatker: string
+  ) => {
+    setKontrakListId(id);
+    setKontrakListNopermohonan(nopermohonan);
+    setKontrakListNmsatker(nmsatker);
+    setKontrakListKdsatker(kdsatker);
+    setIsKontrakListOpen(true);
+  };
+
   // Load data on initial mount (only when user is available)
   useEffect(() => {
     if (user) {
@@ -109,7 +144,7 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
 
     const encodedQuery = encodeURIComponent(
       `SELECT a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.jmlkontrak jumlah,SUM(b.nilkontrak) nilaikontrak FROM laporan_2023.dispensasi_kontrak a LEFT JOIN laporan_2023.dispensasi_kontrak_lampiran b ON a.id=b.id_dispensasi::integer  LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${finalFilter ? `WHERE ${finalFilter}` : "  "
-      }GROUP BY a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.jmlkontrak ORDER BY a.id DESC`
+      }GROUP BY a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.jmlkontrak ORDER BY a.tgpermohonan DESC`
     );
 
     const cleanedQuery = decodeURIComponent(encodedQuery)
@@ -162,20 +197,7 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
 
   const confirmDelete = async () => {
     try {
-      const response = await fetch(
-        apiPath(`/dispensasi/dispkontrak/${deleteTargetId}`),
-        {
-          method: "DELETE",
-          credentials: "include",
-          headers: {
-            // Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await apiClient.delete(`/dispensasi/dispkontrak/${deleteTargetId}`);
 
       toast.success("Data telah dihapus.");
       getData();
@@ -287,57 +309,85 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
     {
       accessorKey: "jumlah",
       header: () => <div className="text-center font-medium">Jumlah Kontrak</div>,
-      cell: ({ row }) => <div className="text-center">{row.original.jumlah ?? "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <button
+            type="button"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2 font-medium cursor-pointer"
+            onClick={() =>
+              handleOpenKontrakList(
+                String(row.original.id),
+                row.original.nopermohonan?.trim() || "",
+                row.original.nmsatker?.trim() || "",
+                row.original.kdsatker
+              )
+            }
+            title="Lihat daftar Kontrak"
+          >
+            {row.original.jumlah ?? "-"}
+          </button>
+        </div>
+      ),
+    },
+    {
+      id: "file",
+      header: () => <div className="text-center font-medium">File</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
+            title="Pratinjau Dokumen (PDF)"
+            onClick={() => handleOpenPreview(String(row.original.id), row.original.nopermohonan)}
+          >
+            <Eye className="h-4 w-4 text-amber-600" />
+          </Button>
+        </div>
+      ),
     },
     {
       id: "aksi",
       header: () => <div className="text-center font-medium">Opsi</div>,
       cell: ({ row }) => (
-        <div className="flex items-center justify-center gap-2">
-          {user?.role !== "kppn" && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="Rekam Kontrak"
-              onClick={() =>
-                handleRekamKontrak(
-                  String(row.original.id),
-                  row.original.nopermohonan?.trim() || "",
-                  row.original.nmsatker?.trim() || "",
-                  row.original.kdsatker,
-                  row.original.thang
-                )
-              }
-            >
-              <PlusSquare className="h-4 w-4 text-blue-600" />
-            </Button>
+        <div className="text-center">
+          {user?.role !== "kppn" ? (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Rekam Kontrak"
+                onClick={() =>
+                  handleRekamKontrak(
+                    String(row.original.id),
+                    row.original.nopermohonan?.trim() || "",
+                    row.original.nmsatker?.trim() || "",
+                    row.original.kdsatker,
+                    row.original.thang
+                  )
+                }
+              >
+                <PlusSquare className="h-4 w-4 text-blue-600" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Hapus Dispensasi"
+                onClick={() =>
+                  handleHapusDispKontrak(
+                    String(row.original.id),
+                    row.original.jumlah ?? 0
+                  )
+                }
+              >
+                <Trash2 className="h-4 w-4 text-red-600" />
+              </Button>
+            </div>
+          ) : (
+            "-"
           )}
-          {user?.role !== "kppn" && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="Hapus Dispensasi"
-              onClick={() =>
-                handleHapusDispKontrak(
-                  String(row.original.id),
-                  row.original.jumlah ?? 0
-                )
-              }
-            >
-              <Trash2 className="h-4 w-4 text-red-600" />
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            title="Download Dokumen"
-            onClick={() => handledownloadKontrak(String(row.original.id))}
-          >
-            <Download className="h-4 w-4 text-amber-600" />
-          </Button>
         </div>
       ),
     },
@@ -366,6 +416,22 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
         nomor={nomor}
         kdsatker={kdsatker}
         nmsatker={nmsatker}
+      />
+
+      <PdfViewerModal
+        open={isPdfOpen}
+        onOpenChange={setIsPdfOpen}
+        url={pdfUrl}
+        title={pdfTitle}
+      />
+
+      <KontrakListDialog
+        open={isKontrakListOpen}
+        onOpenChange={setIsKontrakListOpen}
+        id={kontrakListId}
+        nopermohonan={kontrakListNopermohonan}
+        nmsatker={kontrakListNmsatker}
+        kdsatker={kontrakListKdsatker}
       />
 
       {/* Delete Confirmation Dialog */}

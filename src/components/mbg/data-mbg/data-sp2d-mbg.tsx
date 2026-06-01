@@ -274,8 +274,6 @@ function TabRealisasiBGN() {
                 date={tglAwal}
                 onDateChange={setTglAwal}
                 placeholder="Pilih Tanggal Awal"
-                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
-                captionLayout="dropdown"
                 startMonth={new Date(2020, 0)}
                 endMonth={new Date(new Date().getFullYear() + 5, 11)}
               />
@@ -286,8 +284,6 @@ function TabRealisasiBGN() {
                 date={tglAkhir}
                 onDateChange={setTglAkhir}
                 placeholder="Pilih Tanggal Akhir"
-                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
-                captionLayout="dropdown"
                 startMonth={new Date(2020, 0)}
                 endMonth={new Date(new Date().getFullYear() + 5, 11)}
               />
@@ -869,8 +865,6 @@ function DataSpasial() {
                 date={dateFrom}
                 onDateChange={setDateFrom}
                 placeholder="Pilih Tanggal Dari"
-                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
-                captionLayout="dropdown"
                 startMonth={new Date(2025, 8)}
                 endMonth={new Date(new Date().getFullYear() + 1, 11)}
               />
@@ -882,8 +876,6 @@ function DataSpasial() {
                 date={dateTo}
                 onDateChange={setDateTo}
                 placeholder="Pilih Tanggal Sampai"
-                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
-                captionLayout="dropdown"
                 startMonth={new Date(2025, 8)}
                 endMonth={new Date(new Date().getFullYear() + 1, 11)}
               />

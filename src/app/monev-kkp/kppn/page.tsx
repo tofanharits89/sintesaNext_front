@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { useAuth } from "@/hooks/useAuth";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -126,52 +127,44 @@ export default function MonevKkpKppnPage() {
         const ts = new Date().getTime();
 
         // Fetch current status
-        const response = await fetch(
-          apiPath(
-            `/monev-kkp/status-laporan?tahun=${selectedYear}&triwulan=${triwulan}&_t=${ts}`,
-          ),
-          {
-            credentials: "include",
-            cache: "no-store",
+        const url = `/monev-kkp/status-laporan?tahun=${selectedYear}&triwulan=${triwulan}&_t=${ts}`;
+        try {
+          const result = await apiClient.get(url, {
             headers: {
               "Cache-Control": "no-cache",
               Pragma: "no-cache",
             },
-          },
-        );
-        if (response.ok) {
-          const result = await response.json();
-          if (result.data?.sts_kirim_kppn === "1") {
+          });
+          if (result && result.data?.sts_kirim_kppn === "1") {
             setStatusLaporan("sent");
             setTglKirimKppn(result.data?.tgkirim_kppn || null);
           } else {
             setStatusLaporan("not_sent");
             setTglKirimKppn(null);
           }
+        } catch (error) {
+          console.error("Failed to fetch current status:", error);
         }
 
         // Fetch previous status if triwulan > 1
         const triwulanInt = parseInt(triwulan);
         if (triwulanInt > 1) {
           const prevTriwulan = String(triwulanInt - 1);
-          const prevResponse = await fetch(
-            apiPath(
-              `/monev-kkp/status-laporan?tahun=${selectedYear}&triwulan=${prevTriwulan}&_t=${ts}`,
-            ),
-            {
-              credentials: "include",
-              cache: "no-store",
+          const prevUrl = `/monev-kkp/status-laporan?tahun=${selectedYear}&triwulan=${prevTriwulan}&_t=${ts}`;
+          try {
+            const prevResult = await apiClient.get(prevUrl, {
               headers: {
                 "Cache-Control": "no-cache",
                 Pragma: "no-cache",
               },
-            },
-          );
-          if (prevResponse.ok) {
-            const prevResult = await prevResponse.json();
-            setPrevStatusLaporan(
-              prevResult.data?.sts_kirim_kppn === "1" ? "sent" : "not_sent",
-            );
+            });
+            if (prevResult) {
+              setPrevStatusLaporan(
+                prevResult.data?.sts_kirim_kppn === "1" ? "sent" : "not_sent",
+              );
+            }
+          } catch (error) {
+            console.error("Failed to fetch previous status:", error);
           }
         } else {
           setPrevStatusLaporan("sent"); // Q1 is always allowed
@@ -208,16 +201,12 @@ export default function MonevKkpKppnPage() {
       toast.info("Sedang menyiapkan data Excel, harap tunggu...");
       const triwulanNum = selectedPeriode.replace("Q", "");
       const ts = new Date().getTime();
-      const apiUrl = apiPath(
-        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulanNum}&kdkppn=${user?.kdkppn}&page=1&limit=100000&_t=${ts}`,
-      );
-      const response = await fetch(apiUrl, {
-        credentials: "include",
-        cache: "no-store",
+      const url = `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulanNum}&kdkppn=${user?.kdkppn || "all"}&page=1&limit=100000&_t=${ts}`;
+      
+      const result = await apiClient.get(url, {
         headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
       });
-      if (!response.ok) throw new Error("Gagal mengambil data untuk export");
-      const result = await response.json();
+      if (!result) throw new Error("Gagal mengambil data untuk export");
 
       const data: KkpData[] = (result.data || []).map((item: any, index: number) => ({
         id: `${item.kdsatker}-${index}`,
@@ -611,17 +600,10 @@ export default function MonevKkpKppnPage() {
     setIsSending(true);
     try {
       const triwulan = selectedPeriode.replace("Q", "");
-      const response = await fetch(apiPath("/monev-kkp/kirim-laporan"), {
-        method: "POST",
-        credentials: "include",
-        headers: addCsrfToHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ tahun: selectedYear, triwulan }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(result.message || "Gagal mengirim laporan");
+      const result = await apiClient.post("/monev-kkp/kirim-laporan", { tahun: selectedYear, triwulan });
+      
+      if (!result) {
+        toast.error("Gagal mengirim laporan");
         return;
       }
 

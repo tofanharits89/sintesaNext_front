@@ -1,5 +1,6 @@
 "use client";
 
+import { Save,  X } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -7,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,13 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils/utils";
 import { KmkPenundaanListModal } from "./kmk-penundaan-list-modal";
@@ -52,7 +47,6 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
     kdpemda: "",
   });
   const [isKmkPenundaanListOpen, setIsKmkPenundaanListOpen] = useState(false);
-  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -239,42 +233,11 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
               {/* Tanggal KMK */}
               <div className="space-y-2">
                 <Label>Tanggal KMK</Label>
-                <Popover
-                  modal={false}
-                  open={datePopoverOpen}
-                  onOpenChange={setDatePopoverOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal bg-zinc-100 dark:bg-black",
-                        !formData.tanggalKmk && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.tanggalKmk
-                        ? format(formData.tanggalKmk, "dd/MM/yyyy")
-                        : "Pilih tanggal KMK"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto p-0"
-                    align="start"
-                    onOpenAutoFocus={(e) => e.preventDefault()}
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={formData.tanggalKmk}
-                      onSelect={(date) => {
-                        setFormData({ ...formData, tanggalKmk: date });
-                        // close popover after selecting a date
-                        setDatePopoverOpen(false);
-                      }}
-                      autoFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePicker
+                  date={formData.tanggalKmk}
+                  onDateChange={(date) => setFormData({ ...formData, tanggalKmk: date })}
+                  placeholder="Pilih tanggal KMK"
+                />
               </div>
             </div>
 
@@ -310,13 +273,13 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleTutup}>
-                Tutup
+                <X className="h-4 w-4 mr-2" /> Batal
               </Button>
               <Button
                 onClick={handleSubmit}
                 className="bg-slate-800 hover:bg-slate-900"
               >
-                Simpan
+                <Save className="h-4 w-4 mr-2" /> Simpan
               </Button>
             </div>
           </DialogFooter>

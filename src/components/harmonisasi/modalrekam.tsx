@@ -19,7 +19,7 @@ import {
 } from "@/components/animate-ui/components/animate/tabs";
 import { http } from "@/lib/api/httpClient";
 import { toast } from "sonner";
-import { Info } from "lucide-react";
+import { Save,  X,  Info } from "lucide-react";
 import { apiPath } from "@/lib/config/base-path";
 import {
   Tooltip,
@@ -543,14 +543,14 @@ export default function Rekam({
 
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={onHide}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button
             type="submit"
             form="rekam-form"
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
-            Simpan
+            <Save className="h-4 w-4 mr-2" /> Simpan
           </Button>
         </DialogFooter>
       </DialogContent>

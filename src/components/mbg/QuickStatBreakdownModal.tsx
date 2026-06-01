@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
@@ -243,7 +244,7 @@ export function QuickStatBreakdownModal({
                 <Button
                   className="px-8"
                 >
-                  Tutup
+                  <X className="h-4 w-4 mr-2" /> Tutup
                 </Button>
               </DialogClose>
             </div>

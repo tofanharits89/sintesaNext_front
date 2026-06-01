@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
 import { Loading2 } from "../../layout/LoadingTable";
 import { Trash2 } from "lucide-react";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 
 interface DataKontrakDetailProps {
   cek: boolean;
@@ -72,41 +72,16 @@ export default function DataKontrakDetail({ cek, id }: DataKontrakDetailProps) {
     kdkppn: string,
     id_dispensasi: string
   ) => {
-    Swal.fire({
-      title: "Konfirmasi Hapus",
-      text: "Anda yakin ingin menghapus data ini?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, Hapus",
-      cancelButtonText: "Batal",
-      position: "top",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const response = await fetch(
-            apiPath(`/dispensasi/kontrak/${id}/${id_dispensasi}`),
-            {
-              method: "DELETE",
-              credentials: "include",
-              headers: {
-                // Authorization: `Bearer ${user?.token}`,
-              },
-            }
-          );
+    if (confirm("Anda yakin ingin menghapus data ini?")) {
+      try {
+        await apiClient.delete(`/dispensasi/kontrak/${id}/${id_dispensasi}`);
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          toast.success("Data telah dihapus.");
-          getData();
-        } catch (error) {
-          toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
-        }
+        toast.success("Data telah dihapus.");
+        getData();
+      } catch (error) {
+        toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
       }
-    });
+    }
   };
 
   return (

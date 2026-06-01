@@ -337,7 +337,7 @@ export default function WeeklyLanding() {
               <TabsTrigger
                 key={item.id}
                 value={item.id}
-                className="h-10 md:h-full px-3 md:px-4 py-0 text-xs sm:text-sm flex items-center justify-center whitespace-nowrap gap-2"
+                className="h-10 px-3 md:px-4 text-xs sm:text-sm flex items-center justify-center whitespace-nowrap gap-2"
               >
                 {item.icon}
                 <span className="font-medium">{item.title}</span>

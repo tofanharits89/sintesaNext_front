@@ -10,7 +10,7 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { X,  ChevronLeft, ChevronRight } from "lucide-react";
 import { useKmkPencabutan } from "@/hooks/use-kmk-pencabutan";
 
 interface KmkPenundaanListModalProps {
@@ -223,11 +223,10 @@ export function KmkPenundaanListModal({
             </Button>
           </div>
           <Button
-            variant="destructive"
             className="w-24"
             onClick={() => onOpenChange(false)}
           >
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Tutup
           </Button>
         </DialogFooter>
       </DialogContent>

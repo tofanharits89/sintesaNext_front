@@ -1,33 +1,19 @@
-import React from "react";
+"use client";
+
+import React, { useMemo } from "react";
+import { ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils/utils";
-import { ListFilter, Table2 } from "lucide-react";
-import { DDHeaderTableProps } from "./types";
+import { DataTable } from "@/components/ui/data-table";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Table2 } from "lucide-react";
+import { DDHeaderData, DDHeaderTableProps } from "./types";
+
+const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n || 0);
+
+const months = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
 
 export const DDHeaderTable: React.FC<DDHeaderTableProps> = ({
   tableData,
@@ -38,224 +24,147 @@ export const DDHeaderTable: React.FC<DDHeaderTableProps> = ({
   setItemsPerPage,
   loadingResults = false,
 }) => {
-  const totalRows = tableData.length;
-  const totalPages = Math.ceil(totalRows / itemsPerPage) || 1;
-  const currentData = tableData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const startEntry = totalRows === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-  const endEntry = Math.min(currentPage * itemsPerPage, totalRows);
-
-  const months = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-  ];
-  const shortMonths = [
-    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-    "Jul", "Ags", "Sep", "Okt", "Nov", "Des"
-  ];
+  const columns = useMemo<ColumnDef<DDHeaderData>[]>(() => [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "thang",
+      header: () => <div className="text-center font-medium">Tahun</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("thang")}</div>,
+    },
+    {
+      accessorKey: "kdkanwil",
+      header: () => <div className="text-center font-medium">Kanwil</div>,
+      cell: ({ row }) => <div className="text-center font-mono">{row.getValue("kdkanwil")}</div>,
+    },
+    {
+      accessorKey: "nmkanwil",
+      header: () => <div className="text-center font-medium">Nama Kanwil</div>,
+      cell: ({ row }) => (
+        <div className="text-left max-w-[180px] truncate" title={row.getValue("nmkanwil")}>
+          {row.getValue("nmkanwil")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "kdkppn",
+      header: () => <div className="text-center font-medium">KPPN</div>,
+      cell: ({ row }) => <div className="text-center font-mono">{row.getValue("kdkppn")}</div>,
+    },
+    {
+      accessorKey: "nmkppn",
+      header: () => <div className="text-center font-medium">Nama KPPN</div>,
+      cell: ({ row }) => (
+        <div className="text-left max-w-[180px] truncate" title={row.getValue("nmkppn")}>
+          {row.getValue("nmkppn")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "kdlokasi",
+      header: () => <div className="text-center font-medium">Lokasi</div>,
+      cell: ({ row }) => <div className="text-center font-mono">{row.getValue("kdlokasi")}</div>,
+    },
+    {
+      accessorKey: "nmkabkota",
+      header: () => <div className="text-center font-medium">Nama Pemda</div>,
+      cell: ({ row }) => (
+        <div className="text-left max-w-[180px] truncate" title={row.getValue("nmkabkota")}>
+          {row.getValue("nmkabkota") || "-"}
+        </div>
+      ),
+      footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
+    },
+    {
+      accessorKey: "pagu",
+      header: () => <div className="text-center font-medium">Pagu</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-mono tabular-nums pr-2">
+          {fmt(row.getValue("pagu"))}
+        </div>
+      ),
+      footer: ({ table }) => (
+        <div className="text-right font-mono tabular-nums pr-2 font-bold">
+          {fmt(table.getFilteredRowModel().rows.reduce((sum, row) => sum + (Number(row.getValue("pagu")) || 0), 0))}
+        </div>
+      ),
+    },
+    ...months.map((month) => ({
+      accessorKey: month,
+      header: () => <div className="text-center font-medium">{month.slice(0, 3)}</div>,
+      cell: ({ row }: any) => (
+        <div className="text-right font-mono tabular-nums pr-2">
+          {fmt(row.getValue(month))}
+        </div>
+      ),
+      footer: ({ table }: any) => (
+        <div className="text-right font-mono tabular-nums pr-2 font-bold">
+          {fmt(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue(month)) || 0), 0))}
+        </div>
+      ),
+    })),
+    {
+      accessorKey: "total_nilai",
+      header: () => <div className="text-center font-medium">Total</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-mono tabular-nums pr-2 font-semibold">
+          {fmt(row.getValue("total_nilai"))}
+        </div>
+      ),
+      footer: ({ table }) => (
+        <div className="text-right font-mono tabular-nums pr-2 font-bold">
+          {fmt(table.getFilteredRowModel().rows.reduce((sum, row) => sum + (Number(row.getValue("total_nilai")) || 0), 0))}
+        </div>
+      ),
+    },
+  ], []);
 
   return (
-    <div className="results-section space-y-4">
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <ListFilter className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base font-semibold">
-              Hasil Data Dana Desa
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loadingResults ? (
-            <TableSkeleton rows={itemsPerPage} />
-          ) : !showResults ? (
-            <div className="border rounded-md">
-              <div className="h-10 bg-muted/50 border-b flex items-center px-4">
-                <div className="text-xs font-medium text-muted-foreground uppercase">
-                  Data belum ditarik
-                </div>
-              </div>
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
-                <Table2 className="h-10 w-10 mb-2 opacity-20" />
-                <p className="text-sm">
-                  Silahkan Pilih Parameter dan klik "Tayang" untuk menampilkan hasil
-                </p>
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base font-semibold">Hasil Data Dana Desa</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loadingResults ? (
+          <TableSkeleton rows={itemsPerPage} />
+        ) : !showResults ? (
+          <div className="border rounded-md">
+            <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+              <div className="text-xs font-medium text-muted-foreground uppercase">
+                Data belum ditarik
               </div>
             </div>
-          ) : (
-            <>
-              <div className="rounded-md border overflow-hidden">
-                <div className="overflow-x-auto no-scrollbar">
-                  <Table className="border-separate border-spacing-0 relative" style={{ minWidth: "2200px" }}>
-                    <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
-                      <TableRow>
-                        <TableHead className="border-b border-r text-center font-bold w-[60px]">No</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">Tahun</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">Kanwil</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">Nama Kanwil</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">KPPN</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">Nama KPPN</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">Lokasi</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">Nama Pemda</TableHead>
-                        <TableHead className="border-b border-r text-center font-bold">Pagu</TableHead>
-                        {shortMonths.map((m) => (
-                          <TableHead key={m} className="border-b border-r text-center font-bold bg-muted/30">{m}</TableHead>
-                        ))}
-                        <TableHead className="border-b text-center font-bold">Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentData.length > 0 ? (
-                        currentData.map((row, index) => (
-                          <TableRow key={index} className="hover:bg-muted/50 transition-colors">
-                            <TableCell className="border-b border-r text-center">
-                              {(currentPage - 1) * itemsPerPage + index + 1}
-                            </TableCell>
-                            <TableCell className="border-b border-r text-center whitespace-nowrap">{row.thang}</TableCell>
-                            <TableCell className="border-b border-r text-center whitespace-nowrap">{row.kdkanwil}</TableCell>
-                            <TableCell className="border-b border-r text-left max-w-[200px] truncate" title={row.nmkanwil}>{row.nmkanwil}</TableCell>
-                            <TableCell className="border-b border-r text-center whitespace-nowrap">{row.kdkppn}</TableCell>
-                            <TableCell className="border-b border-r text-left max-w-[200px] truncate" title={row.nmkppn}>{row.nmkppn}</TableCell>
-                            <TableCell className="border-b border-r text-center whitespace-nowrap">{row.kdlokasi}</TableCell>
-                            <TableCell className="border-b border-r text-left max-w-[200px] truncate" title={row.nmkabkota}>{row.nmkabkota}</TableCell>
-                            <TableCell className="border-b border-r text-right font-medium">
-                              {new Intl.NumberFormat("id-ID").format(row.pagu || 0)}
-                            </TableCell>
-                            {months.map((m) => (
-                              <TableCell key={m} className="border-b border-r text-right">
-                                {new Intl.NumberFormat("id-ID").format(row[m] || 0)}
-                              </TableCell>
-                            ))}
-                            <TableCell className="border-b text-right font-bold">
-                              {new Intl.NumberFormat("id-ID").format(row.total_nilai || 0)}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={22} className="h-24 text-center text-muted-foreground">
-                            Tidak ada data yang ditampilkan.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Standard Pagination matching DAU page */}
-              <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4">
-                <div className="flex items-center space-x-2 order-2 md:order-1">
-                  <p className="text-sm font-medium">Rows per page</p>
-                  <Select
-                    value={`${itemsPerPage}`}
-                    onValueChange={(value) => {
-                      setItemsPerPage(Number(value));
-                      setCurrentPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={itemsPerPage} />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[10, 25, 50, 100].map((pageSize) => (
-                        <SelectItem key={pageSize} value={`${pageSize}`}>
-                          {pageSize}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
-                  <Pagination className="mx-auto justify-center">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (currentPage > 1) setCurrentPage(currentPage - 1);
-                          }}
-                          className={cn(
-                            "cursor-pointer select-none",
-                            currentPage === 1 && "pointer-events-none opacity-50"
-                          )}
-                        />
-                      </PaginationItem>
-
-                      {/* Page Numbers */}
-                      {(() => {
-                        const items = [];
-                        const maxVisible = 5;
-                        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-                        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-                        if (endPage - startPage + 1 < maxVisible) {
-                          startPage = Math.max(1, endPage - maxVisible + 1);
-                        }
-
-                        if (startPage > 1) {
-                          items.push(
-                            <PaginationItem key={1}>
-                              <PaginationLink onClick={() => setCurrentPage(1)}>1</PaginationLink>
-                            </PaginationItem>
-                          );
-                          if (startPage > 2) items.push(<PaginationEllipsis key="e1" />);
-                        }
-
-                        for (let i = startPage; i <= endPage; i++) {
-                          items.push(
-                            <PaginationItem key={i}>
-                              <PaginationLink
-                                isActive={currentPage === i}
-                                onClick={() => setCurrentPage(i)}
-                                className="cursor-pointer"
-                              >
-                                {i}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        }
-
-                        if (endPage < totalPages) {
-                          if (endPage < totalPages - 1) items.push(<PaginationEllipsis key="e2" />);
-                          items.push(
-                            <PaginationItem key={totalPages}>
-                              <PaginationLink onClick={() => setCurrentPage(totalPages)}>{totalPages}</PaginationLink>
-                            </PaginationItem>
-                          );
-                        }
-
-                        return items;
-                      })()}
-
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                          }}
-                          className={cn(
-                            "cursor-pointer select-none",
-                            currentPage === totalPages && "pointer-events-none opacity-50"
-                          )}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-
-                <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
-                  Showing {startEntry}-{endEntry} of {totalRows} entries
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+              <Table2 className="h-10 w-10 mb-2 opacity-20" />
+              <p className="text-sm">
+                Silahkan Pilih Parameter dan klik &quot;Tayang&quot; untuk menampilkan hasil
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto no-scrollbar">
+            <DataTable
+              columns={columns}
+              data={tableData}
+              initialPageSize={itemsPerPage}
+              showFooter={true}
+              emptyMessage="Tidak ada data yang ditampilkan."
+              tableClassName="text-sm"
+              onPaginationChange={(p) => {
+                setCurrentPage(p.pageIndex + 1);
+                setItemsPerPage(p.pageSize);
+              }}
+              controlledPagination={{
+                pageIndex: currentPage - 1,
+                pageSize: itemsPerPage,
+              }}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

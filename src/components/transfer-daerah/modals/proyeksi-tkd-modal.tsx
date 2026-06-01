@@ -1,5 +1,6 @@
 "use client";
 
+import { Save,  X } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -579,13 +580,13 @@ export function ProyeksiTkdModal({
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleTutup}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               onClick={handleSubmit}
               className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white"
             >
-              Simpan
+              <Save className="h-4 w-4 mr-2" /> Simpan
             </Button>
           </div>
         </DialogFooter>

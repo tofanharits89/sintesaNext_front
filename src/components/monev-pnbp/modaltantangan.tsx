@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { MessageSquareText } from "lucide-react";
+import { Save,  X,  MessageSquareText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -476,10 +476,10 @@ export default function RekamanTantangan({
         </div>
         <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" type="button" onClick={onHide}>
-            Tutup
+            <X className="h-4 w-4 mr-2" /> Batal
           </Button>
           <Button variant="default" type="submit" form={formId}>
-            Simpan
+            <Save className="h-4 w-4 mr-2" /> Simpan
           </Button>
         </DialogFooter>
       </DialogContent>

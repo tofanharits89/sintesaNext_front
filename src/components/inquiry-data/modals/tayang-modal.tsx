@@ -28,7 +28,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import {
+import { X, 
   RefreshCw,
   Search,
   Clock,
@@ -169,7 +169,16 @@ export function TayangModal({
       "JUL", "AGS", "SEP", "OKT", "NOV", "DES", "JMLPNRK",
       "RUPIAH",
     ];
-    return summableColumns.includes(column.toUpperCase());
+    const upper = column.toUpperCase();
+    return (
+      summableColumns.includes(upper) ||
+      upper.startsWith("RENCANA_") ||
+      upper.startsWith("REALISASI_") ||
+      upper.startsWith("RENC") ||
+      upper.startsWith("REAL") ||
+      upper === "TOTAL_RENCANA" ||
+      upper === "TOTAL_REALISASI"
+    );
   };
 
   // Grand totals — prefer server-provided, fallback to client sum
@@ -238,6 +247,9 @@ export function TayangModal({
     return (
       lower.includes("pagu") ||
       lower.includes("realisasi") ||
+      lower.includes("rencana") ||
+      lower.includes("renc") ||
+      lower.includes("real") ||
       lower.includes("blokir") ||
       lower.includes("anggaran") ||
       lower === "jmlpnrk" ||
@@ -708,8 +720,8 @@ export function TayangModal({
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                   {displayStart}-{displayEnd} dari {totalAvailable} baris
                 </span>
-                <Button variant="destructive" onClick={handleCloseModal} className="w-20">
-                  Tutup
+                <Button onClick={handleCloseModal} className="w-24">
+                  <X className="h-4 w-4 mr-2" /> Tutup
                 </Button>
               </div>
             </div>
@@ -768,8 +780,8 @@ export function TayangModal({
               </div>
 
               {/* Close button full width */}
-              <Button variant="destructive" onClick={handleCloseModal} className="w-full h-9">
-                Tutup
+              <Button onClick={handleCloseModal} className="w-full h-9">
+                <X className="h-4 w-4 mr-2" /> Tutup
               </Button>
             </div>
           </>
@@ -778,8 +790,8 @@ export function TayangModal({
         {/* Close button when no data yet */}
         {!(lastResult && lastResult.success && lastResult.data) && (
           <DialogFooter className="shrink-0 flex-shrink-0 pt-4 border-t border-border/50">
-            <Button variant="destructive" onClick={handleCloseModal} className="w-full sm:w-24">
-              Tutup
+            <Button onClick={handleCloseModal} className="w-full sm:w-24">
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         )}

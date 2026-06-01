@@ -30,7 +30,7 @@ import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useAuth } from "@/hooks/useAuth";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
-import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
+import { X,  Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 
 export default function UpTupPage() {
@@ -411,7 +411,7 @@ export default function UpTupPage() {
           </div>
           <DialogFooter>
             <Button variant="destructive" className="w-24" onClick={() => setIsQueryManagementOpen(false)}>
-              Tutup
+              <X className="h-4 w-4 mr-2" /> Tutup
             </Button>
           </DialogFooter>
         </DialogContent>

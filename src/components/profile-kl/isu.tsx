@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { X,  Save,  Loader2 } from "lucide-react";
 
 export interface IsuRow {
   id: number;
@@ -146,7 +146,7 @@ export default function Isu({ show, handleClose, data, isi }: IsuProps) {
               disabled={loading}
               className="px-6"
             >
-              Batal
+              <X className="h-4 w-4 mr-2" /> Batal
             </Button>
             <Button
               type="submit"
@@ -159,7 +159,7 @@ export default function Isu({ show, handleClose, data, isi }: IsuProps) {
                   Menyimpan...
                 </>
               ) : (
-                "Simpan"
+                <><Save className="h-4 w-4 mr-2" /> Simpan</>
               )}
             </Button>
           </DialogFooter>

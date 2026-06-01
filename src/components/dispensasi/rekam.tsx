@@ -20,25 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
-import DatePicker from "react-datepicker";
-import {
-  Formik,
-  ErrorMessage,
-  FormikHelpers,
-  FormikProps,
-} from "formik";
-import * as Yup from "yup";
-import "react-datepicker/dist/react-datepicker.css";
-import Swal from "sweetalert2";
+import { DatePicker } from "@/components/ui/date-picker";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
 import moment from "moment";
 import { X, Save } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiPath } from "@/lib/config/base-path";
+import { apiClient } from "@/lib/api/httpClient";
 
 interface RekamProps {
   show: boolean;
   onHide: () => void;
+  onSuccess?: () => void;
   tahun?: string;
   id?: string;
   nomor?: string;
@@ -58,145 +55,95 @@ interface FormValues {
   nomorPermohonan: string;
   satker: string;
   dispen: string;
-  alasan2: string;
+  alasan2?: string | undefined;
   jenis: string;
   tanggalPersetujuan: string | null;
   nomorPersetujuan: string;
-  cara_upload: string;
+  cara_upload?: string | undefined;
   file: File | null;
-  username?: string;
-  kdkanwil?: string | number;
+  username?: string | undefined;
+  kdkanwil?: string | number | undefined;
 }
 
-
-// Helper for HTTP errors
 const handleHttpError = (status: any, msg: string) => console.error(msg);
+
+const validationSchema = z.object({
+  tahun: z.string().min(1, "Tahun harus diisi"),
+  jenis: z.string().min(1, "Jenis harus diisi"),
+  tanggalPermohonan: z.any().refine(val => val !== null && val !== undefined && val !== "", "Tanggal Permohonan harus diisi"),
+  nomorPermohonan: z.string().min(1, "Nomor Permohonan harus diisi"),
+  satker: z.string().min(1, "Satker harus diisi"),
+  dispen: z.string().min(1, "Jenis harus dipilih"),
+  alasan2: z.string().optional().or(z.literal("")),
+  tanggalPersetujuan: z.any().refine(val => val !== null && val !== undefined && val !== "", "Tanggal Persetujuan harus diisi"),
+  nomorPersetujuan: z.string().min(1, "Nomor Persetujuan harus diisi"),
+  file: z.any()
+    .refine((val) => val instanceof File, "File belum dipilih")
+    .refine((val) => !(val instanceof File) || val.size <= 2 * 1024 * 1024, "Ukuran file terlalu besar (maks 2MB)")
+    .refine((val) => !(val instanceof File) || val.type === "application/pdf", "Hanya file berekstensi PDF yang diperbolehkan")
+}).superRefine((data, ctx) => {
+  if (data.dispen === "07" && (!data.alasan2 || data.alasan2.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["alasan2"],
+      message: "Alasan harus diisi"
+    });
+  }
+});
 
 export default function Rekam({
   show,
   onHide,
+  onSuccess,
   tahun: propTahun,
   id,
   nomor,
   kdsatker,
   nmsatker,
 }: RekamProps) {
-  // Get auth values
   const { user } = useAuth();
   const kdkanwil = user?.kdkanwil || "";
   const role = user?.role || "";
   const username = user?.username || "";
 
-
   const [loading, setLoading] = useState(false);
   const [selectedSatker, setSelectedSatker] = useState<OptionType | null>(null);
   const [searchResults, setSearchResults] = useState<OptionType[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [data, setData] = useState<OptionType[]>([]);
   const [jenisspm, setJenisspm] = useState("");
   const [tahun, setTahun] = useState<string>(
     propTahun || String(new Date().getFullYear())
   );
   const [jenisdispensasi, setjenisdispensasi] = useState(false);
-  const [uraian, setUraian] = useState(false);
   const [dispen, setDispen] = useState("");
 
-  const handleTahunChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedTahun = event.target.value;
-    setTahun(selectedTahun);
-  };
-
   const handleAlasanChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-    setFieldValue?: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean
-    ) => void
+    value: string
   ) => {
-    const selectedDispen = event.target.value;
-    setDispen(selectedDispen);
-    if (selectedDispen !== "07" && setFieldValue) {
-      setFieldValue("alasan2", "");
-    }
-  };
-
-  const handleJenisChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-    setFieldValue?: (
-      field: string,
-      value: any,
-      shouldValidate?: boolean
-    ) => void
-  ) => {
-    const selectedJenis = event.target.value;
-    setjenisdispensasi(selectedJenis === "" ? false : true);
-    setJenisspm(selectedJenis);
-    if (selectedJenis === "04" && setFieldValue) {
-      setFieldValue("dispen", "07");
-      setjenisdispensasi(true);
-    } else if (setFieldValue) {
-      setFieldValue("dispen", "");
+    setDispen(value);
+    if (value !== "07") {
+      setValue("alasan2", "");
     }
   };
 
   useEffect(() => {
     if (jenisspm === "04") {
       setDispen("07");
+      setValue("dispen", "07");
       setjenisdispensasi(true);
     } else {
       setDispen("");
     }
   }, [jenisspm]);
 
-  const validationSchema = Yup.object().shape({
-    tahun: Yup.string().required("Tahun harus diisi"),
-    jenis: Yup.string().required("Jenis harus diisi"),
-    tanggalPermohonan: Yup.string().required("Tanggal Permohonan harus diisi"),
-    nomorPermohonan: Yup.string().required("Nomor Permohonan harus diisi"),
-    satker: Yup.string().required("Satker harus diisi"),
-    dispen: Yup.string().required("Jenis harus dipilih"),
-    alasan2: Yup.string().when("dispen", {
-      is: (d: string) => d === "07",
-      then: () => Yup.string().required("Alasan harus diisi"),
-    }),
-    tanggalPersetujuan: Yup.string().required(
-      "Tanggal Persetujuan harus diisi"
-    ),
-    nomorPersetujuan: Yup.string().required("Nomor Persetujuan harus diisi"),
-    file: Yup.mixed()
-      .required("File belum dipilih")
-      .test(
-        "fileSize",
-        "Ukuran file terlalu besar (maks 2MB)",
-        (value: any) => {
-          if (!value) return true;
-          return value.size <= 2 * 1024 * 1024;
-        }
-      )
-      .test(
-        "fileType",
-        "Hanya file berekstensi PDF yang diperbolehkan",
-        (value: any) => {
-          const allowedTypes = ["application/pdf"];
-          const isValid = value && allowedTypes.includes(value.type);
-          if (!isValid) {
-            console.error("Invalid file type:", value ? value.type : "none");
-          }
-          return isValid;
-        }
-      ),
-  });
-
   const initialValues: FormValues = {
     tahun,
     tanggalPermohonan: null,
     nomorPermohonan: "",
     satker: "",
-    dispen: dispen,
+    dispen: "",
     alasan2: "",
-    jenis: jenisspm,
+    jenis: "",
     tanggalPersetujuan: null,
     nomorPersetujuan: "",
     cara_upload: "normal",
@@ -205,14 +152,22 @@ export default function Rekam({
     kdkanwil: kdkanwil,
   };
 
-  const handleSubmitdata = async (
-    values: FormValues,
-    { setSubmitting }: FormikHelpers<FormValues>
-  ) => {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: initialValues,
+  });
+
+  const handleSubmitdata = async (values: FormValues) => {
     setLoading(true);
     try {
       const form = new FormData();
-
 
       const fieldOrder = [
         "tahun",
@@ -239,63 +194,36 @@ export default function Rekam({
         form.append("file", fileObj, fileObj.name);
       }
 
-      let endpoint = "";
+      let path = "";
       if (values.jenis === "01" || values.jenis === "03") {
-        endpoint = apiPath("/dispensasi/simpan-dispensasi");
+        path = "/dispensasi/simpan-dispensasi";
       } else if (values.jenis === "02") {
-        endpoint = apiPath("/dispensasi/simpan-kontrak");
+        path = "/dispensasi/simpan-kontrak";
       } else if (values.jenis === "04") {
-        endpoint = apiPath("/dispensasi/simpan-tup");
+        path = "/dispensasi/simpan-tup";
       }
 
-      console.log("Sending POST to:", endpoint);
+      console.log("Sending POST to:", path);
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        credentials: "include",
-        body: form,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || `HTTP ${response.status}`);
-      }
+      await apiClient.post(path, form);
 
       console.log("Data submitted successfully");
-      Swal.fire({
-        html: `<div class='text-success mt-4'>Data Berhasil Disimpan</div>`,
-        icon: "success",
-        position: "top",
-        buttonsStyling: false,
-        confirmButtonText: "Tutup",
-        customClass: {
-          confirmButton: "bg-primary text-white px-4 py-2 rounded",
-        }
-      });
+      toast.success("Data Berhasil Disimpan");
       setLoading(false);
+      onSuccess?.();
       handleModalClose();
     } catch (error: any) {
       console.error("Submit error details:", error);
       const { status, data: errData } = error.response || {};
       const errorMsg =
         (errData && (errData.error || errData.msg || errData.detail)) ||
+        error.message ||
         "Terjadi Permasalahan Koneksi atau Server Backend";
 
       handleHttpError(status, errorMsg);
-
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Menyimpan',
-        text: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),
-        confirmButtonText: 'Tutup',
-        customClass: {
-          confirmButton: "bg-red-600 text-white px-4 py-2 rounded",
-        }
-      });
+      toast.error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
     } finally {
       setLoading(false);
-      setSubmitting(false);
     }
   };
 
@@ -339,47 +267,29 @@ export default function Rekam({
     }
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setIsSearching(true);
-
-    const results = data.filter((item) => {
-      const kdsatkerLowerCase = item.kdsatker.toLowerCase();
-      const nmsatkerLowerCase = item.nmsatker.toLowerCase();
-
-      if (role === "kanwil_djpb") {
-        if (item.kdkanwil === kdkanwil) {
-          return (
-            kdsatkerLowerCase.includes(value.toLowerCase()) ||
-            nmsatkerLowerCase.includes(value.toLowerCase())
-          );
-        }
-      } else {
-        return (
-          kdsatkerLowerCase.includes(value.toLowerCase()) ||
-          nmsatkerLowerCase.includes(value.toLowerCase())
-        );
-      }
-
-      return false;
-    });
-
-    setSearchResults(results.slice(0, 100));
-    setIsSearching(false);
-  };
-
   const handleModalClose = () => {
     setSelectedSatker(null);
     setSearchResults([]);
-    setSearchTerm("");
-    setUraian(false);
     setjenisdispensasi(false);
     setJenisspm("");
     setDispen("");
     onHide();
+    reset({
+      tahun: propTahun || String(new Date().getFullYear()),
+      tanggalPermohonan: null,
+      nomorPermohonan: "",
+      satker: "",
+      dispen: "",
+      alasan2: "",
+      jenis: "",
+      tanggalPersetujuan: null,
+      nomorPersetujuan: "",
+      cara_upload: "normal",
+      file: null,
+      username: username,
+      kdkanwil: kdkanwil,
+    });
   };
-
-  const inputClass = "flex h-9 w-full rounded-md border border-input bg-zinc-100 dark:bg-black px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     <Dialog open={show} onOpenChange={handleModalClose}>
@@ -388,34 +298,24 @@ export default function Rekam({
           <DialogTitle>Rekam Data Dispensasi TA. {tahun}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4 overflow-y-auto flex-1 min-h-0">
-          <Formik
-            validationSchema={validationSchema}
-            onSubmit={handleSubmitdata}
-            initialValues={initialValues}
-            enableReinitialize={false}
-          >
-            {({
-              handleSubmit,
-              handleChange,
-              setFieldValue,
-              values,
-              touched,
-              errors,
-            }: FormikProps<FormValues>) => (
-              <form onSubmit={handleSubmit as any} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Tahun Anggaran</Label>
+        <div className="py-4 overflow-y-auto flex-1 min-h-0 px-1">
+          <form onSubmit={handleSubmit(handleSubmitdata)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">Tahun Anggaran</Label>
+                  <Controller
+                    control={control}
+                    name="tahun"
+                    render={({ field }) => (
                       <Select
-                        value={values.tahun}
-                        onValueChange={(value) => {
-                          setFieldValue("tahun", value);
-                          setTahun(value);
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          setTahun(val);
                         }}
                       >
-                        <SelectTrigger className={`w-full ${touched.tahun && errors.tahun ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.tahun ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="--- Pilih Tahun ---" />
                         </SelectTrigger>
                         <SelectContent>
@@ -424,32 +324,36 @@ export default function Rekam({
                           <SelectItem value="2026">TA 2026</SelectItem>
                         </SelectContent>
                       </Select>
-                      <ErrorMessage
-                        name="tahun"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
+                    )}
+                  />
+                  {errors.tahun && (
+                    <div className="text-red-500 text-sm mt-1">{errors.tahun.message}</div>
+                  )}
+                </div>
+              </div>
 
-                  <div className="md:col-span-8">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Jenis Dispensasi</Label>
+              <div className="md:col-span-8">
+                <div className="space-y-2">
+                  <Label className="font-bold">Jenis Dispensasi</Label>
+                  <Controller
+                    control={control}
+                    name="jenis"
+                    render={({ field }) => (
                       <Select
-                        value={values.jenis}
-                        onValueChange={(value) => {
-                          setFieldValue("jenis", value);
-                          setjenisdispensasi(value === "" ? false : true);
-                          setJenisspm(value);
-                          if (value === "04") {
-                            setFieldValue("dispen", "07");
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          setjenisdispensasi(val === "" ? false : true);
+                          setJenisspm(val);
+                          if (val === "04") {
+                            setValue("dispen", "07");
                             setjenisdispensasi(true);
                           } else {
-                            setFieldValue("dispen", "");
+                            setValue("dispen", "");
                           }
                         }}
                       >
-                        <SelectTrigger className={`w-full ${touched.jenis && errors.jenis ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.jenis ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="--- Pilih Jenis Dispensasi ---" />
                         </SelectTrigger>
                         <SelectContent>
@@ -459,159 +363,136 @@ export default function Rekam({
                           <SelectItem value="04">TUP Tunai</SelectItem>
                         </SelectContent>
                       </Select>
-                      <ErrorMessage
-                        name="jenis"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
+                    )}
+                  />
+                  {errors.jenis && (
+                    <div className="text-red-500 text-sm mt-1">{errors.jenis.message}</div>
+                  )}
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Tanggal Permohonan</Label>
-                      <div className="relative">
-                        <DatePicker
-                          name="tanggalPermohonan"
-                          selected={
-                            values.tanggalPermohonan
-                              ? moment(values.tanggalPermohonan).toDate()
-                              : null
-                          }
-                          className={inputClass}
-                          wrapperClassName="w-full"
-                          onChange={(date: any) =>
-                            setFieldValue(
-                              "tanggalPermohonan",
-                              moment(date).format("YYYY-MM-DD"),
-                              true
-                            )
-                          }
-                          dateFormat="dd/MM/yyyy"
-                          placeholderText="Tgl Permohonan"
-                          autoComplete="off"
-                        />
-                      </div>
-                      <ErrorMessage
-                        name="tanggalPermohonan"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-8">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Nomor Permohonan</Label>
-                      <Input
-                        name="nomorPermohonan"
-                        type="text"
-                        value={values.nomorPermohonan}
-                        onChange={handleChange}
-                        placeholder="Nomor Permohonan"
-                      />
-                      <ErrorMessage
-                        name="nomorPermohonan"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4">
                 <div className="space-y-2">
-                  <Label className="font-bold">Satker</Label>
-                  <VirtualizedSelect
+                  <Label className="font-bold">Tanggal Permohonan</Label>
+                  <Controller
+                    control={control}
+                    name="tanggalPermohonan"
+                    render={({ field }) => (
+                      <DatePicker
+                        date={field.value ? moment(field.value).toDate() : undefined}
+                        onDateChange={(date) => {
+                          field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
+                        }}
+                        placeholder="Tgl Permohonan"
+                        className={errors.tanggalPermohonan ? "border-red-500" : ""}
+                      />
+                    )}
+                  />
+                  {errors.tanggalPermohonan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.tanggalPermohonan.message}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="md:col-span-8">
+                <div className="space-y-2">
+                  <Label className="font-bold">Nomor Permohonan</Label>
+                  <Input
+                    {...register("nomorPermohonan")}
+                    type="text"
+                    placeholder="Nomor Permohonan"
+                  />
+                  {errors.nomorPermohonan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.nomorPermohonan.message}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-bold">Satker</Label>
+              <Controller
+                control={control}
+                name="satker"
+                render={({ field }) => (
+                  <SearchableSelect
                     options={searchResults.map((item) => ({
                       value: item.kdsatker,
                       label: `${item.kdsatker} - ${item.nmsatker}`,
                     }))}
-                    value={selectedSatker ? selectedSatker.kdsatker : ""}
-                    onValueChange={(value) => {
-                      const selected = searchResults.find((item) => item.kdsatker === value);
-                      setFieldValue("satker", value);
+                    value={field.value}
+                    onValueChange={(val) => {
+                      const selected = searchResults.find((item) => item.kdsatker === val);
+                      field.onChange(val);
                       setSelectedSatker(selected || null);
                     }}
                     placeholder="Ketik Kode atau Nama Satker..."
-                    className={touched.satker && errors.satker ? "border-red-500" : ""}
+                    className={errors.satker ? "border-red-500" : ""}
                   />
-                  <ErrorMessage
-                    name="satker"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
+                )}
+              />
+              {errors.satker && (
+                <div className="text-red-500 text-sm mt-1">{errors.satker.message}</div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4">
+                <div className="space-y-2">
+                  <Label className="font-bold">Tanggal Persetujuan</Label>
+                  <Controller
+                    control={control}
+                    name="tanggalPersetujuan"
+                    render={({ field }) => (
+                      <DatePicker
+                        date={field.value ? moment(field.value).toDate() : undefined}
+                        onDateChange={(date) => {
+                          field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
+                        }}
+                        placeholder="Tgl Persetujuan"
+                        className={errors.tanggalPersetujuan ? "border-red-500" : ""}
+                      />
+                    )}
                   />
+                  {errors.tanggalPersetujuan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.tanggalPersetujuan.message}</div>
+                  )}
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-4">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Tanggal Persetujuan</Label>
-                      <div className="relative">
-                        <DatePicker
-                          name="tanggalPersetujuan"
-                          selected={
-                            values.tanggalPersetujuan
-                              ? moment(values.tanggalPersetujuan).toDate()
-                              : null
-                          }
-                          className={inputClass}
-                          wrapperClassName="w-full"
-                          onChange={(date: any) =>
-                            setFieldValue(
-                              "tanggalPersetujuan",
-                              moment(date).format("YYYY-MM-DD"),
-                              true
-                            )
-                          }
-                          dateFormat="dd/MM/yyyy"
-                          placeholderText="Tgl Persetujuan"
-                          autoComplete="off"
-                        />
-                      </div>
-                      <ErrorMessage
-                        name="tanggalPersetujuan"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-8">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Nomor Persetujuan</Label>
-                      <Input
-                        name="nomorPersetujuan"
-                        value={values.nomorPersetujuan}
-                        onChange={handleChange}
-                        type="text"
-                        placeholder="Nomor Persetujuan Dispensasi"
-                      />
-                      <ErrorMessage
-                        name="nomorPersetujuan"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
+              <div className="md:col-span-8">
+                <div className="space-y-2">
+                  <Label className="font-bold">Nomor Persetujuan</Label>
+                  <Input
+                    {...register("nomorPersetujuan")}
+                    type="text"
+                    placeholder="Nomor Persetujuan Dispensasi"
+                  />
+                  {errors.nomorPersetujuan && (
+                    <div className="text-red-500 text-sm mt-1">{errors.nomorPersetujuan.message}</div>
+                  )}
                 </div>
+              </div>
+            </div>
 
-                {jenisdispensasi && (jenisspm === "01" || jenisspm === "03") && (
-                  <div className="animate-in fade-in zoom-in duration-300">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Alasan Dispensasi SPM</Label>
+            {jenisdispensasi && (jenisspm === "01" || jenisspm === "03") && (
+              <div className="animate-in fade-in zoom-in duration-300">
+                <div className="space-y-2">
+                  <Label className="font-bold">Alasan Dispensasi SPM</Label>
+                  <Controller
+                    control={control}
+                    name="dispen"
+                    render={({ field }) => (
                       <Select
-                        value={dispen}
-                        onValueChange={(value) => {
-                          setDispen(value);
-                          setFieldValue("dispen", value);
-                          if (value !== "07") {
-                            setFieldValue("alasan2", "");
-                          }
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          handleAlasanChange(val);
                         }}
                       >
-                        <SelectTrigger className={`w-full ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.dispen ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="--- Pilih Alasan Dispensasi ---" />
                         </SelectTrigger>
                         <SelectContent>
@@ -625,30 +506,31 @@ export default function Rekam({
                           <SelectItem value="08">08 - Proses Revisi Penghematan Belanja Perjalanan Dinas</SelectItem>
                         </SelectContent>
                       </Select>
-                      <ErrorMessage
-                        name="dispen"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
-                )}
+                    )}
+                  />
+                  {errors.dispen && (
+                    <div className="text-red-500 text-sm mt-1">{errors.dispen.message}</div>
+                  )}
+                </div>
+              </div>
+            )}
 
-                {jenisdispensasi && jenisspm === "02" && (
-                  <div className="animate-in fade-in zoom-in duration-300">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Alasan Dispensasi Kontrak</Label>
+            {jenisdispensasi && jenisspm === "02" && (
+              <div className="animate-in fade-in zoom-in duration-300">
+                <div className="space-y-2">
+                  <Label className="font-bold">Alasan Dispensasi Kontrak</Label>
+                  <Controller
+                    control={control}
+                    name="dispen"
+                    render={({ field }) => (
                       <Select
-                        value={dispen}
-                        onValueChange={(value) => {
-                          setDispen(value);
-                          setFieldValue("dispen", value);
-                          if (value !== "07") {
-                            setFieldValue("alasan2", "");
-                          }
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          handleAlasanChange(val);
                         }}
                       >
-                        <SelectTrigger className={`w-full ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.dispen ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="--- Pilih Alasan Dispensasi ---" />
                         </SelectTrigger>
                         <SelectContent>
@@ -661,92 +543,79 @@ export default function Rekam({
                           <SelectItem value="07">07 - Lainnya</SelectItem>
                         </SelectContent>
                       </Select>
-                      <ErrorMessage
-                        name="dispen"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {jenisdispensasi && jenisspm === "04" && (
-                  <div className="animate-in fade-in zoom-in duration-300">
-                    <div className="space-y-2">
-                      <Label className="font-bold">Alasan Dispensasi TUP</Label>
-                      <Select
-                        value="07"
-                        onValueChange={(value) => {
-                          setDispen(value);
-                          setFieldValue("dispen", value);
-                        }}
-                        disabled
-                      >
-                        <SelectTrigger className={`w-full ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}>
-                          <SelectValue placeholder="Isikan Alasan Dispensasi TUP" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="07">07 - Lainnya</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-
-                {dispen === "07" && jenisdispensasi && (
-                  <div className="animate-in fade-in zoom-in duration-300">
-                    <div className="space-y-2">
-                      <Label>Uraian Alasan (Lainnya)</Label>
-                      <Textarea
-                        name="alasan2"
-                        value={values.alasan2}
-                        onChange={(e) => setFieldValue("alasan2", e.target.value)}
-                        placeholder="Uraian Alasan"
-                        rows={4}
-                        className={`w-full ${touched.alasan2 && errors.alasan2 ? "border-red-500" : ""}`}
-                      />
-                      <ErrorMessage
-                        name="alasan2"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label className="font-bold">
-                    Upload File Surat Persetujuan (PDF)
-                  </Label>
-                  <div className="flex gap-4 items-center">
-                    <div className="flex-1">
-                      <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">Normal Upload</Label>
-                        <Input
-                          type="file"
-                          accept="application/pdf"
-                          onChange={(event) => {
-                            if (
-                              event.currentTarget.files &&
-                              event.currentTarget.files[0]
-                            ) {
-                              setFieldValue("file", event.currentTarget.files[0]);
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <ErrorMessage
-                    name="file"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
+                    )}
                   />
+                  {errors.dispen && (
+                    <div className="text-red-500 text-sm mt-1">{errors.dispen.message}</div>
+                  )}
                 </div>
-
-              </form>
+              </div>
             )}
-          </Formik>
+
+            {jenisdispensasi && jenisspm === "04" && (
+              <div className="animate-in fade-in zoom-in duration-300">
+                <div className="space-y-2">
+                  <Label className="font-bold">Alasan Dispensasi TUP</Label>
+                  <Select
+                    value="07"
+                    disabled
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Isikan Alasan Dispensasi TUP" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="07">07 - Lainnya</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {dispen === "07" && jenisdispensasi && (
+              <div className="animate-in fade-in zoom-in duration-300">
+                <div className="space-y-2">
+                  <Label>Uraian Alasan (Lainnya)</Label>
+                  <Textarea
+                    {...register("alasan2")}
+                    placeholder="Uraian Alasan"
+                    rows={4}
+                    className={`w-full ${errors.alasan2 ? "border-red-500" : ""}`}
+                  />
+                  {errors.alasan2 && (
+                    <div className="text-red-500 text-sm mt-1">{errors.alasan2.message}</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label className="font-bold">
+                Upload File Surat Persetujuan (PDF)
+              </Label>
+              <div className="flex gap-4 items-center">
+                <div className="flex-1">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Normal Upload</Label>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(event) => {
+                        if (
+                          event.currentTarget.files &&
+                          event.currentTarget.files[0]
+                        ) {
+                          setValue("file", event.currentTarget.files[0], { shouldValidate: true });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              {errors.file && (
+                <div className="text-red-500 text-sm mt-1">{errors.file.message}</div>
+              )}
+            </div>
+          </form>
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3">
@@ -756,7 +625,7 @@ export default function Rekam({
             </Button>
             {loading ? (
               <Button disabled>
-                <Spinner className="mr-2 h-4 w-4" /> Simpan
+                <Spinner className="mr-2 h-4 w-4" /> <Save className="h-4 w-4 mr-2" /> Simpan
               </Button>
             ) : (
               <Button

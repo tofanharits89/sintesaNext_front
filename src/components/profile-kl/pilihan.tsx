@@ -30,8 +30,12 @@ export default function Pilihan({
   onInputChange,
   defaultDept = "027",
 }: PilihanProps) {
-  const [selectedTA, setSelectedTA] = useState("2025");
-  const [selectedPeriode, setSelectedPeriode] = useState("1");
+  const currentYear = new Date().getFullYear().toString();
+  const currentMonth = (new Date().getMonth() + 1).toString();
+  const defaultTA = (TAHUN_OPTIONS.includes(currentYear) ? currentYear : TAHUN_OPTIONS[TAHUN_OPTIONS.length - 1]) || "2026";
+
+  const [selectedTA, setSelectedTA] = useState(defaultTA);
+  const [selectedPeriode, setSelectedPeriode] = useState(currentMonth);
   const [selectedDept, setSelectedDept] = useState(defaultDept);
 
   // Sync state if defaultDept changes (e.g. from props)
@@ -66,7 +70,7 @@ export default function Pilihan({
           <SelectContent>
             {TAHUN_OPTIONS.map((ta) => (
               <SelectItem key={ta} value={ta}>
-                TA {ta}
+                {ta}
               </SelectItem>
             ))}
           </SelectContent>

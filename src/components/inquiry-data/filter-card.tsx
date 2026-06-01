@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -1360,7 +1360,7 @@ export function FilterCard({
             ) : filterKey === "cutOff" ? (
               <>
                 <Label className="text-xs font-medium">Pilih Bulan</Label>
-                <VirtualizedSelect
+                <SearchableSelect
                   key={`${filterKey}-${
                     currentFilterValue?.selection || "default"
                   }`}
@@ -1376,7 +1376,7 @@ export function FilterCard({
             ) : (
               <>
                 <Label className="text-xs font-medium">Pilihan</Label>
-                <VirtualizedSelect
+                <SearchableSelect
                   key={`${filterKey}-${
                     currentFilterValue?.selection || "default"
                   }`}
