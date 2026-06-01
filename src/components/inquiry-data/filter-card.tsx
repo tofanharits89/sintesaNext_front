@@ -1477,13 +1477,13 @@ export function FilterCard({
                   if (isBooleanSwitch) return; // disabled
                   handleInputChange("jenisTampilan", value);
                 }}
+                disabled={isBooleanSwitch}
               >
                 <SelectTrigger
                   className={cn(
                     "w-full h-8 text-xs",
                     isBooleanSwitch && "opacity-50 cursor-not-allowed",
                   )}
-                  disabled={isBooleanSwitch}
                 >
                   <SelectValue placeholder="Pilih tampilan" />
                 </SelectTrigger>

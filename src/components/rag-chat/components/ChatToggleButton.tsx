@@ -8,19 +8,21 @@ import { forwardRef } from "react";
 interface ChatToggleButtonProps {
     isOpen: boolean;
     onToggle: () => void;
+    className?: string;
 }
 
 /**
  * Floating action button to toggle chat visibility.
  */
 export const ChatToggleButton = forwardRef<HTMLDivElement, ChatToggleButtonProps>(
-    function ChatToggleButton({ isOpen, onToggle }, ref) {
+    function ChatToggleButton({ isOpen, onToggle, className }, ref) {
         return (
             <motion.div
                 ref={ref}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className={className}
             >
                 <Button
                     type="button"

@@ -58,6 +58,11 @@ export function DynamicFiltersCard({
   scope = "general", // Default to general scope
   hiddenFilterKeys = [],
 }: DynamicFiltersCardProps) {
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [modals, setModals] = useState({
     tayang: false,
     whatsapp: false,
@@ -69,6 +74,7 @@ export function DynamicFiltersCard({
   const { user: currentUser } = useAuth();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+  const showAdmin = mounted && isAdmin;
 
   // API hook for query execution (used for downloads)
   const { downloadCSV, downloadExcel, isLoading } = useInquiryDataApi();
@@ -226,7 +232,7 @@ export function DynamicFiltersCard({
             </Button>
 
             {/* Lihat SQL Button - Only for Admin */}
-            {isAdmin && (
+            {showAdmin && (
               <Button
                 onClick={() => openModal("lihatSql")}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200 min-w-[150px] h-10"
@@ -269,7 +275,7 @@ export function DynamicFiltersCard({
         scope={scope} // Pass scope to SimpanModal
       />
 
-      {isAdmin && (
+      {showAdmin && (
         <LihatSqlModal
           open={modals.lihatSql}
           onOpenChange={() => closeModal("lihatSql")}

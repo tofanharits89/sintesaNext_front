@@ -37,6 +37,11 @@ export function APBDDynamicFiltersCard({
   filterValues,
   onFilterChange,
 }: APBDDynamicFiltersCardProps) {
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [modals, setModals] = useState({
     tayang: false,
     lihatSql: false,
@@ -45,6 +50,7 @@ export function APBDDynamicFiltersCard({
   const { user: currentUser } = useAuth();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+  const showAdmin = mounted && isAdmin;
 
   const { downloadCSV, downloadExcel, isLoading } = useAPBDDataApi();
 
@@ -158,7 +164,7 @@ export function APBDDynamicFiltersCard({
             </Button>
 
             {/* Lihat SQL Button (admin only) */}
-            {isAdmin && (
+            {showAdmin && (
               <Button
                 onClick={() => openModal("lihatSql")}
                 variant="outline"

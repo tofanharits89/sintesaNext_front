@@ -57,6 +57,11 @@ export function BelwilDynamicFiltersCard({
   filterValues,
   onFilterChange,
 }: BelwilDynamicFiltersCardProps) {
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [modals, setModals] = useState({
     tayang: false,
     lihatSql: false,
@@ -65,6 +70,7 @@ export function BelwilDynamicFiltersCard({
   const { user: currentUser } = useAuth();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+  const showAdmin = mounted && isAdmin;
 
   const { downloadCSV, downloadExcel, isLoading } = useBelwilDataApi();
 
@@ -178,7 +184,7 @@ export function BelwilDynamicFiltersCard({
             </Button>
 
             {/* Lihat SQL Button (admin only) */}
-            {isAdmin && (
+            {showAdmin && (
               <Button
                 onClick={() => openModal("lihatSql")}
                 variant="outline"
@@ -232,6 +238,11 @@ export function BelwilTematikDynamicFiltersCard({
   filterValues,
   onFilterChange,
 }: BelwilTematikDynamicFiltersCardProps) {
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [modals, setModals] = useState({
     tayang: false,
     lihatSql: false,
@@ -240,6 +251,7 @@ export function BelwilTematikDynamicFiltersCard({
   const { user: currentUser } = useAuth();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+  const showAdmin = mounted && isAdmin;
 
   const { downloadCSV, downloadExcel, isLoading } = useBelwilTematikDataApi();
 
@@ -347,7 +359,7 @@ export function BelwilTematikDynamicFiltersCard({
               Download CSV
             </Button>
 
-            {isAdmin && (
+            {showAdmin && (
               <Button
                 onClick={() => openModal("lihatSql")}
                 variant="outline"
@@ -400,6 +412,11 @@ export function BelwilSubsidiDynamicFiltersCard({
   filterValues,
   onFilterChange,
 }: BelwilSubsidiDynamicFiltersCardProps) {
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [modals, setModals] = useState({
     tayang: false,
     lihatSql: false,
@@ -408,6 +425,7 @@ export function BelwilSubsidiDynamicFiltersCard({
   const { user: currentUser } = useAuth();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+  const showAdmin = mounted && isAdmin;
 
   const { downloadCSV, downloadExcel, isLoading } = useBelwilSubsidiDataApi();
 
@@ -515,7 +533,7 @@ export function BelwilSubsidiDynamicFiltersCard({
               Download CSV
             </Button>
 
-            {isAdmin && (
+            {showAdmin && (
               <Button
                 onClick={() => openModal("lihatSql")}
                 variant="outline"
@@ -569,6 +587,11 @@ export function BelwilBansosDynamicFiltersCard({
   filterValues,
   onFilterChange,
 }: BelwilBansosDynamicFiltersCardProps) {
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [modals, setModals] = useState({
     tayang: false,
     lihatSql: false,
@@ -577,6 +600,7 @@ export function BelwilBansosDynamicFiltersCard({
   const { user: currentUser } = useAuth();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+  const showAdmin = mounted && isAdmin;
 
   const { downloadCSV, downloadExcel, isLoading } = useBelwilBansosDataApi();
 
@@ -684,7 +708,7 @@ export function BelwilBansosDynamicFiltersCard({
               Download CSV
             </Button>
 
-            {isAdmin && (
+            {showAdmin && (
               <Button
                 onClick={() => openBansosModal("lihatSql")}
                 variant="outline"

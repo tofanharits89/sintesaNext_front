@@ -80,7 +80,7 @@ export function RagChatWidget() {
   }, [messages.length, streamProgress]);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3 pointer-events-none">
       <motion.div
         ref={chatRef}
         initial={{ opacity: 0, y: 20, scale: 0.95, pointerEvents: "none", visibility: "hidden" }}
@@ -154,6 +154,7 @@ export function RagChatWidget() {
         ref={toggleButtonRef}
         isOpen={isOpen}
         onToggle={() => setIsOpen((v) => !v)}
+        className="pointer-events-auto"
       />
     </div>
   );

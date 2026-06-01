@@ -6,8 +6,13 @@ import { Navbar } from "@/components/layout/navbar";
 import { ResponsiveSidebar } from "@/components/layout/responsive-sidebar";
 import { useLoginNotifications } from "@/hooks/use-login-notifications";
 import { usePageContext } from "@/contexts/page-context";
-import { RagChatWidget } from "@/components/rag-chat/RagChatWidget";
+import dynamic from "next/dynamic";
 import type { User } from "@/lib/stores/users-store";
+
+const RagChatWidget = dynamic(
+  () => import("@/components/rag-chat/RagChatWidget").then((m) => m.RagChatWidget),
+  { ssr: false }
+);
 
 const AppShell = memo(function AppShell({
   children,
