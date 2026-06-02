@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import BelanjaNegaraWeekly from "@/components/weekly/belanja-negara";
+import BelanjaNegaraWeekly, { type BelanjaNegaraWeeklyHandle } from "@/components/weekly/belanja-negara";
 import PengeluaranAkun, { type PengeluaranAkunHandle } from "@/components/weekly/pengeluaran-akun";
 import PengeluaranFungsi, { type PengeluaranFungsiHandle } from "@/components/weekly/pengeluaran-fungsi";
 import RealisasiKlWeekly, { type RealisasiKlHandle } from "@/components/weekly/realisasi-kl";
@@ -109,6 +109,7 @@ export default function WeeklyLanding() {
   });
   const [isLoadingBelanja, setIsLoadingBelanja] = useState(false);
   const [applyCounterBelanja, setApplyCounterBelanja] = useState(0);
+  const belanjaNegaraRef = useRef<BelanjaNegaraWeeklyHandle>(null);
 
   const handleApplyBelanja = () => {
     setIsLoadingBelanja(true);
@@ -651,7 +652,7 @@ export default function WeeklyLanding() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { }}
+                        onClick={() => belanjaNegaraRef.current?.exportExcel()}
                         disabled={isLoadingBelanja}
                         className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
                       >
@@ -730,11 +731,12 @@ export default function WeeklyLanding() {
                 <CardContent>
                   {item.id === "belanja-negara" ? (
                     <BelanjaNegaraWeekly
+                      ref={belanjaNegaraRef}
                       {...(dateRange !== undefined ? { dateRange } : {})}
                       onDateChange={setDateRange}
                       onApply={handleApplyBelanja}
                       isLoading={isLoadingBelanja}
-                      onExport={() => { }}
+                      onExport={() => belanjaNegaraRef.current?.exportExcel()}
                       applyCounter={applyCounterBelanja}
                     />
                   ) : item.id === "pengeluaran-akun" ? (
