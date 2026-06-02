@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import * as XLSX from "xlsx";
 import { useBelanjaNegaraWeekly, type BelanjaNegaraRow } from "@/hooks/use-belanja-negara-weekly";
 import { Badge } from "@/components/ui/badge";
@@ -158,21 +158,25 @@ function BelanjaNegaraTableSkeleton() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function BelanjaNegaraWeekly({ 
-  dateRange, 
-  onDateChange, 
-  onApply,
-  isLoading,
-  onExport,
-  applyCounter = 0,
-}: { 
+export interface BelanjaNegaraWeeklyHandle {
+  exportExcel: () => void;
+}
+
+const BelanjaNegaraWeekly = forwardRef<BelanjaNegaraWeeklyHandle, { 
   dateRange?: DateRange; 
   onDateChange?: (range: DateRange | undefined) => void;
   onApply?: () => void;
   isLoading?: boolean;
   onExport?: () => void;
   applyCounter?: number;
-} = {}) {
+}>(function BelanjaNegaraWeekly({ 
+  dateRange, 
+  onDateChange, 
+  onApply,
+  isLoading,
+  onExport,
+  applyCounter = 0,
+}, ref) {
   // Compute default values
   const defaultRange = getDefaultRange();
 
@@ -213,6 +217,10 @@ export default function BelanjaNegaraWeekly({
     const currentDate = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(wb, `Belanja_Negara_${currentDate}.xlsx`);
   };
+
+  useImperativeHandle(ref, () => ({
+    exportExcel: handleExportExcel,
+  }), [handleExportExcel, data]);
 
   // Derive title info from params
   const titleDate = appliedParams.tglAkhir2026
@@ -351,4 +359,6 @@ export default function BelanjaNegaraWeekly({
       </p>
     </>
   );
-}
+});
+
+export default BelanjaNegaraWeekly;
