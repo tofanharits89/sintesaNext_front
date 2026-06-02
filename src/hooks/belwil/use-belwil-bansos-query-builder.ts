@@ -92,7 +92,7 @@ function buildFilterWhereClause(
 
     // selection filter
     if (selection && selection !== "all" && selection !== "") {
-      conditions.push(`a.${col} = '${selection.replace(/'/g, "''")}'`);
+      conditions.push(`main.${col} = '${selection.replace(/'/g, "''")}'`);
     }
 
     // kondisiCode filter
@@ -110,16 +110,16 @@ function buildFilterWhereClause(
 
       for (const code of includeCodes) {
         if (code.length < 6) {
-          conditions.push(`a.${col} LIKE '${code}%'`);
+          conditions.push(`main.${col} LIKE '${code}%'`);
         } else {
-          conditions.push(`a.${col} = '${code}'`);
+          conditions.push(`main.${col} = '${code}'`);
         }
       }
       for (const code of excludeCodes) {
         if (code.length < 6) {
-          conditions.push(`a.${col} NOT LIKE '${code}%'`);
+          conditions.push(`main.${col} NOT LIKE '${code}%'`);
         } else {
-          conditions.push(`a.${col} != '${code}'`);
+          conditions.push(`main.${col} != '${code}'`);
         }
       }
     }
@@ -127,7 +127,7 @@ function buildFilterWhereClause(
     // mengandungKata filter
     if (mengandungKata && mengandungKata.trim() !== "" && nameCol) {
       const kw = mengandungKata.replace(/'/g, "''");
-      conditions.push(`LOWER(a.${nameCol}) LIKE LOWER('%${kw}%')`);
+      conditions.push(`LOWER(main.${nameCol}) LIKE LOWER('%${kw}%')`);
     }
   }
 
@@ -167,6 +167,8 @@ export function useBelwilBansosQueryBuilder() {
 
       // --- SELECT ---
       const selectColumns: string[] = [];
+      const joinColumns: string[] = [];
+      const groupByColumns: string[] = [];
 
       // Dimension columns from active filters
       uniqueFilters.forEach((filterKey) => {
@@ -177,22 +179,81 @@ export function useBelwilBansosQueryBuilder() {
         if (jenisTampilan === "jangan_tampilkan") return;
 
         if (jenisTampilan === "kode" || jenisTampilan === "kode_uraian") {
-          selectColumns.push(`a.${col} AS ${filterKey}_kode`);
+          selectColumns.push(`main.${col} AS ${filterKey}_kode`);
         }
         if (
           (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") &&
           nameCol
         ) {
-          selectColumns.push(`a.${nameCol} AS ${filterKey}_uraian`);
+          // Kementerian
+          if (filterKey === "kementerian") {
+            selectColumns.push(`ref_kl.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_dept_${tahun} ref_kl ON main.kddept=ref_kl.kddept`,
+            );
+          }
+          // Eselon I
+          else if (filterKey === "eselonI") {
+            selectColumns.push(`ref_es1.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_unit_${tahun} ref_es1 ON main.kddept=ref_es1.kddept AND main.kdunit=ref_es1.kdunit`,
+            );
+          }
+          // Kewenangan
+          else if (filterKey === "kewenangan") {
+            selectColumns.push(`ref_dekon.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_dekon_${tahun} ref_dekon ON main.kddekon=ref_dekon.kddekon`,
+            );
+          }
+          // Satker
+          else if (filterKey === "satker") {
+            selectColumns.push(`ref_satker.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_satker_${tahun} ref_satker ON main.kdsatker=ref_satker.kdsatker`,
+            );
+          }
+          // Provinsi
+          else if (filterKey === "provinsi") {
+            selectColumns.push(`ref_prov.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_provinsi ref_prov ON main.kdprov=ref_prov.kdprov`,
+            );
+          }
+          // Kabkota
+          else if (filterKey === "kabkota") {
+            selectColumns.push(`ref_kabkota.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_kabkota_bansos ref_kabkota ON main.kdprov=ref_kabkota.kdprov AND main.kdkabkota=ref_kabkota.kdkabkota`,
+            );
+          }
+          // Kecamatan
+          else if (filterKey === "kecamatan") {
+            selectColumns.push(`ref_kec.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_kecamatan ref_kec ON main.kdprov=ref_kec.kdprov AND main.kdkabkota=ref_kec.kdkabkota AND main.kdkec=ref_kec.kdkec`,
+            );
+          }
+          // Kanwil
+          else if (filterKey === "kanwil") {
+            selectColumns.push(`ref_kanwil.${nameCol} AS ${filterKey}_uraian`);
+            joinColumns.push(
+              `LEFT JOIN dbref.t_kanwil_${tahun} ref_kanwil ON main.kdkanwil=ref_kanwil.kdkanwil`,
+            );
+          }
+          // Default Fallback
+          else {
+            selectColumns.push(`main.${nameCol} AS ${filterKey}_uraian`);
+          }
         }
       });
 
       // jenis_transaksi column based on jenisTampilan (only uraian / jangan_tampilkan)
       const bansosJenisTampilan = kdbansosJenisTampilan || "uraian";
       if (bansosJenisTampilan !== "jangan_tampilkan") {
-        selectColumns.push("a.jenis_transaksi");
+        selectColumns.push("main.jenis_transaksi");
       }
-      selectColumns.push("a.tahap");
+      selectColumns.push("main.tahap");
 
       // Metric columns
       if (tipeLaporan === "belwil_bansos_all") {
@@ -201,31 +262,33 @@ export function useBelwilBansosQueryBuilder() {
           for (let m = 1; m <= 12; m++) {
             const realParts = Array.from(
               { length: m },
-              (_, i) => `SUM(COALESCE(a.real${i + 1}, 0))`,
+              (_, i) => `SUM(COALESCE(main.real${i + 1}, 0))`,
             ).join(" + ");
             selectColumns.push(`(${realParts})${allDivisorExpr} AS real${m}`);
             const jmlParts = Array.from(
               { length: m },
-              (_, i) => `SUM(COALESCE(a.jml${i + 1}, 0))`,
+              (_, i) => `SUM(COALESCE(main.jml${i + 1}, 0))`,
             ).join(" + ");
             selectColumns.push(`(${jmlParts}) AS jml${m}`);
           }
         } else {
           for (let m = 1; m <= 12; m++) {
-            selectColumns.push(`SUM(a.real${m})${allDivisorExpr} AS real${m}`);
-            selectColumns.push(`SUM(a.jml${m}) AS jml${m}`);
+            selectColumns.push(
+              `SUM(main.real${m})${allDivisorExpr} AS real${m}`,
+            );
+            selectColumns.push(`SUM(main.jml${m}) AS jml${m}`);
           }
         }
         const totalRealParts = Array.from(
           { length: 12 },
-          (_, i) => `SUM(COALESCE(a.real${i + 1}, 0))`,
+          (_, i) => `SUM(COALESCE(main.real${i + 1}, 0))`,
         ).join(" + ");
         selectColumns.push(
           `(${totalRealParts})${allDivisorExpr} AS total_realisasi`,
         );
         const totalJmlParts = Array.from(
           { length: 12 },
-          (_, i) => `SUM(COALESCE(a.jml${i + 1}, 0))`,
+          (_, i) => `SUM(COALESCE(main.jml${i + 1}, 0))`,
         ).join(" + ");
         selectColumns.push(`(${totalJmlParts}) AS total_penerima`);
       } else if (tipeLaporan === "belwil_bansos_realisasi") {
@@ -233,18 +296,18 @@ export function useBelwilBansosQueryBuilder() {
           for (let m = 1; m <= 12; m++) {
             const parts = Array.from(
               { length: m },
-              (_, i) => `SUM(COALESCE(a.real${i + 1}, 0))`,
+              (_, i) => `SUM(COALESCE(main.real${i + 1}, 0))`,
             ).join(" + ");
             selectColumns.push(`(${parts})${divisorExpr} AS real${m}`);
           }
         } else {
           for (let m = 1; m <= 12; m++) {
-            selectColumns.push(`SUM(a.real${m})${divisorExpr} AS real${m}`);
+            selectColumns.push(`SUM(main.real${m})${divisorExpr} AS real${m}`);
           }
         }
         const realParts = Array.from(
           { length: 12 },
-          (_, i) => `SUM(COALESCE(a.real${i + 1}, 0))`,
+          (_, i) => `SUM(COALESCE(main.real${i + 1}, 0))`,
         ).join(" + ");
         selectColumns.push(`(${realParts})${divisorExpr} AS total_realisasi`);
       } else if (tipeLaporan === "belwil_bansos_jumlah_penerima") {
@@ -252,32 +315,32 @@ export function useBelwilBansosQueryBuilder() {
           for (let m = 1; m <= 12; m++) {
             const parts = Array.from(
               { length: m },
-              (_, i) => `SUM(COALESCE(a.jml${i + 1}, 0))`,
+              (_, i) => `SUM(COALESCE(main.jml${i + 1}, 0))`,
             ).join(" + ");
             selectColumns.push(`(${parts}) AS jml${m}`);
           }
         } else {
           for (let m = 1; m <= 12; m++) {
-            selectColumns.push(`SUM(a.jml${m}) AS jml${m}`);
+            selectColumns.push(`SUM(main.jml${m}) AS jml${m}`);
           }
         }
         const jmlParts = Array.from(
           { length: 12 },
-          (_, i) => `SUM(COALESCE(a.jml${i + 1}, 0))`,
+          (_, i) => `SUM(COALESCE(main.jml${i + 1}, 0))`,
         ).join(" + ");
         selectColumns.push(`(${jmlParts}) AS total_penerima`);
       }
 
       // --- FROM ---
       const tableName = `monev${tahun}.bansos_pkh_bulanan`;
-      const fromClause = `FROM ${tableName} AS a`;
+      const fromClause = `FROM ${tableName} AS main`;
 
       // --- WHERE ---
       const whereConditions: string[] = [`1 = 1`];
 
       const escapedKdbansos = escapeJenisTransaksi(kdbansos || "");
       if (escapedKdbansos) {
-        whereConditions.push(`a.jenis_transaksi = '${escapedKdbansos}'`);
+        whereConditions.push(`main.jenis_transaksi = '${escapedKdbansos}'`);
       }
 
       if (kdbansosKondisi && kdbansosKondisi.trim()) {
@@ -293,23 +356,25 @@ export function useBelwilBansosQueryBuilder() {
           .map((c) => c.slice(1).replace(/'/g, "''"));
         for (const code of includeCodes) {
           if (code.length < 6) {
-            whereConditions.push(`a.jenis_transaksi LIKE '${code}%'`);
+            whereConditions.push(`main.jenis_transaksi LIKE '${code}%'`);
           } else {
-            whereConditions.push(`a.jenis_transaksi = '${code}'`);
+            whereConditions.push(`main.jenis_transaksi = '${code}'`);
           }
         }
         for (const code of excludeCodes) {
           if (code.length < 6) {
-            whereConditions.push(`a.jenis_transaksi NOT LIKE '${code}%'`);
+            whereConditions.push(`main.jenis_transaksi NOT LIKE '${code}%'`);
           } else {
-            whereConditions.push(`a.jenis_transaksi != '${code}'`);
+            whereConditions.push(`main.jenis_transaksi != '${code}'`);
           }
         }
       }
 
       if (kdbansosKataKunci && kdbansosKataKunci.trim() !== "") {
         const kw = kdbansosKataKunci.replace(/'/g, "''");
-        whereConditions.push(`LOWER(a.jenis_transaksi) LIKE LOWER('%${kw}%')`);
+        whereConditions.push(
+          `LOWER(main.jenis_transaksi) LIKE LOWER('%${kw}%')`,
+        );
       }
 
       const filterConditions = buildFilterWhereClause(
@@ -319,8 +384,6 @@ export function useBelwilBansosQueryBuilder() {
       whereConditions.push(...filterConditions);
 
       // --- GROUP BY ---
-      const groupByColumns: string[] = [];
-
       uniqueFilters.forEach((filterKey) => {
         const col = BANSOS_COLUMN_MAP[filterKey];
         const nameCol = BANSOS_NAME_COLUMN_MAP[filterKey];
@@ -329,21 +392,54 @@ export function useBelwilBansosQueryBuilder() {
         if (jenisTampilan === "jangan_tampilkan") return;
 
         if (jenisTampilan === "kode" || jenisTampilan === "kode_uraian") {
-          groupByColumns.push(`a.${col}`);
+          groupByColumns.push(`main.${col}`);
         }
         if (
           (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") &&
           nameCol
         ) {
-          groupByColumns.push(`a.${nameCol}`);
+          // Kementerian
+          if (filterKey === "kementerian") {
+            groupByColumns.push(`ref_kl.${nameCol}`);
+          }
+          // Eselon I
+          else if (filterKey === "eselonI") {
+            groupByColumns.push(`ref_es1.${nameCol}`);
+          }
+          // Kewenangan
+          else if (filterKey === "kewenangan") {
+            groupByColumns.push(`ref_dekon.${nameCol}`);
+          }
+          // Satker
+          else if (filterKey === "satker") {
+            groupByColumns.push(`ref_satker.${nameCol}`);
+          }
+          // Provinsi
+          else if (filterKey === "provinsi") {
+            groupByColumns.push(`ref_prov.${nameCol}`);
+          }
+          // Kabkota
+          else if (filterKey === "kabkota") {
+            groupByColumns.push(`ref_kabkota.${nameCol}`);
+          }
+          // Kecamatan
+          else if (filterKey === "kecamatan") {
+            groupByColumns.push(`ref_kec.${nameCol}`);
+          }
+          // Kanwil
+          else if (filterKey === "kanwil") {
+            groupByColumns.push(`ref_kanwil.${nameCol}`);
+          } else {
+            groupByColumns.push(`main.${nameCol}`);
+          }
         }
       });
 
       // Always GROUP BY jenis_transaksi (if selected) and tahap
       if (bansosJenisTampilan !== "jangan_tampilkan") {
-        groupByColumns.push("a.jenis_transaksi");
+        groupByColumns.push("main.jenis_transaksi");
       }
-      groupByColumns.push("a.tahap");
+      groupByColumns.push("main.tahap");
 
       const selectClause = `SELECT\n  ${selectColumns.join(",\n  ")}`;
       const whereClause =
@@ -354,8 +450,9 @@ export function useBelwilBansosQueryBuilder() {
         groupByColumns.length > 0
           ? `GROUP BY\n  ${groupByColumns.join(",\n  ")}`
           : "";
+      const joinClause = joinColumns.length > 0 ? joinColumns.join("\n") : "";
 
-      return [selectClause, fromClause, whereClause, groupByClause]
+      return [selectClause, fromClause, joinClause, whereClause, groupByClause]
         .filter(Boolean)
         .join("\n");
     },
