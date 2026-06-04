@@ -28,6 +28,28 @@ export async function GET(
       cache: "no-store",
     });
 
+    const contentType = resp.headers.get("content-type") || "";
+
+    // If backend returns a binary file (Excel, etc.), stream it directly
+    if (
+      contentType.includes("spreadsheetml") ||
+      contentType.includes("octet-stream") ||
+      contentType.includes("application/zip")
+    ) {
+      const headers = new Headers();
+      headers.set("Content-Type", contentType);
+      const disposition = resp.headers.get("content-disposition");
+      if (disposition) headers.set("Content-Disposition", disposition);
+      const cacheControl = resp.headers.get("cache-control");
+      if (cacheControl) headers.set("Cache-Control", cacheControl);
+
+      return new NextResponse(resp.body, {
+        status: resp.status,
+        headers,
+      });
+    }
+
+    // Otherwise, treat as JSON (default for all other API responses)
     const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp);
   } catch (error) {
@@ -37,3 +59,4 @@ export async function GET(
     );
   }
 }
+

@@ -696,6 +696,7 @@ function DataSpasial() {
     try {
       const params = new URLSearchParams({
         tabel: categoryToTable(selectedCategory, yearSuffix),
+        preview: "true",
         ...(dateFrom && dateTo
           ? {
               dateFrom: format(dateFrom, "yyyy-MM-dd"),
@@ -722,14 +723,46 @@ function DataSpasial() {
     }
   };
 
-  const handleDownload = () => {
-    if (!data || data.length === 0) return;
-    const date = new Date().toISOString().slice(0, 10);
-    downloadExcel(
-      data,
-      selectedCategory,
-      `mbg-${selectedCategory.toLowerCase().replace(/\s+/g, "_")}-${date}.xlsx`,
-    );
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const table = categoryToTable(selectedCategory, yearSuffix);
+      const params = new URLSearchParams({
+        tabel: table,
+        export: "excel",
+        ...(dateFrom && dateTo
+          ? {
+              dateFrom: format(dateFrom, "yyyy-MM-dd"),
+              dateTo: format(dateTo, "yyyy-MM-dd"),
+            }
+          : {}),
+      });
+      const res = await fetch(`/api/mbg/unduh-data?${params.toString()}`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message ?? "Gagal mengunduh data",
+        );
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const date = new Date().toISOString().slice(0, 10);
+      a.download = `mbg-${selectedCategory.toLowerCase().replace(/\s+/g, "_")}-${date}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Gagal mengunduh file Excel");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleReset = () => {
@@ -909,17 +942,26 @@ function DataSpasial() {
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Table2 className="h-4 w-4" />
             Hasil Data {selectedCategory}{" "}
-            {data ? `(${data.length} record)` : ""}
+            {data ? `(Preview 100 record - Klik Unduh untuk seluruh data)` : ""}
           </CardTitle>
           <Button
             variant="outline"
             size="sm"
             onClick={handleDownload}
-            disabled={!data || data.length === 0}
+            disabled={downloading}
             className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
           >
-            <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
-            <span className="text-sm text-white">Unduh Data Excel</span>
+            {downloading ? (
+              <>
+                <Loader2 className="w-4 h-4 text-white mr-2 animate-spin" />
+                <span className="text-sm text-white">Mengunduh...</span>
+              </>
+            ) : (
+              <>
+                <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                <span className="text-sm text-white">Unduh Data Excel</span>
+              </>
+            )}
           </Button>
         </CardHeader>
         <CardContent>
