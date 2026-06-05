@@ -60,12 +60,20 @@ interface Dispo {
   dispoStaf: DispoStaf[];
 }
 
+interface Penandatangan {
+  NamaJabatan: string;
+  NamaPejabat: string;
+  NipPejabat: string;
+}
+
+interface KonseptorItem {
+  Name: string;
+  Unit: string;
+}
+
 interface KonseptorData {
-  Data?: {
-    Riwayat?: { Unit?: string }[];
-    DataNd?: { Perihal?: string; TglNd?: string; NoNd?: string };
-  } | null;
-  Konseptor?: any;
+  Penandatangan: Penandatangan | null;
+  Konseptor: KonseptorItem[];
 }
 
 export default function Detail({
@@ -81,12 +89,7 @@ export default function Detail({
   const { user } = useAuth();
   const router = useRouter();
   const [loadingKonseptor, setLoadingKonseptor] = useState(false);
-  const [konseptorData, setKonseptorData] = useState<KonseptorData | null>(
-    null
-  );
-  const [namaKonseptorDanKasi, setNamaKonseptorDanKasi] = useState<string[]>(
-    []
-  );
+  const [konseptorData, setKonseptorData] = useState<KonseptorData | null>(null);
   const [showKonseptorModal, setShowKonseptorModal] = useState(false);
 
   useEffect(() => {
@@ -144,20 +147,18 @@ export default function Detail({
       const result = await apiClient.get(
         `/track-nadine/konsep/detail/${notaId}/${token}`
       );
-      setKonseptorData(
-        result?.data?.Data ? { Data: result.data.Data, Konseptor: result.data.Konseptor } : null
-      );
-
-      const uniqueMap = new Map<string, string>();
-      result?.data?.Data?.Riwayat?.forEach((item: any) => {
-        if (item?.Unit) uniqueMap.set(item.Unit, item.Unit);
-      });
-      const uniqueFilteredRiwayat = [...uniqueMap.values()];
-      setNamaKonseptorDanKasi(uniqueFilteredRiwayat);
+      // Backend sekarang mengembalikan { Penandatangan, Konseptor } langsung di result.data
+      if (result?.data) {
+        setKonseptorData({
+          Penandatangan: result.data.Penandatangan ?? null,
+          Konseptor: result.data.Konseptor ?? [],
+        });
+      } else {
+        setKonseptorData(null);
+      }
     } catch (err) {
       console.error("Error fetching konseptor data:", err);
       setKonseptorData(null);
-      setNamaKonseptorDanKasi([]);
     } finally {
       setLoadingKonseptor(false);
     }
@@ -327,7 +328,7 @@ export default function Detail({
       </Dialog>
 
       <Dialog open={showKonseptorModal} onOpenChange={handleCloseKonseptor}>
-        <DialogContent showCloseButton={false} className="max-w-3xl fixed z-[60] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
+        <DialogContent showCloseButton={false} className="fixed z-[60] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] min-w-[320px] max-w-3xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-500" />
@@ -335,55 +336,81 @@ export default function Detail({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="py-4 space-y-5 overflow-y-auto max-h-[70vh] pr-1">
             {loadingKonseptor ? (
               <div className="flex justify-center items-center h-[200px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : konseptorData ? (
-              <div className="border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-gray-200">
-                    <TableRow>
-                      <TableHead className="text-gray-900 font-semibold">
-                        Unit
-                      </TableHead>
-                      <TableHead className="text-gray-900 font-semibold">
-                        Perihal
-                      </TableHead>
-                      <TableHead className="text-gray-900 font-semibold">
-                        Tanggal ND
-                      </TableHead>
-                      <TableHead className="text-gray-900 font-semibold">
-                        Nomor ND
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="align-top text-gray-900">
-                        {namaKonseptorDanKasi && namaKonseptorDanKasi.length > 0
-                          ? namaKonseptorDanKasi.map((item, idx) => (
-                            <div key={idx} className="mb-1">
-                              {item}
-                            </div>
-                          ))
-                          : "Tidak tersedia"}
-                      </TableCell>
-                      <TableCell className="align-top text-gray-900">
-                        {konseptorData?.Data?.DataNd?.Perihal ||
-                          "Tidak tersedia"}
-                      </TableCell>
-                      <TableCell className="align-top text-gray-900">
-                        {konseptorData?.Data?.DataNd?.TglNd || "Tidak tersedia"}
-                      </TableCell>
-                      <TableCell className="align-top text-gray-900">
-                        {konseptorData?.Data?.DataNd?.NoNd || "Tidak tersedia"}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
+              <>
+                {/* PENANDATANGAN */}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <Shield className="h-3.5 w-3.5" /> Penandatangan
+                  </p>
+                  {konseptorData.Penandatangan ? (
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader className="bg-muted/60">
+                          <TableRow>
+                            <TableHead className="text-foreground font-semibold w-36">Jabatan</TableHead>
+                            <TableHead className="text-foreground font-semibold w-44">Nama</TableHead>
+                            <TableHead className="text-foreground font-semibold">NIP</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="align-top text-foreground text-sm">
+                              {konseptorData.Penandatangan.NamaJabatan || "-"}
+                            </TableCell>
+                            <TableCell className="align-top text-foreground font-medium text-sm">
+                              {konseptorData.Penandatangan.NamaPejabat || "-"}
+                            </TableCell>
+                            <TableCell className="align-top text-muted-foreground font-mono text-xs">
+                              {konseptorData.Penandatangan.NipPejabat || "-"}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Data penandatangan tidak tersedia</p>
+                  )}
+                </div>
+
+                {/* KONSEPTOR */}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5" /> Konseptor
+                  </p>
+                  {konseptorData.Konseptor && konseptorData.Konseptor.length > 0 ? (
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader className="bg-muted/60">
+                          <TableRow>
+                            <TableHead className="text-foreground font-semibold w-44">Nama</TableHead>
+                            <TableHead className="text-foreground font-semibold">Unit</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {konseptorData.Konseptor.map((item, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="align-top text-foreground font-medium text-sm whitespace-nowrap">
+                                {item.Name || "-"}
+                              </TableCell>
+                              <TableCell className="align-top text-muted-foreground text-sm break-words">
+                                {item.Unit || "-"}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Data konseptor tidak tersedia</p>
+                  )}
+                </div>
+              </>
             ) : (
               <p className="text-center text-destructive font-bold py-8">
                 Data konseptor tidak tersedia
