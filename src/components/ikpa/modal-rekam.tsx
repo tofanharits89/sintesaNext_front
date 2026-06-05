@@ -36,6 +36,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { apiClient } from "@/lib/api/httpClient";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { FilePlus, Loader2, Save, X } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
 import satkerData from "@/data/carisatker.json";
 import kppnData from "@/data/kdkppn.json";
 import { format } from "date-fns";
@@ -58,7 +59,7 @@ const formSchema = z.object({
     tg_nd: z.date({ error: "Tanggal ND wajib diisi" }),
     no_nd: z.string().min(1, "Nomor ND wajib diisi"),
     kdsatker: z.string().min(1, "Satker wajib dipilih"),
-    nm_indikator: z.string().min(1, "Indikator wajib dipilih"),
+    nm_indikator: z.array(z.string()).min(1, "Minimal pilih satu indikator"),
     no_doc: z.string().min(1, "Nomor dokumen wajib diisi"),
     keterangan: z.string().optional(),
     kronologis: z.string().optional(),
@@ -110,7 +111,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
             tg_nd: new Date(),
             no_nd: "",
             kdsatker: "",
-            nm_indikator: "",
+            nm_indikator: [],
             no_doc: "",
             keterangan: "",
             kronologis: "",
@@ -144,18 +145,21 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
         const satker = (satkerData as any[]).find(s => s.kdsatker === values.kdsatker);
         // Find KPPN details
         const kppn = (kppnData as any[]).find(k => k.kdkppn === satker?.kdkppn);
-        // Find indicator code
-        const indicator = INDIKATOR_OPTIONS.find(i => i.value === values.nm_indikator);
+        // Find indicator codes for all selected indicators
+        const selectedIndicators = INDIKATOR_OPTIONS.filter(i => values.nm_indikator.includes(i.value));
+        const indicator = selectedIndicators[0];
 
         const payload = {
             ...values,
+            // Join multiple indikator as comma-separated string for backend
+            nm_indikator: values.nm_indikator.join(", "),
+            kd_indikator: selectedIndicators.map(i => i.code).join(", "),
             date_input: new Date().toISOString().split('T')[0],
             kdkanwil: satker?.kdkanwil || kppn?.kdkanwil || "",
             nmkanwil: kppn?.nmkanwil || "",
             kdkppn: satker?.kdkppn || "",
             nmkppn: kppn?.nmkppn || "",
             nmsatker: satker?.nmsatker || "",
-            kd_indikator: indicator?.code || "",
             approval: "Pending",
             id_approval: "0"
         };
@@ -242,21 +246,12 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="w-full space-y-2">
                                 <Label htmlFor="nm_indikator">Indikator IKPA</Label>
-                                <Select
+                                <MultiSelect
+                                    options={INDIKATOR_OPTIONS}
                                     value={form.watch("nm_indikator")}
                                     onValueChange={(value) => form.setValue("nm_indikator", value)}
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Pilih Indikator" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {INDIKATOR_OPTIONS.map((opt) => (
-                                            <SelectItem key={opt.code} value={opt.value}>
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Pilih satu atau lebih indikator"
+                                />
                             </div>
 
                             <div className="w-full space-y-2">
