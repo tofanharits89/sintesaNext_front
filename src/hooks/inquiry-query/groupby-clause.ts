@@ -8,7 +8,7 @@ const FILTER_CONFIG: Record<string, FilterConfig> = getFilterConfigMap() as any;
 export function buildGroupByClause(
   activeFilters: string[],
   filterValues: Record<string, FilterValue>,
-  reportParams: { tipeLaporan: string; tematikKategori?: string }
+  reportParams: { tipeLaporan: string; tematikKategori?: string },
 ) {
   const groupByColumns: string[] = [];
   const addGroupBy = (col: string) => {
@@ -87,14 +87,19 @@ export function buildGroupByClause(
 
   const uniqueActiveFilters = Array.from(new Set(activeFilters));
 
-  if (uniqueActiveFilters.includes("kemiskinanEkstrim")) addGroupBy("main.kemiskinan_ekstrim");
+  if (uniqueActiveFilters.includes("kemiskinanEkstrim"))
+    addGroupBy("main.kemiskinan_ekstrim");
   if (uniqueActiveFilters.includes("jenisKontrak")) {
-    addGroupBy("CASE WHEN SUBSTR(main.can,16,1) = '0' THEN 'SYC' WHEN SUBSTR(main.can,16,1) <> '0' THEN 'MYC' END");
+    addGroupBy(
+      "CASE WHEN SUBSTR(main.can,16,1) = '0' THEN 'SYC' WHEN SUBSTR(main.can,16,1) <> '0' THEN 'MYC' END",
+    );
   }
   if (uniqueActiveFilters.includes("belanjaPemilu")) addGroupBy("main.pemilu");
   if (uniqueActiveFilters.includes("ibuKotaNusantara")) addGroupBy("main.ikn");
-  if (uniqueActiveFilters.includes("ketahananPangan")) addGroupBy("main.pangan");
-  if (uniqueActiveFilters.includes("swasembadaPangan")) addGroupBy("main.swasembada");
+  if (uniqueActiveFilters.includes("ketahananPangan"))
+    addGroupBy("main.pangan");
+  if (uniqueActiveFilters.includes("swasembadaPangan"))
+    addGroupBy("main.swasembada");
   if (uniqueActiveFilters.includes("statusSumber")) {
     const filterValue = filterValues["statusSumber"];
     const jenisTampilan = filterValue?.jenisTampilan || "kode";
@@ -104,46 +109,62 @@ export function buildGroupByClause(
     }
   }
 
-uniqueActiveFilters.forEach((filterKey) => {
-      if (filterKey === "cutOff" || filterKey === "statusSumber") return;
-      const config = FILTER_CONFIG[filterKey];
-      const filterValue = filterValues[filterKey];
-      
-      // Only return if filterValue is missing, but still process if config is missing
-      if (!filterValue) return;
+  uniqueActiveFilters.forEach((filterKey) => {
+    if (filterKey === "cutOff" || filterKey === "statusSumber") return;
+    const config = FILTER_CONFIG[filterKey];
+    const filterValue = filterValues[filterKey];
 
-      const jenisTampilan = filterValue.jenisTampilan || "kode";
-      if (jenisTampilan === "jangan_tampilkan") return;
+    // Only return if filterValue is missing, but still process if config is missing
+    if (!filterValue) return;
 
-      // If config exists, use it for special cases
-      if (config) {
-        if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
-          addGroupBy(`LEFT(main.${config.columnName}, 4)`);
-        } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
-          addGroupBy(`LEFT(main.${config.columnName}, 2)`);
-        } else if (filterKey === "kodeBkpk") {
-          addGroupBy(`LEFT(main.${config.columnName}, 4)`);
-        } else if (filterKey === "jenisBelanja") {
-          addGroupBy(`LEFT(main.${config.columnName}, 2)`);
-        } else if (filterKey === "komponen" || filterKey === "subKomponen" || filterKey === "subFungsi") {
-          // Trim kode for columns with trailing spaces
-          addGroupBy(`TRIM(main.${config.columnName})`);
-        } else if (filterKey !== "register") {
-          addGroupBy(`main.${config.columnName}`);
-        }
-      } else {
-        // Fallback: if config doesn't exist, use filterKey as column name
-        addGroupBy(`main.${filterKey}`);
+    const jenisTampilan = filterValue.jenisTampilan || "kode";
+    if (jenisTampilan === "jangan_tampilkan") return;
+
+    // If config exists, use it for special cases
+    if (config) {
+      if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+        addGroupBy(`LEFT(main.${config.columnName}, 4)`);
+      } else if (
+        filterKey === "akun" &&
+        filterValue?.akunType === "jenisBelanja"
+      ) {
+        addGroupBy(`LEFT(main.${config.columnName}, 2)`);
+      } else if (filterKey === "kodeBkpk") {
+        addGroupBy(`LEFT(main.${config.columnName}, 4)`);
+      } else if (filterKey === "jenisBelanja") {
+        addGroupBy(`LEFT(main.${config.columnName}, 2)`);
+      } else if (
+        filterKey === "komponen" ||
+        filterKey === "subKomponen" ||
+        filterKey === "subFungsi"
+      ) {
+        // Trim kode for columns with trailing spaces
+        addGroupBy(`TRIM(main.${config.columnName})`);
+      } else if (filterKey !== "register") {
+        addGroupBy(`main.${config.columnName}`);
       }
+    } else {
+      // Fallback: if config doesn't exist, use filterKey as column name
+      addGroupBy(`main.${filterKey}`);
+    }
 
-    if (filterKey === "jenisProgramStrategis" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
+    if (
+      filterKey === "jenisProgramStrategis" &&
+      (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")
+    ) {
       addGroupBy("main.nmprogis");
     }
-    if (filterKey === "jenisPrioritasPresiden" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
+    if (
+      filterKey === "jenisPrioritasPresiden" &&
+      (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")
+    ) {
       addGroupBy("main.nmpriopres");
     }
 
-    if (filterKey === "item" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
+    if (
+      filterKey === "item" &&
+      (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")
+    ) {
       // Add columns used in nameColumn expression to GROUP BY
       addGroupBy("main.nmitem");
       addGroupBy("main.volkeg");
@@ -153,6 +174,7 @@ uniqueActiveFilters.forEach((filterKey) => {
 
     if (getReportTypeConfig(reportParams.tipeLaporan).isVolumeOutput) {
       addGroupBy("main.sat");
+      addGroupBy("main.vol");
       addGroupBy("main.os");
       addGroupBy("main.ket");
     }
@@ -168,11 +190,15 @@ uniqueActiveFilters.forEach((filterKey) => {
         addGroupBy(`${alias}.nmdonor`);
         addGroupBy(`${alias}.jmlpnrk`);
         addGroupBy(`${alias}.closingdate`);
-      } else if (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") {
+      } else if (
+        jenisTampilan === "uraian" ||
+        jenisTampilan === "kode_uraian"
+      ) {
         let nameColumn = config.nameColumn!;
         if (filterKey === "akun" && filterValue?.akunType) {
           if (filterValue.akunType === "kodeBkpk") nameColumn = "nmbkpk";
-          else if (filterValue.akunType === "jenisBelanja") nameColumn = "nmgbkpk";
+          else if (filterValue.akunType === "jenisBelanja")
+            nameColumn = "nmgbkpk";
         }
         addGroupBy(`${alias}.${nameColumn}`);
       }
@@ -183,7 +209,8 @@ uniqueActiveFilters.forEach((filterKey) => {
   if (tematikKategori) {
     const categoryConfig = getCategoryQueryConfig(tematikKategori);
     if (categoryConfig?.groupByColumns?.length) {
-      for (const col of categoryConfig.groupByColumns) if (!groupByColumns.includes(col)) groupByColumns.push(col);
+      for (const col of categoryConfig.groupByColumns)
+        if (!groupByColumns.includes(col)) groupByColumns.push(col);
     }
   }
 
