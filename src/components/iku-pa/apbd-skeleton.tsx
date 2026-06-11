@@ -85,7 +85,7 @@ export function ApbdPageSkeleton() {
         </Card>
 
         {/* ── Detail card ── */}
-        <Card className="border shadow-lg overflow-hidden bg-white">
+        <Card className="border shadow-lg overflow-hidden bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <Skeleton className="h-5 w-64" />
             {/* Download button */}
@@ -136,7 +136,7 @@ export function ApbdDetailTableSkeleton({ rows = 8 }: { rows?: number }) {
         <div
           key={rowIdx}
           className={`flex items-center gap-2 px-3 py-2 border-b last:border-b-0 ${
-            rowIdx % 2 === 0 ? "bg-white" : "bg-muted/20"
+            rowIdx % 2 === 0 ? "bg-transparent" : "bg-muted/20"
           }`}
         >
           {colWidths.map((w, colIdx) => (

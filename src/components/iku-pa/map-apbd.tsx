@@ -565,7 +565,7 @@ export default function MapApbd() {
 
       {/* ─── Detail per Kanwil ─── */}
       {selectedKanwil && (
-        <Card className="border-blue-900/10 shadow-lg overflow-hidden mt-6 bg-white">
+        <Card className="border-blue-900/10 shadow-lg overflow-hidden mt-6 bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>
               Detail: {selectedKanwil.name} &mdash; Tw{" "}
