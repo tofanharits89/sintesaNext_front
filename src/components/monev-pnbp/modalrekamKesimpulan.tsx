@@ -211,7 +211,7 @@ export default function RekamKesimpulan({
     try {
       const encryptedQuery = btoa(cleanedQuery);
       const apiUrl = apiPath(
-        `/kesimpulan/${encryptedQuery}?limit=${limit}&page=${page}`
+        `/monev-pnbp/tayang?query=${encryptedQuery}&limit=${limit}&page=${page}`
       );
 
       const response = await fetch(apiUrl, {
