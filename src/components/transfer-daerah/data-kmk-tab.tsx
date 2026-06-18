@@ -15,7 +15,7 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Trash2, Scissors, PauseCircle, Undo2, ScrollText } from "lucide-react";
+import { FileText, Trash2, Scissors, PauseCircle, Undo2, ScrollText, Timer } from "lucide-react";
 import { PdfViewerModal } from "./modals/pdf-viewer-modal";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
@@ -23,6 +23,7 @@ import { DataPencabutanModal } from "./modals/data-pencabutan-modal";
 import { DataPenundaanModal } from "./modals/data-penundaan-modal";
 import { DataPemotonganModal } from "./modals/data-pemotongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
+import { RekamPenundaanModal } from "./modals/rekam-penundaan-modal";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
@@ -42,6 +43,8 @@ export function DataKmkTab({ kdkanwil, kdkppn }: DataKmkTabProps) {
   const [isDataKmkModalOpen, setIsDataKmkModalOpen] = useState(false);
   const [isPencabutanModalOpen, setIsPencabutanModalOpen] = useState(false);
   const [isDataPenundaanModalOpen, setIsDataPenundaanModalOpen] =
+    useState(false);
+  const [isRekamPenundaanModalOpen, setIsRekamPenundaanModalOpen] =
     useState(false);
   const [isDataPemotonganModalOpen, setIsDataPemotonganModalOpen] =
     useState(false);
@@ -263,7 +266,7 @@ export function DataKmkTab({ kdkanwil, kdkppn }: DataKmkTabProps) {
               </Button>
             )}
 
-            {/* Data Penundaan (jenis 2 atau 3) */}
+            {/* Data Penundaan - lihat (jenis 2 atau 3) */}
             {(jenis === "2" || jenis === "3") && (
               <Button
                 variant="outline"
@@ -276,6 +279,22 @@ export function DataKmkTab({ kdkanwil, kdkppn }: DataKmkTabProps) {
                 title="Data Penundaan"
               >
                 <PauseCircle className="h-4 w-4 text-blue-600" />
+              </Button>
+            )}
+
+            {/* Rekam Data Penundaan - tambah (hanya jenis 2) */}
+            {jenis === "2" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 cursor-pointer"
+                onClick={() => {
+                  setSelectedItem(row.original);
+                  setIsRekamPenundaanModalOpen(true);
+                }}
+                title="Rekam Data Penundaan"
+              >
+                <Timer className="h-4 w-4 text-green-600" />
               </Button>
             )}
 
@@ -399,6 +418,18 @@ export function DataKmkTab({ kdkanwil, kdkppn }: DataKmkTabProps) {
       <PencabutanModal
         open={isPencabutanModalOpen}
         onOpenChange={setIsPencabutanModalOpen}
+      />
+      <RekamPenundaanModal
+        open={isRekamPenundaanModalOpen}
+        onOpenChange={setIsRekamPenundaanModalOpen}
+        data={selectedItem}
+        onSaveSuccess={async () => {
+          await queryClient.invalidateQueries({
+            queryKey: ["kmk-dau", selectedYear],
+            refetchType: "active",
+          });
+          await mutate();
+        }}
       />
       <DataPenundaanModal
         open={isDataPenundaanModalOpen}
