@@ -31,9 +31,11 @@ export interface KmkRow {
   tanggalKmk: string;
   nomorKmk: string;
   uraian: string;
-  jenis: string; // code as string (e.g., "1", "2")
+  jenis: string; // code as string (e.g., "1", "2") — TRIMMED
   nmjenis: string; // name from backend
-  kriteria: string; // human readable
+  kriteria: string; // human readable (nm_kriteria)
+  rawKriteria: string; // kode kriteria asli dari DB (e.g., "21", "22") — digunakan modal rekam penundaan
+  rawTglKmk: string; // tgl_kmk asli dari DB (format YYYY-MM-DD) — digunakan untuk ekstrak bulan KMK
   fileUrl: string;
   fileName: string;
 }
@@ -129,6 +131,8 @@ export function useKmkDau(year?: string | number, kdkanwil?: string, kdkppn?: st
       jenis: String(r.jenis ?? "").trim(),
       nmjenis: (r.nmjenis ?? "").toString().trim(),
       kriteria: (r.nm_kriteria ?? r.kriteria ?? "").toString(),
+      rawKriteria: String(r.kriteria ?? "").trim(), // kode asli: "21", "22", dll
+      rawTglKmk: r.tgl_kmk ?? "", // format YYYY-MM-DD untuk ekstrak bulan KMK
       fileUrl: (() => {
         const f = (r.filekmk ?? "").toString().trim(); // Trim whitespace
         if (!f) return "";

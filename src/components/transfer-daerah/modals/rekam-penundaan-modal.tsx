@@ -19,13 +19,36 @@ import {
   AlertDialogTitle,
 } from "@/components/animate-ui/components/radix/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useKppnByNoKmk } from "@/hooks/use-kppn-by-nokmk";
 import { useKabKotaByNoKmk } from "@/hooks/use-kabkota-by-nokmk";
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
+import { CekAlokasi, MonthValues, MONTH_KEYS, emptyMonthValues } from "./cek-alokasi";
+
+// Daftar pilihan periode/bulan (01-12)
+const PERIODE_OPTIONS = [
+  { value: "01", label: "01 - Januari" },
+  { value: "02", label: "02 - Februari" },
+  { value: "03", label: "03 - Maret" },
+  { value: "04", label: "04 - April" },
+  { value: "05", label: "05 - Mei" },
+  { value: "06", label: "06 - Juni" },
+  { value: "07", label: "07 - Juli" },
+  { value: "08", label: "08 - Agustus" },
+  { value: "09", label: "09 - September" },
+  { value: "10", label: "10 - Oktober" },
+  { value: "11", label: "11 - November" },
+  { value: "12", label: "12 - Desember" },
+];
 
 interface RekamPenundaanModalProps {
   open: boolean;
@@ -34,44 +57,41 @@ interface RekamPenundaanModalProps {
   onSaveSuccess?: () => void;
 }
 
-const MONTH_KEYS = ["jan", "peb", "mar", "apr", "mei", "jun", "jul", "ags", "sep", "okt", "nov", "des"] as const;
-type MonthKey = typeof MONTH_KEYS[number];
-
-const MONTH_LABELS: Record<MonthKey, string> = {
-  jan: "Januari", peb: "Februari", mar: "Maret", apr: "April",
-  mei: "Mei", jun: "Juni", jul: "Juli", ags: "Agustus",
-  sep: "September", okt: "Oktober", nov: "November", des: "Desember",
-};
-
-type MonthValues = Record<MonthKey, string>;
-
-const emptyMonths = (): MonthValues =>
-  Object.fromEntries(MONTH_KEYS.map((k) => [k, ""])) as MonthValues;
-
 export function RekamPenundaanModal({
   open,
   onOpenChange,
   data,
   onSaveSuccess,
 }: RekamPenundaanModalProps) {
-  // Resolve KMK info from row data
+  // Resolve KMK info dari row data
   const noKmk: string = String(data?.nomorKmk || data?.no_kmk || "");
   const thang: string = String(data?.tahun || data?.thang || new Date().getFullYear());
   const uraian: string = String(data?.uraian || "");
-  const jenis: string = String(data?.jenis || "2");
-  const kriteria: string = String(data?.kriteria || "");
+  const jenis: string = String(data?.jenis || "2").trim();
+  // rawKriteria = kode asli dari DB ("21", "22") — digunakan untuk logika auto-fill
+  // kriteria display = nama human-readable (nm_kriteria)
+  const kriteria: string = String(data?.rawKriteria || data?.kriteria || "").trim();
+  const kriteriaDisplay: string = String(data?.kriteria || "");
+
+  // Ekstrak bulan dari rawTglKmk (dari DB, format "YYYY-MM-DD") → "03" dst
+  // rawTglKmk tersedia di KmkRow (ditambahkan ke hook), tgl_kmk hanya di RawKmkDauItem
+  const tglKmk: string = String(data?.rawTglKmk || data?.tgl_kmk || data?.tanggalKmk || "");
+  const bulanKmk: string = tglKmk.length >= 7 ? tglKmk.substring(5, 7) : "";
 
   // Form state
   const [kdkppn, setKdkppn] = useState("");
   const [kdpemda, setKdpemda] = useState("");
-  const [monthValues, setMonthValues] = useState<MonthValues>(emptyMonths());
+  // periode = bulan yang dipilih user di dropdown (digunakan untuk query alokasi ke DB)
+  const [periode, setPeriode] = useState("");
+  // monthValues diisi via CekAlokasi (auto-fill 25%) atau manual
+  const [monthValues, setMonthValues] = useState<MonthValues>(emptyMonthValues());
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // KPPN options based on selected KMK
+  // KPPN options berdasarkan KMK terpilih
   const { options: kppnOptions, isLoading: kppnLoading } = useKppnByNoKmk(noKmk || undefined);
 
-  // Kab/Kota options based on selected KMK + KPPN
+  // Kab/Kota options berdasarkan KPPN terpilih
   const { options: kabkotaOptions, isLoading: kabkotaLoading } = useKabKotaByNoKmk(
     noKmk || undefined,
     kdkppn || undefined
@@ -80,7 +100,8 @@ export function RekamPenundaanModal({
   const handleReset = useCallback(() => {
     setKdkppn("");
     setKdpemda("");
-    setMonthValues(emptyMonths());
+    setPeriode("");
+    setMonthValues(emptyMonthValues());
     setErrorMsg(null);
   }, []);
 
@@ -89,9 +110,15 @@ export function RekamPenundaanModal({
     handleReset();
   }, [onOpenChange, handleReset]);
 
-  const handleMonthChange = (key: MonthKey, value: string) => {
-    setMonthValues((prev) => ({ ...prev, [key]: value }));
-  };
+  // Callback dari CekAlokasi setiap kali nilai berubah (auto-fill atau manual)
+  const handleReceiveFormData = useCallback(
+    (data: MonthValues & { alokasi: number }) => {
+      // Ambil hanya nilai bulan (drop key alokasi)
+      const { alokasi: _, ...months } = data;
+      setMonthValues(months as MonthValues);
+    },
+    []
+  );
 
   const handleSubmit = async () => {
     setErrorMsg(null);
@@ -101,10 +128,12 @@ export function RekamPenundaanModal({
       if (!noKmk) throw new Error("Data KMK tidak ditemukan");
       if (!kdkppn) throw new Error("Pilih KPPN terlebih dahulu");
       if (!kdpemda) throw new Error("Pilih Kabupaten/Kota terlebih dahulu");
+      if (!periode) throw new Error("Pilih Periode terlebih dahulu");
 
-      const monthPayload: Record<MonthKey, number> = Object.fromEntries(
+      // Nilai dari CekAlokasi dalam satuan juta → kalikan 1.000.000 untuk kirim ke backend
+      const monthPayload: Record<string, number> = Object.fromEntries(
         MONTH_KEYS.map((k) => [k, Number(monthValues[k] || 0) * 1_000_000])
-      ) as Record<MonthKey, number>;
+      );
 
       const totalNilai = Object.values(monthPayload).reduce((a, b) => a + b, 0);
       if (totalNilai === 0) {
@@ -161,19 +190,28 @@ export function RekamPenundaanModal({
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-6 grid gap-5 py-4">
-            {/* Info KMK (read-only, dari baris yang diklik) */}
+            {/* Info KMK (read-only) */}
             <div className="space-y-1.5">
               <Label>KMK Penundaan</Label>
               <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
                 <p className="font-medium">{noKmk || "—"}</p>
                 {uraian && <p className="text-xs text-muted-foreground mt-0.5">{uraian}</p>}
-                {kriteria && <p className="text-xs text-muted-foreground">Kriteria: {kriteria}</p>}
-                <p className="text-xs text-muted-foreground">Tahun: {thang}</p>
+                <div className="flex gap-4 mt-1">
+                  {kriteriaDisplay && (
+                    <p className="text-xs text-muted-foreground">Kriteria: {kriteriaDisplay}</p>
+                  )}
+                  {bulanKmk && (
+                    <p className="text-xs text-muted-foreground">
+                      Bulan KMK: {bulanKmk}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Tahun: {thang}</p>
+                </div>
               </div>
             </div>
 
-            {/* KPPN & Kab/Kota */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* KPPN, Kab/Kota, Periode — 3 kolom */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label>
                   KPPN <span className="text-destructive">*</span>
@@ -184,6 +222,7 @@ export function RekamPenundaanModal({
                   onValueChange={(v) => {
                     setKdkppn(v);
                     setKdpemda("");
+                    setMonthValues(emptyMonthValues());
                   }}
                   placeholder={
                     kppnLoading
@@ -203,7 +242,10 @@ export function RekamPenundaanModal({
                 <SearchableSelect
                   options={kabkotaOptions}
                   value={kdpemda}
-                  onValueChange={setKdpemda}
+                  onValueChange={(v) => {
+                    setKdpemda(v);
+                    setMonthValues(emptyMonthValues());
+                  }}
                   placeholder={
                     !kdkppn
                       ? "Pilih KPPN terlebih dahulu"
@@ -214,30 +256,51 @@ export function RekamPenundaanModal({
                   disabled={!kdkppn || kabkotaLoading}
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <Label>
+                  Periode <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={periode}
+                  onValueChange={(v) => {
+                    setPeriode(v);
+                    setMonthValues(emptyMonthValues());
+                  }}
+                  disabled={!kdpemda}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={!kdpemda ? "Pilih Kab/Kota dahulu" : "Pilih Periode"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PERIODE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Nilai Penundaan per Bulan */}
-            <div className="space-y-3">
+            {/* Nilai Penundaan per Bulan — via CekAlokasi (auto-fill 25%) */}
+            <div className="space-y-2">
               <Label className="text-sm font-semibold">
                 Nilai Penundaan per Bulan{" "}
-                <span className="text-xs font-normal text-muted-foreground">(dalam juta rupiah)</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  (dalam juta rupiah)
+                </span>
               </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {MONTH_KEYS.map((key) => (
-                  <div key={key} className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">{MONTH_LABELS[key]}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.001"
-                      value={monthValues[key]}
-                      onChange={(e) => handleMonthChange(key, e.target.value)}
-                      placeholder="0"
-                      className="text-right font-mono"
-                    />
-                  </div>
-                ))}
-              </div>
+              <CekAlokasi
+                kdpemda={kdpemda}
+                bulanKmk={bulanKmk}
+                periode={periode}
+                kriteria={kriteria}
+                thang={thang}
+                onReceiveFormData={handleReceiveFormData}
+              />
             </div>
           </div>
 
