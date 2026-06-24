@@ -264,8 +264,13 @@ export function ResponsiveSidebar({
         // Only admins can see Data Supplier
         if (item.label === "Data Supplier" && !isAdmin) return false;
 
-        // Only admins and ditpa can see IKI Dit.PA
-        if (item.label === "IKI Dit.PA" && !isAdmin && user.role !== "ditpa")
+        // Only admins, ditpa, and kanwil_djpb can see IKI Dit.PA
+        if (
+          item.label === "IKI Dit.PA" &&
+          !isAdmin &&
+          user.role !== "ditpa" &&
+          user.role !== "kanwil_djpb"
+        )
           return false;
 
         return true;
@@ -314,6 +319,23 @@ export function ResponsiveSidebar({
 
           if (allowedChildren.length === 0) return null; // Hide menu entirely
           return { ...item, children: allowedChildren };
+        }
+
+        // Filter IKI Dit.PA children based on role
+        if (item.label === "IKI Dit.PA") {
+          // Admin dan ditpa bisa melihat semua child menu
+          if (isAdmin || user.role === "ditpa") return item;
+
+          // kanwil_djpb hanya bisa melihat sub-menu "Efektivitas Pusat-Daerah"
+          if (user.role === "kanwil_djpb") {
+            const allowedChildren = (item.children || []).filter(
+              (child) => child.label === "Efektivitas Pusat-Daerah",
+            );
+            if (allowedChildren.length === 0) return null;
+            return { ...item, children: allowedChildren };
+          }
+
+          return null;
         }
 
         // Filter Dashboard children: hide Pengendalian Belanja for non-ditpa, non-admin

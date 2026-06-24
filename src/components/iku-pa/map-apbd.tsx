@@ -47,6 +47,7 @@ import {
   Wallet,
   BarChart3,
   Building2,
+  ChevronDown,
 } from "lucide-react";
 import { ApbdDetailTableSkeleton } from "@/components/iku-pa/apbd-skeleton";
 
@@ -222,11 +223,19 @@ export default function MapApbd() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layerRef = useRef<any>(null);
 
+  // ── State accordion legenda (default tertutup) ──
+  const [legendOpen, setLegendOpen] = useState(false);
+
+  // ── State kanwil yg diklik di peta (null = tampilkan Nasional) ──
+  const [mapSelectedKd, setMapSelectedKd] = useState<string | null>(null);
+
   // ── Filter PETA ──
   const [triwulan, setTriwulan] = useState(1);
   const [data, setData] = useState<KanwilRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // noDataMap: true jika backend kembalikan noData (data triwulan belum ada)
+  const [noDataMap, setNoDataMap] = useState(false);
 
   // ── Data Nasional ──
   const [nasionalData, setNasionalData] = useState<NasionalRow | null>(null);
@@ -235,11 +244,14 @@ export default function MapApbd() {
   // ── Filter TABEL (independen dari peta) ──
   const [tableTriwulan, setTableTriwulan] = useState(1);
   // Hanya simpan kdkanwil (string) agar Select value tidak pernah undefined/null
-  const [tableKdkanwil, setTableKdkanwil] = useState<string>("13");
+  // Default: 'nasional' → tabel menampilkan agregat semua kanwil
+  const [tableKdkanwil, setTableKdkanwil] = useState<string>("nasional");
 
   const [detailData, setDetailData] = useState<DetailRow[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  // noDataDetail: true jika backend kembalikan noData untuk tabel detail
+  const [noDataDetail, setNoDataDetail] = useState(false);
 
   // Map untuk lookup warna per kanwil (dipakai peta)
   const dataMap = useMemo(() => {
@@ -257,15 +269,16 @@ export default function MapApbd() {
   }, [data]);
 
   // Nama kanwil aktif — di-derive dari options agar tidak perlu menyimpan name di state
-  const tableKanwilName = useMemo(
-    () => kanwilOptions.find((o) => o.kdkanwil === tableKdkanwil)?.name ?? "Jawa Tengah",
-    [kanwilOptions, tableKdkanwil],
-  );
+  const tableKanwilName = useMemo(() => {
+    if (tableKdkanwil === "nasional") return "Nasional (Agregat)";
+    return kanwilOptions.find((o) => o.kdkanwil === tableKdkanwil)?.name ?? tableKdkanwil;
+  }, [kanwilOptions, tableKdkanwil]);
 
   // ── Inisialisasi Leaflet Map ──────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     let destroyed = false;
+    let ro: ResizeObserver | null = null;
 
     import("leaflet").then(({ default: L }) => {
       if (destroyed || !containerRef.current) return;
@@ -279,10 +292,16 @@ export default function MapApbd() {
         attribution: "© OpenStreetMap contributors",
       }).addTo(map);
       mapRef.current = map;
+
+      // ResizeObserver: panggil invalidateSize setiap kali container berubah ukuran
+      // (terjadi saat layout flex selesai render atau sidebar toggle)
+      ro = new ResizeObserver(() => { map.invalidateSize(); });
+      ro.observe(containerRef.current!);
     });
 
     return () => {
       destroyed = true;
+      ro?.disconnect();
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -342,11 +361,12 @@ export default function MapApbd() {
           lyr.on("mouseout", function (this: typeof lyr) {
             layer.resetStyle(this);
           });
-          // Klik peta → sync ke filter tabel
+          // Klik peta → sync ke filter tabel + update overlay stat
           lyr.on("click", () => {
             const kd = getKdkanwil(kodeProv);
             if (dataMap.has(kd)) {
               setTableKdkanwil(kd);
+              setMapSelectedKd(kd);
             }
           });
         },
@@ -366,12 +386,18 @@ export default function MapApbd() {
   const fetchData = useCallback(async (tw: number) => {
     setLoading(true);
     setError(null);
+    setNoDataMap(false);
     try {
-      const res = await axios.get<{ result: KanwilRow[] }>(
+      const res = await axios.get<{ result: KanwilRow[]; noData?: boolean }>(
         "/api/v1/iku-pa/apbd/map",
         { params: { triwulan: tw }, withCredentials: true },
       );
-      setData(res.data.result ?? []);
+      if (res.data.noData) {
+        setNoDataMap(true);
+        setData([]);
+      } else {
+        setData(res.data.result ?? []);
+      }
     } catch {
       setError("Gagal memuat data peta. Silakan coba lagi.");
     } finally {
@@ -383,11 +409,12 @@ export default function MapApbd() {
   const fetchNasional = useCallback(async (tw: number) => {
     setNasionalLoading(true);
     try {
-      const res = await axios.get<{ result: NasionalRow }>(
+      const res = await axios.get<{ result: NasionalRow | null; noData?: boolean }>(
         "/api/v1/iku-pa/apbd/nasional",
         { params: { triwulan: tw }, withCredentials: true },
       );
-      setNasionalData(res.data.result ?? null);
+      // Jika noData, tetap set null agar overlay stat menampilkan "Data tidak tersedia"
+      setNasionalData(res.data.noData ? null : (res.data.result ?? null));
     } catch {
       setNasionalData(null);
     } finally {
@@ -399,12 +426,18 @@ export default function MapApbd() {
   const fetchDetail = useCallback(async (kdkanwil: string, tw: number) => {
     setDetailLoading(true);
     setDetailError(null);
+    setNoDataDetail(false);
     try {
-      const res = await axios.get<{ result: DetailRow[] }>(
+      const res = await axios.get<{ result: DetailRow[]; noData?: boolean }>(
         "/api/v1/iku-pa/apbd/detail",
         { params: { kdkanwil, triwulan: tw }, withCredentials: true },
       );
-      setDetailData(res.data.result ?? []);
+      if (res.data.noData) {
+        setNoDataDetail(true);
+        setDetailData([]);
+      } else {
+        setDetailData(res.data.result ?? []);
+      }
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err)
         ? `Error ${err.response?.status ?? ""}: ${err.response?.data?.error ?? err.message}`
@@ -561,7 +594,7 @@ export default function MapApbd() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {/* ══ BAGIAN 1: Filter Triwulan + Peta ════════════════════════════════ */}
+      {/* ══ BAGIAN 1: Filter Triwulan + Peta ═════════════════════════════ */}
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -591,11 +624,11 @@ export default function MapApbd() {
           {error && (
             <div className="mb-3 text-sm text-red-500">{error}</div>
           )}
-          {/* ── Peta + Legenda side-by-side (70 : 30) ── */}
-          <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+          {/* ── Peta full-width, overlay panel Legenda+Stat di kanan ── */}
+          <div className="relative">
 
-            {/* Map container */}
-            <Card className="relative w-full lg:w-[70%] lg:shrink-0 border shadow-sm overflow-hidden py-0 min-h-[350px]">
+            {/* Map container — full width */}
+            <Card className="relative w-full border shadow-sm overflow-hidden py-0 min-h-[420px]">
               {loading && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/70 backdrop-blur-sm">
                   <Skeleton className="h-full w-full absolute inset-0 rounded-none" />
@@ -607,61 +640,54 @@ export default function MapApbd() {
               )}
               <div
                 ref={containerRef}
-                className="relative isolate z-0 w-full h-[350px] lg:h-full"
+                className="relative isolate z-0 w-full h-[420px]"
                 style={{ background: "#b8b89a" }}
               />
             </Card>
 
-            {/* Legenda */}
-            <Card className="w-full lg:w-[30%] border shadow-sm overflow-hidden flex flex-col py-0 gap-0">
-              <CardHeader className="shrink-0 px-4 pb-3 pt-4">
-                <CardTitle className="text-base font-semibold">Legenda Indeks APBD</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4 pt-0">
-                <div className="rounded-md border">
-                  <Table className="relative border-separate border-spacing-0 text-[11px]">
-                    <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
+            {/* Panel overlay: Legenda accordion + Stat Card — absolut di atas peta sebelah kanan */}
+            <div className="absolute top-2 right-2 z-20 w-[270px] flex flex-col rounded-xl border bg-card/95 backdrop-blur-sm shadow-lg overflow-hidden">
+
+              {/* ── Tombol Accordion Legenda ── */}
+              <button
+                type="button"
+                onClick={() => setLegendOpen((o) => !o)}
+                className="flex items-center justify-between w-full px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+              >
+                <span className="text-xs font-semibold">Legenda Indeks APBD</span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${legendOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {/* ── Isi Legenda (collapsible) ── */}
+              {legendOpen && (
+                <div className="px-3 pb-2 border-t">
+                  <Table className="relative border-separate border-spacing-0 text-[10px] mt-1">
+                    <TableHeader className="bg-card sticky top-0 z-10">
                       <TableRow>
-                        <TableHead className="bg-background font-medium text-[11px] text-center">Capaian</TableHead>
-                        <TableHead className="bg-background font-medium text-center text-[11px]">Tw I–III</TableHead>
-                        <TableHead className="bg-background font-medium text-center text-[11px]">Tw IV</TableHead>
+                        <TableHead className="bg-card font-medium text-[10px] text-center py-1 px-1">Capaian</TableHead>
+                        <TableHead className="bg-card font-medium text-center text-[10px] py-1 px-1">Tw I–III</TableHead>
+                        <TableHead className="bg-card font-medium text-center text-[10px] py-1 px-1">Tw IV</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {INDEKS_LEGEND.map((idx, i) => (
                         <TableRow key={idx}>
-                          <TableCell className="py-1.5">
+                          <TableCell className="py-0.5 px-1">
                             <Badge
                               variant="outline"
-                              className="text-[10px] font-semibold px-1.5 py-0.5 whitespace-nowrap gap-1.5"
-                              style={{
-                                borderColor: INDEKS_COLORS[idx],
-                                color: INDEKS_COLORS[idx],
-                              }}
+                              className="text-[9px] font-semibold px-1 py-0.5 whitespace-nowrap gap-1"
+                              style={{ borderColor: INDEKS_COLORS[idx], color: INDEKS_COLORS[idx] }}
                             >
-                              <span
-                                className="inline-block w-2 h-2 rounded-full shrink-0"
-                                style={{ background: INDEKS_COLORS[idx] }}
-                              />
-                              Indeks {idx}
+                              <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0" style={{ background: INDEKS_COLORS[idx] }} />
+                              {idx}
                             </Badge>
                           </TableCell>
-                          <TableCell
-                            className={`text-center py-1.5 font-mono ${
-                              triwulan !== 4
-                                ? "font-semibold text-blue-900"
-                                : "text-muted-foreground"
-                            }`}
-                          >
+                          <TableCell className={`text-center py-0.5 px-1 font-mono text-[9px] ${triwulan !== 4 ? "font-semibold text-blue-900" : "text-muted-foreground"}`}>
                             {LEGEND_TW1TO3[i]}
                           </TableCell>
-                          <TableCell
-                            className={`text-center py-1.5 font-mono ${
-                              triwulan === 4
-                                ? "font-semibold text-blue-900"
-                                : "text-muted-foreground"
-                            }`}
-                          >
+                          <TableCell className={`text-center py-0.5 px-1 font-mono text-[9px] ${triwulan === 4 ? "font-semibold text-blue-900" : "text-muted-foreground"}`}>
                             {LEGEND_TW4[i]}
                           </TableCell>
                         </TableRow>
@@ -669,79 +695,79 @@ export default function MapApbd() {
                     </TableBody>
                   </Table>
                 </div>
-              </CardContent>
-            </Card>
+              )}
 
-          </div>
-        </CardContent>
-      </Card>
+              {/* ── Separator ── */}
+              <div className="mx-3 border-t" />
 
-      {/* ══ BAGIAN 2: Card Agregat Nasional ════════════════════════════════ */}
-      <Card className="border shadow-sm overflow-hidden bg-gradient-to-br from-blue-950/5 via-card to-indigo-950/5">
-        <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/10">
-                <Building2 className="h-4 w-4 text-blue-600" />
-              </span>
-              <div>
-                <CardTitle className="text-base font-semibold">Agregat Nasional</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Triwulan {["I", "II", "III", "IV"][triwulan - 1]} — Semua Kanwil
-                </p>
+              {/* ── Stat Card: Nasional by default, ganti ke kanwil saat user klik peta ── */}
+              <div className="px-3 py-2.5 flex flex-col gap-2">
+                {(() => {
+                  const selRow = mapSelectedKd ? dataMap.get(mapSelectedKd) : null;
+                  const isNas = !selRow;
+                  const showLabel = selRow ? selRow.nmkanwil : "Agregat Nasional";
+                  const showData = selRow
+                    ? { pad: selRow.pad, tkd: selRow.tkd, belanja_daerah: selRow.belanja_daerah, capaian_persen: selRow.capaian_persen, indeks: selRow.indeks }
+                    : nasionalData;
+                  const isLoading = isNas ? nasionalLoading : false;
+
+                  return (
+                    <>
+                      {/* Header */}
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600/10 shrink-0">
+                            <Building2 className="h-3 w-3 text-blue-600" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-semibold leading-tight truncate">{showLabel}</p>
+                            <p className="text-[9px] text-muted-foreground">
+                              Tw {["I", "II", "III", "IV"][triwulan - 1]}
+                              {!isNas && (
+                                <button
+                                  onClick={() => setMapSelectedKd(null)}
+                                  className="ml-1.5 underline opacity-60 hover:opacity-100"
+                                >
+                                  ← Nasional
+                                </button>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        {isLoading ? (
+                          <Skeleton className="h-5 w-16 rounded-full shrink-0" />
+                        ) : showData ? (
+                          <IndeksBadge indeks={showData.indeks} />
+                        ) : null}
+                      </div>
+
+                      {/* Stat grid */}
+                      {isLoading ? (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
+                        </div>
+                      ) : showData ? (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <NasionalStatCard label="Total PAD"     value={fmtTrili(showData.pad)}             icon={Wallet}    colorClass="bg-emerald-500/10 text-emerald-600" />
+                          <NasionalStatCard label="Total TKD"     value={fmtTrili(showData.tkd)}             icon={BarChart3} colorClass="bg-blue-500/10 text-blue-600" />
+                          <NasionalStatCard label="Belanja"       value={fmtTrili(showData.belanja_daerah)}  icon={TrendingUp} colorClass="bg-orange-500/10 text-orange-600" />
+                          <NasionalStatCard label="Capaian"       value={`${Number(showData.capaian_persen).toFixed(2)}%`} icon={MapPin} colorClass="bg-purple-500/10 text-purple-600" />
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-muted-foreground italic text-center py-2">Data tidak tersedia.</div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
+
             </div>
-            {nasionalLoading ? (
-              <Skeleton className="h-7 w-32 rounded-full" />
-            ) : nasionalData ? (
-              <IndeksBadge indeks={nasionalData.indeks} />
-            ) : null}
+
           </div>
-        </CardHeader>
-        <CardContent>
-          {nasionalLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-20 rounded-xl" />
-              ))}
-            </div>
-          ) : nasionalData ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <NasionalStatCard
-                label="Total PAD"
-                value={fmtTrili(nasionalData.pad)}
-                icon={Wallet}
-                colorClass="bg-emerald-500/10 text-emerald-600"
-              />
-              <NasionalStatCard
-                label="Total TKD"
-                value={fmtTrili(nasionalData.tkd)}
-                icon={BarChart3}
-                colorClass="bg-blue-500/10 text-blue-600"
-              />
-              <NasionalStatCard
-                label="Total Belanja Daerah"
-                value={fmtTrili(nasionalData.belanja_daerah)}
-                icon={TrendingUp}
-                colorClass="bg-orange-500/10 text-orange-600"
-              />
-              <NasionalStatCard
-                label="Capaian Nasional"
-                value={`${Number(nasionalData.capaian_persen).toFixed(2)}%`}
-                icon={MapPin}
-                colorClass="bg-purple-500/10 text-purple-600"
-                sub={`Sisa anggaran vs pendapatan`}
-              />
-            </div>
-          ) : (
-            <div className="text-sm text-muted-foreground italic text-center py-6">
-              Data nasional tidak tersedia.
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* ══ BAGIAN 3: Filter + Tabel Detail per Kanwil ═════════════════════ */}
+      {/* ══ BAGIAN 2: Filter + Tabel Detail per Kanwil ═════════════════════ */}
       <Card className="border-blue-900/10 shadow-lg overflow-hidden bg-card">
         <CardHeader className="border-b pb-4">
           <div className="flex flex-col gap-4">
@@ -783,6 +809,8 @@ export default function MapApbd() {
                     <SelectValue placeholder="Pilih Provinsi…" />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* Opsi agregat nasional selalu tersedia di atas */}
+                    <SelectItem value="nasional">🇮🇩 Nasional (Agregat)</SelectItem>
                     {kanwilOptions.length === 0 ? (
                       <SelectItem value="__loading" disabled>
                         Memuat data…
@@ -846,6 +874,16 @@ export default function MapApbd() {
           ) : detailError ? (
             <div className="p-12 text-sm text-red-500 font-mono bg-red-50 rounded-md">
               {detailError}
+            </div>
+          ) : noDataDetail ? (
+            <div className="p-12 flex flex-col items-center gap-2 text-center">
+              <span className="text-3xl">📭</span>
+              <p className="text-sm font-semibold text-foreground">
+                Data Triwulan {["I", "II", "III", "IV"][tableTriwulan - 1]} belum tersedia
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Realisasi APBD untuk periode ini belum diinput ke database.
+              </p>
             </div>
           ) : detailData.length === 0 ? (
             <div className="p-12 text-sm text-center text-gray-500 italic">
