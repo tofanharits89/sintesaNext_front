@@ -112,30 +112,54 @@ const INDEKS_COLORS: Record<number, string> = {
 
 const INDEKS_LEGEND = [5, 4.75, 4.5, 4.25, 4, 3.75, 3.5, 3.25, 3, 2.75];
 
+// Legend Tw I–III  (target gap = 30%)
+// selisih = capaian - 30
+// Indeks 5   : selisih <= -25  → capaian <= 5%
+// Indeks 4.75: -25 < selisih <= -20  → 5% < capaian <= 10%
+// Indeks 4.5 : -20 < selisih <= -15  → 10% < capaian <= 15%
+// Indeks 4.25: -15 < selisih <= -10  → 15% < capaian <= 20%
+// Indeks 4   : -10 < selisih < +10   → 20% < capaian < 40%
+// Indeks 3.75: +10 <= selisih < +20  → 40% <= capaian < 50%
+// Indeks 3.5 : +20 <= selisih < +30  → 50% <= capaian < 60%
+// Indeks 3.25: +30 <= selisih < +40  → 60% <= capaian < 70%
+// Indeks 3   : +40 <= selisih < +50  → 70% <= capaian < 80%
+// Indeks 2.75: selisih >= +50        → capaian >= 80%
 const LEGEND_TW1TO3 = [
-  "<= 22,50%",
-  "22,50% <= x < 24,00%",
-  "24,00% <= x < 25,50%",
-  "25,50% <= x < 27,00%",
-  "27,00% <= x <= 33,00%",
-  "33,00% < x < 36,00%",
-  "36,00% <= x < 39,00%",
-  "39,00% <= x < 42,00%",
-  "42,00% <= x < 45,00%",
-  ">= 45,00%",
+  "≤ 25%",
+  "20% ≤ x < 25%",
+  "15% ≤ x < 20%",
+  "10% ≤ x < 15%",
+  "10%",
+  "10% ≥ x > 20%",
+  "20% ≥ x > 30%",
+  "30% ≥ x > 40%",
+  "40% ≥ x > 50%",
+  "50% ≥ x",
 ];
 
+// Legend Tw IV (target gap = 3%, kecuali Jakarta = 30%)
+// selisih = capaian - 3
+// Indeks 5   : selisih <= -25  → capaian <= -22% (hampir tidak terjadi)
+// Indeks 4.75: -25 < selisih <= -20  → -22% < capaian <= -17%
+// Indeks 4.5 : -20 < selisih <= -15  → -17% < capaian <= -12%
+// Indeks 4.25: -15 < selisih <= -10  → -12% < capaian <= -7%
+// Indeks 4   : -10 < selisih < +10   → -7% < capaian < 13%
+// Indeks 3.75: +10 <= selisih < +20  → 13% <= capaian < 23%
+// Indeks 3.5 : +20 <= selisih < +30  → 23% <= capaian < 33%
+// Indeks 3.25: +30 <= selisih < +40  → 33% <= capaian < 43%
+// Indeks 3   : +40 <= selisih < +50  → 43% <= capaian < 53%
+// Indeks 2.75: selisih >= +50        → capaian >= 53%
 const LEGEND_TW4 = [
-  "<= 2,25%",
-  "2,25% <= x < 2,40%",
-  "2,40% <= x < 2,55%",
-  "2,55% <= x < 2,70%",
-  "2,70% <= x <= 3,30%",
-  "3,30% < x < 3,60%",
-  "3,60% <= x < 3,90%",
-  "3,90% <= x < 4,20%",
-  "4,20% <= x < 4,50%",
-  ">= 4,50%",
+  "≤ 25%",
+  "20% ≤ x < 25%",
+  "15% ≤ x < 20%",
+  "10% ≤ x < 15%",
+  "10%",
+  "10% ≥ x > 20%",
+  "20% ≥ x > 30%",
+  "30% ≥ x > 40%",
+  "40% ≥ x > 50%",
+  "50% ≥ x",
 ];
 
 // KODE_PROV di GeoJSON tidak sama persis dengan kdkanwil untuk 4 provinsi berikut.
@@ -624,11 +648,11 @@ export default function MapApbd() {
           {error && (
             <div className="mb-3 text-sm text-red-500">{error}</div>
           )}
-          {/* ── Peta full-width, overlay panel Legenda+Stat di kanan ── */}
-          <div className="relative">
+          {/* ── Grid Layout: Frame Peta & Frame Legenda/Statistik ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
 
-            {/* Map container — full width */}
-            <Card className="relative w-full border shadow-sm overflow-hidden py-0 min-h-[420px]">
+            {/* Frame Peta (Kiri / 3 Kolom) */}
+            <Card className="lg:col-span-3 relative w-full border shadow-sm overflow-hidden py-0 min-h-[420px] flex flex-col">
               {loading && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/70 backdrop-blur-sm">
                   <Skeleton className="h-full w-full absolute inset-0 rounded-none" />
@@ -645,8 +669,8 @@ export default function MapApbd() {
               />
             </Card>
 
-            {/* Panel overlay: Legenda accordion + Stat Card — absolut di atas peta sebelah kanan */}
-            <div className="absolute top-2 right-2 z-20 w-[270px] flex flex-col rounded-xl border bg-card/95 backdrop-blur-sm shadow-lg overflow-hidden">
+            {/* Frame Legenda & Statistik (Kanan / 1 Kolom) */}
+            <Card className="lg:col-span-1 flex flex-col border shadow-sm bg-card overflow-hidden h-fit">
 
               {/* ── Tombol Accordion Legenda ── */}
               <button
@@ -667,8 +691,8 @@ export default function MapApbd() {
                     <TableHeader className="bg-card sticky top-0 z-10">
                       <TableRow>
                         <TableHead className="bg-card font-medium text-[10px] text-center py-1 px-1">Capaian</TableHead>
-                        <TableHead className="bg-card font-medium text-center text-[10px] py-1 px-1">Tw I–III</TableHead>
-                        <TableHead className="bg-card font-medium text-center text-[10px] py-1 px-1">Tw IV</TableHead>
+                        <TableHead className="bg-card font-medium text-center text-[10px] py-1 px-1">Tw I–III   (Target 30%)</TableHead>
+                        <TableHead className="bg-card font-medium text-center text-[10px] py-1 px-1">Tw IV   (Target 3%/DKI Jakarta 30%)</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -725,6 +749,7 @@ export default function MapApbd() {
                               Tw {["I", "II", "III", "IV"][triwulan - 1]}
                               {!isNas && (
                                 <button
+                                  type="button"
                                   onClick={() => setMapSelectedKd(null)}
                                   className="ml-1.5 underline opacity-60 hover:opacity-100"
                                 >
@@ -748,10 +773,10 @@ export default function MapApbd() {
                         </div>
                       ) : showData ? (
                         <div className="grid grid-cols-2 gap-1.5">
-                          <NasionalStatCard label="Total PAD"     value={fmtTrili(showData.pad)}             icon={Wallet}    colorClass="bg-emerald-500/10 text-emerald-600" />
-                          <NasionalStatCard label="Total TKD"     value={fmtTrili(showData.tkd)}             icon={BarChart3} colorClass="bg-blue-500/10 text-blue-600" />
-                          <NasionalStatCard label="Belanja"       value={fmtTrili(showData.belanja_daerah)}  icon={TrendingUp} colorClass="bg-orange-500/10 text-orange-600" />
-                          <NasionalStatCard label="Capaian"       value={`${Number(showData.capaian_persen).toFixed(2)}%`} icon={MapPin} colorClass="bg-purple-500/10 text-purple-600" />
+                          <NasionalStatCard label="Total PAD" value={fmtTrili(showData.pad)} icon={Wallet} colorClass="bg-emerald-500/10 text-emerald-600" />
+                          <NasionalStatCard label="Total TKD" value={fmtTrili(showData.tkd)} icon={BarChart3} colorClass="bg-blue-500/10 text-blue-600" />
+                          <NasionalStatCard label="Belanja" value={fmtTrili(showData.belanja_daerah)} icon={TrendingUp} colorClass="bg-orange-500/10 text-orange-600" />
+                          <NasionalStatCard label="Capaian" value={`${Number(showData.capaian_persen).toFixed(2)}%`} icon={MapPin} colorClass="bg-purple-500/10 text-purple-600" />
                         </div>
                       ) : (
                         <div className="text-[10px] text-muted-foreground italic text-center py-2">Data tidak tersedia.</div>
@@ -761,7 +786,7 @@ export default function MapApbd() {
                 })()}
               </div>
 
-            </div>
+            </Card>
 
           </div>
         </CardContent>
